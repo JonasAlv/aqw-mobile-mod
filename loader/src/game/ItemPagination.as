@@ -44,7 +44,7 @@ package game {
 			const listMask:MovieClip = lpf.listMask;
 			const scr:Object = lpf.scr;
 
-			const lpfElementListItemItemCls:Class = pocket.game.world.getClass("LPFElementListItemItem");
+			const lpfElementListItemItemCls:Class = this.pocket.game.world.getClass("LPFElementListItemItem");
 
 			while (iList.numChildren > 0) {
 				MovieClip(iList.getChildAt(0)).fClose();
@@ -98,7 +98,9 @@ package game {
 					"reset": reset
 				});
 
-				return {listA: listA};
+				return {
+					listA: listA
+				};
 			}
 
 			for (i = 0; i < sortOrder.length; i++) {
@@ -111,7 +113,11 @@ package game {
 				}
 
 				if (sortedGroup.length > 0) {
-					sortedGroup.sortOn(["sName", "iLvl"], [undefined, Array.DESCENDING | Array.NUMERIC]);
+					sortedGroup.sortOn(
+						["sName", "iLvl"], 
+						[undefined, Array.DESCENDING | Array.NUMERIC]
+					);
+					
 					listA = listA.concat(sortedGroup);
 				}
 			}
@@ -129,18 +135,19 @@ package game {
 				listA = listA.concat(sortedGroup);
 			}
 
-			var itemConfig:Object = {};
+			const itemConfig:Object = {};
+			
 			itemConfig.eventType = itemEventType;
 			itemConfig.allowDesel = allowDesel;
 			itemConfig.multiSelect = multiSelect;
 			itemConfig.bLimited = bLimited && state.getLayout().sMode == "shopBuy";
 
 			var needPagination:Boolean = false;
-			
+
 			const listLength:int = listA.length;
 
 			for (i = 0; i < listLength; i++) {
-				if (i > 100) {
+				if (i > 5) {
 					needPagination = true;
 					break;
 				}
@@ -190,7 +197,7 @@ package game {
 						"subjectMask": listMask,
 						"reset": false
 					});
-				}, false, 0, true);
+				});
 			}
 
 			scr.fOpen({
