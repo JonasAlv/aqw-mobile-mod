@@ -696,43 +696,11 @@ package ui {
 		}
 
 		public static function stickyNotification(overlay:Overlay, id:String, message:String):void {
-			if (overlay == null || overlay.notifications == null) return;
-			removeStickyNotification(overlay, id);
-			
-			var notif:ui.Notification = new ui.Notification(message, true);
-			notif.name = id;
-			notif.id = id;
-			overlay.notifications.addChild(notif);
-			
-			rearrangeNotifications(overlay);
+			ApiNotificationManager.instance.createSticky(id, message);
 		}
 
 		public static function removeStickyNotification(overlay:Overlay, id:String):void {
-			if (overlay == null || overlay.notifications == null) return;
-			var existing:* = overlay.notifications.getChildByName(id);
-			if (existing != null) {
-				if (existing is ui.Notification) {
-					ui.Notification(existing).onClose();
-				} else {
-					overlay.notifications.removeChild(existing);
-				}
-				rearrangeNotifications(overlay);
-			}
-		}
-
-		private static function rearrangeNotifications(overlay:Overlay):void {
-			if (overlay == null || overlay.notifications == null) return;
-			var currentY:Number = 0;
-			for (var i:int = 0; i < overlay.notifications.numChildren; i++) {
-				var child:* = overlay.notifications.getChildAt(i);
-				child.x = 0;
-				child.y = currentY;
-				currentY += child.height + 10;
-			}
-			if (overlay.notifications.numChildren > 0 && overlay.stage != null) {
-				overlay.notifications.x = overlay.stage.stageWidth - overlay.notifications.getChildAt(0).width - 10;
-				overlay.notifications.y = 10;
-			}
+			ApiNotificationManager.instance.removeSticky(id);
 		}
 	}
 }

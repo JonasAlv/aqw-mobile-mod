@@ -16,11 +16,11 @@ package ui {
 		private var _container:Sprite;
 		private var _notifications:Vector.<ApiNotification>;
 		private var _initialized:Boolean = false;
-		private var _pendingMessages:Vector.<String>;
+		private var _pendingMessages:Vector.<Object>;
 
 		public function ApiNotificationManager() {
 			_notifications = new Vector.<ApiNotification>();
-			_pendingMessages = new Vector.<String>();
+			_pendingMessages = new Vector.<Object>();
 			AqwApi.dispatcher.addEventListener(ApiEvent.NOTIFICATION, onApiNotification);
 		}
 
@@ -28,22 +28,38 @@ package ui {
 			if (_initialized) return;
 			_initialized = true;
 			_container = container;
-			for each (var msg:String in _pendingMessages) {
-				showNotification(msg);
+			for each (var item:Object in _pendingMessages) {
+				showNotification(item.id, item.message, item.sticky);
 			}
 			_pendingMessages.length = 0;
 		}
 
 		private function onApiNotification(e:ApiEvent):void {
 			if (_initialized) {
-				showNotification(e.message);
+				showNotification(null, e.message, false);
 			} else {
-				_pendingMessages.push(e.message);
+				_pendingMessages.push({ id: null, message: e.message, sticky: false });
 			}
 		}
 
-		private function showNotification(message:String):void {
-			var notif:ApiNotification = new ApiNotification(message);
+		public function createSticky(id:String, message:String):void {
+			showNotification(id, message, true);
+		}
+
+		public function removeSticky(id:String):void {
+			for (var i:int = _notifications.length - 1; i >= 0; i--) {
+				var notif:ApiNotification = _notifications[i];
+				if (notif.id == id) {
+					notif.destroy();
+					_notifications.splice(i, 1);
+					positionNotifications();
+					return;
+				}
+			}
+		}
+
+		private function showNotification(id:String, message:String, sticky:Boolean):void {
+			var notif:ApiNotification = new ApiNotification(id, message, sticky);
 			notif.setOnDismiss(onDismiss);
 			_notifications.push(notif);
 			_container.addChild(notif);

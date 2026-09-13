@@ -22,8 +22,12 @@ package ui {
 		private var _onDismiss:Function;
 		private var _isHovered:Boolean = false;
 		private var _slideOffset:Number = WIDTH;
+		public var id:String;
+		public var sticky:Boolean;
 
-		public function ApiNotification(message:String) {
+		public function ApiNotification(id:String, message:String, sticky:Boolean = false) {
+			this.id = id;
+			this.sticky = sticky;
 			this.graphics.beginFill(0x0d0d0d, 0.95);
 			this.graphics.lineStyle(1, 0x1a1a1a);
 			this.graphics.drawRoundRect(0, 0, WIDTH, HEIGHT, 6, 6);
@@ -51,6 +55,8 @@ package ui {
 			_closeBtn.graphics.drawRoundRect(WIDTH - 22, 6, 18, 18, 3, 3);
 			_closeBtn.graphics.endFill();
 			_closeBtn.buttonMode = true;
+			_closeBtn.visible = !sticky;
+			_closeBtn.mouseEnabled = !sticky;
 
 			var closeTxt:TextField = new TextField();
 			closeTxt.defaultTextFormat = new TextFormat("_sans", 12, 0x888888, false, null, null, null, null, TextFormatAlign.CENTER);
@@ -68,9 +74,11 @@ package ui {
 			this.addEventListener(MouseEvent.CLICK, onClick);
 			_closeBtn.addEventListener(MouseEvent.CLICK, onCloseClick);
 
-			_timer = new Timer(DISMISS_DELAY, 1);
-			_timer.addEventListener(TimerEvent.TIMER, onDismissTimer);
-			_timer.start();
+			if (!sticky) {
+				_timer = new Timer(DISMISS_DELAY, 1);
+				_timer.addEventListener(TimerEvent.TIMER, onDismissTimer);
+				_timer.start();
+			}
 
 			this.addEventListener(Event.ENTER_FRAME, onEnterFrame);
 		}
