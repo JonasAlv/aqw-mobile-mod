@@ -8,13 +8,13 @@ package game {
 
 	public class ItemPagination {
 
-		private static const ITEMS_PER_PAGE:int = 9;
-
 		public function ItemPagination(pocket:Pocket) {
 			this.pocket = pocket;
 		}
 
 		private var pocket:Pocket;
+
+		private var itemsPerPage:int = 9;
 
 		/**
 		 * Patch freezing when opening Bank, Inventory etc.
@@ -46,6 +46,15 @@ package game {
 			const bgTabs:MovieClip = lpf.bgTabs;
 			const listMask:MovieClip = lpf.listMask;
 			const scr:Object = lpf.scr;
+
+			const layout:MovieClip = state.getLayout();
+
+			switch (this.pocket.game.ui.mcPopup.currentLabel) {
+				case "Bank":
+				case "MergeShop":
+					itemsPerPage = 7;
+					break;
+			}
 
 			const lpfElementListItemItemCls:Class = this.pocket.game.world.getClass("LPFElementListItemItem");
 
@@ -142,7 +151,7 @@ package game {
 				listA = listA.concat(sortedGroup);
 			}
 
-			if (true) {
+			if (layout.sMode != "bank") {
 				const pinnedItems:Array = [];
 				const unpinnedItems:Array = [];
 
@@ -162,10 +171,10 @@ package game {
 			itemConfig.eventType = itemEventType;
 			itemConfig.allowDesel = allowDesel;
 			itemConfig.multiSelect = multiSelect;
-			itemConfig.bLimited = bLimited && state.getLayout().sMode == "shopBuy";
+			itemConfig.bLimited = bLimited && layout.sMode == "shopBuy";
 
 			const listLength:int = listA.length;
-			const totalPages:int = Math.max(1, Math.ceil(listLength / ITEMS_PER_PAGE));
+			const totalPages:int = Math.max(1, Math.ceil(listLength / itemsPerPage));
 
 			if (iList.curPage >= totalPages) {
 				iList.curPage = totalPages - 1;
@@ -176,8 +185,8 @@ package game {
 			}
 
 			const curPage:int = iList.curPage;
-			const startIndex:int = curPage * ITEMS_PER_PAGE;
-			const endIndex:int = Math.min(startIndex + ITEMS_PER_PAGE, listLength);
+			const startIndex:int = curPage * itemsPerPage;
+			const endIndex:int = Math.min(startIndex + itemsPerPage, listLength);
 
 			for (i = startIndex; i < endIndex; i++) {
 				addListItem(iList, lpf, lpfElementListItemItemCls, itemConfig, listA, iSel, i - startIndex);
@@ -240,7 +249,7 @@ package game {
 		}
 
 		private function addListItem(iList:Object, lpf:Object, cls:Class, itemConfig:Object, listA:Array, iSel:Object, key:int):void {
-			itemConfig.fData = listA[key + iList.curPage * ITEMS_PER_PAGE];
+			itemConfig.fData = listA[key + iList.curPage * itemsPerPage];
 
 			const listItem:Object = iList.addChild(new cls());
 
