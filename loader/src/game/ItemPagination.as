@@ -1,11 +1,14 @@
 package game {
-	import flash.display.DisplayObject;
+
 	import flash.display.MovieClip;
+	import flash.display.SimpleButton;
 	import flash.events.MouseEvent;
 
 	import ui.util.Pagination;
 
 	public class ItemPagination {
+
+		private static const ITEMS_PER_PAGE:int = 9;
 
 		public function ItemPagination(pocket:Pocket) {
 			this.pocket = pocket;
@@ -14,7 +17,7 @@ package game {
 		private var pocket:Pocket;
 
 		/**
-		 * Patch freezing when opening Bank, Inventory etc..
+		 * Patch freezing when opening Bank, Inventory etc.
 		 *
 		 * @param state
 		 * @param lpf
@@ -48,6 +51,10 @@ package game {
 
 			while (iList.numChildren > 0) {
 				MovieClip(iList.getChildAt(0)).fClose();
+			}
+
+			if (reset || iList.curPage == undefined) {
+				iList.curPage = 0;
 			}
 
 			if (reset) {
@@ -114,10 +121,10 @@ package game {
 
 				if (sortedGroup.length > 0) {
 					sortedGroup.sortOn(
-						["sName", "iLvl"], 
+						["sName", "iLvl"],
 						[undefined, Array.DESCENDING | Array.NUMERIC]
 					);
-					
+
 					listA = listA.concat(sortedGroup);
 				}
 			}
@@ -135,75 +142,74 @@ package game {
 				listA = listA.concat(sortedGroup);
 			}
 
+			if (true) {
+				const pinnedItems:Array = [];
+				const unpinnedItems:Array = [];
+
+				for each (itemData in listA) {
+					if (itemData.bEquip) {
+						pinnedItems.push(itemData);
+					} else {
+						unpinnedItems.push(itemData);
+					}
+				}
+
+				listA = pinnedItems.concat(unpinnedItems);
+			}
+
 			const itemConfig:Object = {};
-			
+
 			itemConfig.eventType = itemEventType;
 			itemConfig.allowDesel = allowDesel;
 			itemConfig.multiSelect = multiSelect;
 			itemConfig.bLimited = bLimited && state.getLayout().sMode == "shopBuy";
 
-			var needPagination:Boolean = false;
-
 			const listLength:int = listA.length;
+			const totalPages:int = Math.max(1, Math.ceil(listLength / ITEMS_PER_PAGE));
 
-			for (i = 0; i < listLength; i++) {
-				if (i > 5) {
-					needPagination = true;
-					break;
-				}
-
-				addListItem(iList, lpf, lpfElementListItemItemCls, itemConfig, listA, iSel, i);
+			if (iList.curPage >= totalPages) {
+				iList.curPage = totalPages - 1;
 			}
 
-			if (needPagination) {
-				const pagination:DisplayObject = DisplayObject(iList.addChild(new Pagination()));
+			if (iList.curPage < 0) {
+				iList.curPage = 0;
+			}
 
-				pagination.y = iList.height - 5;
+			const curPage:int = iList.curPage;
+			const startIndex:int = curPage * ITEMS_PER_PAGE;
+			const endIndex:int = Math.min(startIndex + ITEMS_PER_PAGE, listLength);
 
-				pagination.addEventListener(MouseEvent.CLICK, function (e:MouseEvent):void {
-					const buttonY:int = pagination.y;
+			for (i = startIndex; i < endIndex; i++) {
+				addListItem(iList, lpf, lpfElementListItemItemCls, itemConfig, listA, iSel, i - startIndex);
+			}
 
-					iList.removeChild(pagination);
+			if (totalPages > 1) {
+				const pagination:Pagination = Pagination(iList.addChild(new Pagination()));
 
-					var ii:int = 0;
+				pagination.y = iList.height + 6.5;
 
-					for (var j:int = i; j < listLength; j++) {
-						if (ii > 100) {
-							break;
-						}
-
-						addListItem(iList, lpf, lpfElementListItemItemCls, itemConfig, listA, iSel, j);
-
-						ii++;
-					}
-
-					i += ii;
-
-					if (i < listLength) {
-						iList.addChild(pagination);
-						pagination.y = iList.height - 5;
-					}
-
-					const hRun:int = scr.b.height - scr.h.height;
-					const dRun:int = iList.height - listMask.height + 20;
-
-					const targetY:Number = Math.max(iList.oy - dRun, iList.oy - buttonY);
-
-					iList.y = targetY;
-					scr.h.y = hRun > 0 ? -(targetY - iList.oy) * hRun / dRun : 0;
-
-					scr.fOpen({
-						"subject": iList,
-						"subjectMask": listMask,
-						"reset": false
-					});
+				pagination.fOpen({
+					"page": curPage + 1,
+					"totalPages": totalPages,
+					"canPrev": curPage > 0,
+					"canNext": curPage < totalPages - 1,
+					"state": state,
+					"lpf": lpf
 				});
+
+				if (pagination.btnPrev) {
+					pagination.btnPrev.addEventListener(MouseEvent.CLICK, this.onPrevClick, false, 0, false);
+				}
+
+				if (pagination.btnNext) {
+					pagination.btnNext.addEventListener(MouseEvent.CLICK, this.onNextClick, false, 0, false);
+				}
 			}
 
 			scr.fOpen({
 				"subject": iList,
 				"subjectMask": listMask,
-				"reset": reset
+				"reset": true
 			});
 
 			return {
@@ -211,8 +217,30 @@ package game {
 			};
 		}
 
+		private function onPrevClick(e:MouseEvent):void {
+			const pagination:Pagination = Pagination(SimpleButton(e.currentTarget).parent);
+			const data:Object = pagination.fData;
+			const iList:MovieClip = data.lpf.iList;
+
+			if (iList.curPage > 0) {
+				iList.curPage--;
+				fDraw(data.state, data.lpf, false);
+			}
+		}
+
+		private function onNextClick(e:MouseEvent):void {
+			const pagination:Pagination = Pagination(SimpleButton(e.currentTarget).parent);
+			const data:Object = pagination.fData;
+			const iList:MovieClip = data.lpf.iList;
+
+			if (iList.curPage < data.totalPages - 1) {
+				iList.curPage++;
+				fDraw(data.state, data.lpf, false);
+			}
+		}
+
 		private function addListItem(iList:Object, lpf:Object, cls:Class, itemConfig:Object, listA:Array, iSel:Object, key:int):void {
-			itemConfig.fData = listA[key];
+			itemConfig.fData = listA[key + iList.curPage * ITEMS_PER_PAGE];
 
 			const listItem:Object = iList.addChild(new cls());
 
