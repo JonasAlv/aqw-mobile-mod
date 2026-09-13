@@ -6,7 +6,7 @@ export JAVA_HOME=$HOME/.sdkman/candidates/java/current
 export PATH=$AIR_HOME/bin:$JAVA_HOME/bin:$PATH
 
 echo "Compiling WorkerMain.swf"
-cd /home/me/Music/aqw-mobile/loader
+cd loader
 mkdir -p gamefiles/embed
 $AIR_HOME/bin/amxmlc worker-src/WorkerMain.as  -source-path+=../../aqw-api-enhanced/src -source-path+=src -source-path+=worker-src -output gamefiles/embed/WorkerMain.swf -swf-version=18
 
