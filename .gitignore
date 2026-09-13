@@ -4,18 +4,15 @@
 # IDE
 /.idea/
 /.vscode/settings.json
-
 # Assets
 *.fla
 /patches/*/build/*
-
 # Generated / runtime files
-/loader/gamefiles/
+/loader/gamefiles/game.swf
 /patches-final/
 /pocket-patches/
 /patches/*
 loader.iml
-
 .env
 build-desktop.sh
 build-android.sh
@@ -28,3 +25,4 @@ loader/Mobile_code-0.abc
 desktop_builds/
 build_workspace/
 loader/Desktop-app-local.xml
+loader/gamefiles/game.swf
