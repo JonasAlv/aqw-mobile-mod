@@ -425,33 +425,47 @@ impl Patcher {
         if !source.exists() {
             return Ok(());
         }
-
+    
+        self.copy_files_inner(source, source, target)
+    }
+    
+    fn copy_files_inner(&self,root: &Path,source: &Path,target: &Path) -> Result<(), Box<dyn Error>> {
         for entry in fs::read_dir(source)? {
             let entry = entry?;
             let path = entry.path();
-
+    
             if path.is_dir() {
-                self.copy_files(&path, target)?;
+                self.copy_files_inner(root, &path, target)?;
                 continue;
             }
-
+    
             let file_name_str = path.file_name().unwrap().to_string_lossy();
-
+    
             if file_name_str.ends_with(".copy.asasm") {
                 let dest_name = file_name_str.replace(".copy.asasm", ".asasm");
-                let dest = target.join(dest_name);
-
+    
+                let rel_dir = path
+                    .parent()
+                    .unwrap()
+                    .strip_prefix(root)
+                    .unwrap_or_else(|_| Path::new(""));
+    
+                let dest_dir = target.join(rel_dir);
+                fs::create_dir_all(&dest_dir)?;
+    
+                let dest = dest_dir.join(dest_name);
+    
                 tracing::info!(
-                    "[{}] Copying patch {} to {:?}",
+                    "[{}] Copying patch {:?} to {}",
                     self.name,
-                    dest.display(),
-                    path
+                    path,
+                    dest.display()
                 );
-
+    
                 fs::copy(&path, &dest)?;
             }
         }
-
+    
         Ok(())
     }
 
