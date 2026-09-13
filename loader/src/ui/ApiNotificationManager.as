@@ -69,21 +69,20 @@ package ui {
 		private function onDismiss(notif:ApiNotification):void {
 			var idx:int = _notifications.indexOf(notif);
 			if (idx != -1) { _notifications.splice(idx, 1); }
+			// notif removes itself from parent in onFadeOut, no need to do it here
 			positionNotifications();
 		}
 
 		private function positionNotifications():void {
-			var currentY:Number = 10;
+			var currentY:Number = 0;
 			for each (var notif:ApiNotification in _notifications) {
 				notif.y = currentY;
-				currentY += notif.height + 8;
+				currentY += notif.height + 6;
 			}
-			if (_container != null && _container.stage != null && _container.numChildren > 0) {
-				var firstNotif:ApiNotification = _notifications[0];
-				if (firstNotif != null) {
-					_container.x = (_container.stage.stageWidth - 300) / 2;
-					_container.y = 10;
-				}
+			// Only center if we have active notifications
+			if (_container != null && _container.stage != null && _notifications.length > 0) {
+				_container.x = (_container.stage.stageWidth - 280) / 2;
+				_container.y = 10;
 			}
 		}
 
