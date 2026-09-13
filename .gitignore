@@ -8,7 +8,6 @@
 *.fla
 /patches/*/build/*
 # Generated / runtime files
-/loader/gamefiles/game.swf
 /patches-final/
 /pocket-patches/
 /patches/*
@@ -25,4 +24,4 @@ loader/Mobile_code-0.abc
 desktop_builds/
 build_workspace/
 loader/Desktop-app-local.xml
-loader/gamefiles/game.swf
+loader/gamefiles/
