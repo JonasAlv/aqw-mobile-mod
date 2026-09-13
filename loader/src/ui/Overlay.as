@@ -707,6 +707,11 @@ package ui {
 		];
 
 		private function initFrame():void {
+			BotMenus.inject(this);
+			
+			var apiNotifications:Sprite = Sprite(addChild(new Sprite()));
+			ApiNotificationManager.instance.init(apiNotifications);
+
 			this.showPanelBtn.addEventListener(MouseEvent.CLICK, onShowPanel);
 
 			for each (var menu:Menu in menus) {
