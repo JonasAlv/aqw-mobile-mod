@@ -87,3 +87,4 @@ rm -f loader/Mobile-app-gpu.xml loader/Mobile_code.swf loader/Mobile_code-0.abc
 echo ""
 echo "=> Done! Output: $OUTPUT ($(du -sh $OUTPUT | cut -f1))"
 echo "   Install on device with: adb install -r $OUTPUT"
+

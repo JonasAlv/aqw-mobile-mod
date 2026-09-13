@@ -24,6 +24,13 @@ rm -rf /tmp/anthony-aqw-extracted
 echo ""
 echo "=> Gamefiles ready:"
 ls -lh "$GAMEFILES_DIR/"
+
+# Create skills_custom.json in loader/ for ADL local testing (applicationDirectory)
+if [ ! -f "loader/skills_custom.json" ]; then
+  echo "=> Creating local skills_custom.json for ADL..."
+  cp "loader/assets/skills.json" "loader/skills_custom.json"
+fi
+
 echo ""
 echo "=> Done! You can now run ./run.sh to test locally."
 
