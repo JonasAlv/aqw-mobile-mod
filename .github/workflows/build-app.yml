@@ -1,379 +1,213 @@
-name: Build Pocket
+name: Build Modded Pocket
 
 on:
-    workflow_dispatch:
-        inputs:
-            version_prefix:
-                description: 'Version prefix (e.g. 1.0.0, 1.1.0, 2.0.0)'
-                required: true
-                default: '2.0.0'
-            
-            prerelease:
-                description: 'Mark as pre-release'
-                required: true
-                default: 'true'
-                type: choice
-                options:
-                    - 'true'
-                    - 'false'
+  workflow_dispatch:
 
 jobs:
-    patch:
-        runs-on: ubuntu-latest
-        permissions:
-            contents: write
-        outputs:
-            VERSION: ${{ steps.version.outputs.VERSION }}
-            VERSION_NUMBER: ${{ steps.version.outputs.VERSION_NUMBER }}
-        steps:
-            -   name: Checkout
-                uses: actions/checkout@v7
-            
-            -   name: Checkout custom
-                uses: actions/checkout@v7
-                with:
-                    repository: anthony-hyo/pocket-patches
-                    token: ${{ secrets.PATCHES_TOKEN }}
-                    path: pocket-patches
-            
-            -   name: Set version
-                id: version
-                run: |
-                    echo "VERSION=v${{ github.event.inputs.version_prefix }}" >> $GITHUB_OUTPUT
-                    echo "VERSION_NUMBER=${{ github.event.inputs.version_prefix }}" >> $GITHUB_OUTPUT
-                    echo "IS_PRERELEASE=${{ github.event.inputs.prerelease }}" >> $GITHUB_OUTPUT
-            
-            -   name: Setup Rust
-                uses: dtolnay/rust-toolchain@stable
-            
-            -   name: Cache Rust dependencies
-                uses: actions/cache@v6
-                with:
-                    path: |
-                        ~/.cargo/registry
-                        ~/.cargo/git
-                        target
-                    key: ${{ runner.os }}-cargo-${{ hashFiles('Cargo.lock') }}
-            
-            -   name: Setup Dlang
-                uses: dlang-community/setup-dlang@v1
-            
-            -   name: Install Dependencies and Build RABCDAsm
-                run: |
-                    sudo apt-get update
-                    sudo apt-get install -y wget unzip git curl liblzma-dev default-jdk
-                    
-                    git clone --depth 1 https://github.com/CyberShadow/RABCDAsm.git
-                    cd RABCDAsm
-                    dmd -run build_rabcdasm.d
-                    sudo cp abcexport rabcdasm rabcasm abcreplace /usr/local/bin/
-            
-            -   name: Patch Game.swf
-                run: cargo run --release
-            
-            -   name: Keystore
-                run: |
-                    echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > aqwpocket_keystore.jks
-                    echo "${{ secrets.KEYSTORE_P12_BASE64 }}" | base64 -d > aqwpocket_keystore.p12
-            
-            -   name: Inject version
-                run: |
-                    sed -i "s|<versionNumber>.*</versionNumber>|<versionNumber>${{ steps.version.outputs.VERSION_NUMBER }}</versionNumber>|" loader/Mobile-app.xml
-                    sed -i "s|<versionLabel>.*</versionLabel>|<versionLabel>${{ steps.version.outputs.VERSION_NUMBER }}</versionLabel>|" loader/Mobile-app.xml
-                    sed -i "s|<versionNumber>.*</versionNumber>|<versionNumber>${{ steps.version.outputs.VERSION_NUMBER }}</versionNumber>|" loader/Desktop-app.xml
-                    sed -i "s|<versionLabel>.*</versionLabel>|<versionLabel>${{ steps.version.outputs.VERSION_NUMBER }}</versionLabel>|" loader/Desktop-app.xml
-            
-            -   name: Upload patched files
-                uses: actions/upload-artifact@v7
-                with:
-                    name: patched-files
-                    path: |
-                        loader/
-                        aqwpocket_keystore.jks
-                        aqwpocket_keystore.p12
-    
-    build-android:
-        needs: patch
-        runs-on: ubuntu-latest
-        permissions:
-            contents: write
-        strategy:
-            matrix:
-                include:
-                    -   architecture: "armv8"
-                        render-mode: "auto"
-                        suffix: ""
-                    
-                    -   architecture: "armv8"
-                        render-mode: "direct"
-                        suffix: "-direct"
-                    
-                    -   architecture: "armv8"
-                        render-mode: "gpu"
-                        suffix: "-gpu"
-                    
-                    -   architecture: "armv7"
-                        render-mode: "auto"
-                        suffix: ""
-                    
-                    -   architecture: "x64"
-                        render-mode: "auto"
-                        suffix: ""
-                    
-                    -   architecture: "x86"
-                        render-mode: "auto"
-                        suffix: ""
-        
-        steps:
-            -   name: Download patched files
-                uses: actions/download-artifact@v8
-                with:
-                    name: patched-files
-            
-            -   name: Setup AIR SDK
-                uses: joshtynjala/setup-adobe-air-action@v2
-                with:
-                    air-version: "51.3.1"
-                    accept-license: yes
-            
-            -   name: Build APK
-                run: |
-                    sed -i "s|<renderMode>.*</renderMode>|<renderMode>${{ matrix.render-mode }}</renderMode>|" loader/Mobile-app.xml
-                    adt -package \
-                      -target apk-captive-runtime \
-                      -arch ${{ matrix.architecture }} \
-                      -storetype JKS \
-                      -keystore aqwpocket_keystore.jks \
-                      -storepass ${{ secrets.KEYSTORE_PASS }} \
-                      -keypass ${{ secrets.KEY_PASS }} \
-                      AQWPocket-${{ needs.patch.outputs.VERSION }}-${{ matrix.architecture }}${{ matrix.suffix }}.apk \
-                      loader/Mobile-app.xml \
-                      -C loader \
-                        Mobile.swf \
-                        icons/icon-36x36.png \
-                        icons/icon-48x48.png \
-                        icons/icon-72x72.png \
-                        icons/icon-96x96.png \
-                        icons/icon-144x144.png \
-                        icons/icon-192x192.png \
-                        gamefiles/game.swf \
-                        gamefiles/world-map.swf \
-                        gamefiles/book-of-lore.swf \
-                        gamefiles/character-select.swf
-            
-            -   name: Upload
-                uses: actions/upload-artifact@v7
-                with:
-                    name: build-${{ matrix.architecture }}${{ matrix.suffix }}
-                    path: "*.apk"
+  prepare:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout aqw-mobile-mod
+        uses: actions/checkout@v4
+        with:
+          path: aqw-mobile
+          
+      - name: Checkout aqw-api
+        uses: actions/checkout@v4
+        with:
+          repository: JonasAlv/aqw-api
+          path: aqw-api-enhanced
 
-    build-windows:
-        needs: patch
-        runs-on: windows-latest
-        permissions:
-            contents: write
-        strategy:
-            matrix:
-                include:
-                    -   architecture: "x64"
-                        render-mode: "auto"
-                        suffix: "-windows-x64"
+      - name: Checkout air-aqw-enhanced
+        uses: actions/checkout@v4
+        with:
+          repository: anthony-hyo/air-aqw-enhanced
+          path: air-aqw-enhanced
 
-                    -   architecture: "x64"
-                        render-mode: "direct"
-                        suffix: "-windows-x64-direct"
+      - name: Setup Dlang
+        uses: dlang-community/setup-dlang@v1
 
-                    -   architecture: "x86"
-                        render-mode: "auto"
-                        suffix: "-windows-x86"
-        steps:
-            -   name: Download patched files
-                uses: actions/download-artifact@v8
-                with:
-                    name: patched-files
+      - name: Install RABCDAsm & Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y wget unzip git curl liblzma-dev default-jdk default-jre
+          git clone --depth 1 https://github.com/CyberShadow/RABCDAsm.git
+          cd RABCDAsm
+          dmd -run build_rabcdasm.d
+          sudo cp abcexport rabcdasm rabcasm abcreplace /usr/local/bin/
 
-            -   name: Setup AIR SDK
-                uses: joshtynjala/setup-adobe-air-action@v2
-                with:
-                    air-version: "51.3.1"
-                    accept-license: yes
+      - name: Setup AIR SDK
+        uses: joshtynjala/setup-adobe-air-action@v2
+        with:
+          air-version: "51.3.1"
+          accept-license: yes
 
-            -   name: Build Windows
-                run: |
-                    (Get-Content loader/Desktop-app.xml) `
-                      -replace '<renderMode>.*</renderMode>', '<renderMode>${{ matrix.render-mode }}</renderMode>' `
-                      | Set-Content loader/Desktop-app.xml
-                    adt -package `
-                      -storetype PKCS12 `
-                      -keystore aqwpocket_keystore.p12 `
-                      -storepass ${{ secrets.KEYSTORE_PASS }} `
-                      -keypass ${{ secrets.KEY_PASS }} `
-                      -target bundle `
-                      -arch ${{ matrix.architecture }} `
-                      AQWPocket-${{ needs.patch.outputs.VERSION }}${{ matrix.suffix }} `
-                      loader/Desktop-app.xml `
-                      -extdir loader/libs `
-                      -C loader `
-                        Desktop.swf `
-                        icons/icon-16x16.png `
-                        icons/icon-32x32.png `
-                        icons/icon-36x36.png `
-                        icons/icon-48x48.png `
-                        icons/icon-72x72.png `
-                        icons/icon-96x96.png `
-                        icons/icon-128x128.png `
-                        icons/icon-144x144.png `
-                        icons/icon-192x192.png `
-                        gamefiles/game.swf `
-                        gamefiles/world-map.swf `
-                        gamefiles/book-of-lore.swf `
-                        gamefiles/character-select.swf
+      - name: Compile and Inject SWFs
+        run: |
+          cd aqw-mobile/loader
+          
+          echo "Compiling Mobile_code.swf"
+          amxmlc +configname=air -define+=POCKET::IS_DESKTOP,false -define+=POCKET::IS_MOBILE,true -library-path+=libs -source-path+=../../air-aqw-enhanced/src_pocket -source-path+=src -source-path+=../../aqw-api-enhanced/src -output Mobile_code.swf ../../air-aqw-enhanced/src_pocket/Pocket.as
+          abcexport Mobile_code.swf
+          abcreplace Mobile.swf 0 Mobile_code-0.abc
+          
+          echo "Compiling WorkerMain.swf"
+          mkdir -p gamefiles/embed
+          amxmlc worker-src/WorkerMain.as -source-path+=../../air-aqw-enhanced/src_pocket -source-path+=../../aqw-api-enhanced/src -source-path+=src -source-path+=worker-src -output gamefiles/embed/WorkerMain.swf -swf-version=18
+          
+          echo "Compiling Desktop_code.swf"
+          amxmlc +configname=air -define+=POCKET::IS_DESKTOP,true -define+=POCKET::IS_MOBILE,false -library-path+=libs -source-path+=worker-src -source-path+=../../air-aqw-enhanced/src_pocket -source-path+=src -source-path+=../../aqw-api-enhanced/src -output Desktop_code.swf ../../air-aqw-enhanced/src_pocket/Pocket.as
+          abcexport Desktop_code.swf
+          abcreplace Desktop.swf 0 Desktop_code-0.abc
 
-            -   name: Zip
-                run: Compress-Archive -Path "AQWPocket-${{ needs.patch.outputs.VERSION }}${{ matrix.suffix }}" -DestinationPath "AQWPocket-${{ needs.patch.outputs.VERSION }}${{ matrix.suffix }}.zip"
+      - name: Download Anthony's Precompiled gamefiles
+        run: |
+          cd aqw-mobile/loader
+          mkdir -p gamefiles
+          wget https://github.com/anthony-hyo/aqw-mobile/releases/download/v3.4.2/AQWPocket-v3.4.2-armv8.apk -O anthony.apk
+          unzip -q anthony.apk "assets/gamefiles/*" -d extracted
+          cp -r extracted/assets/gamefiles/* gamefiles/
+          rm -rf anthony.apk extracted
 
-            -   name: Upload
-                uses: actions/upload-artifact@v7
-                with:
-                    name: build${{ matrix.suffix }}
-                    path: "AQWPocket-${{ needs.patch.outputs.VERSION }}${{ matrix.suffix }}.zip"
+      - name: Inject skills_custom.json
+        run: |
+          cd aqw-mobile/loader
+          mkdir -p assets
+          cp ../../aqw-api-enhanced/assets/skills_custom.json assets/skills.json
 
-    build-macos:
-        needs: patch
-        runs-on: macos-latest
-        permissions:
-            contents: write
-        strategy:
-            matrix:
-                include:
-                    -   architecture: "x64"
-                        render-mode: "auto"
-                        suffix: "-macos-x64"
-                    -   architecture: "x64"
-                        render-mode: "direct"
-                        suffix: "-macos-x64-direct"
-        steps:
-            -   name: Download patched files
-                uses: actions/download-artifact@v8
-                with:
-                    name: patched-files
+      - name: Generate Dynamic Keystore
+        run: |
+          cd aqw-mobile
+          # Generate a 10-year validity pkcs12 and jks dynamically so we don't need github secrets
+          keytool -genkey -v -keystore aqwpocket_keystore.jks -keyalg RSA -keysize 2048 -validity 3650 -alias cert -storepass password -keypass password -dname "CN=AQW, OU=Mobile, O=AQW, L=AQW, S=AQW, C=US"
+          keytool -importkeystore -srckeystore aqwpocket_keystore.jks -srcstorepass password -destkeystore aqwpocket_keystore.p12 -deststoretype PKCS12 -deststorepass password
 
-            -   name: Setup AIR SDK
-                uses: joshtynjala/setup-adobe-air-action@v2
-                with:
-                    air-version: "51.3.1"
-                    accept-license: yes
+      - name: Upload patched workspace
+        uses: actions/upload-artifact@v4
+        with:
+          name: workspace-patched
+          path: aqw-mobile/
 
-            -   name: Build macOS
-                run: |
-                    sed -i '' "s|<renderMode>.*</renderMode>|<renderMode>${{ matrix.render-mode }}</renderMode>|" loader/Desktop-app.xml
-                    adt -package \
-                      -storetype PKCS12 \
-                      -keystore aqwpocket_keystore.p12 \
-                      -storepass ${{ secrets.KEYSTORE_PASS }} \
-                      -keypass ${{ secrets.KEY_PASS }} \
-                      -target bundle \
-                      -arch ${{ matrix.architecture }} \
-                      AQWPocket-${{ needs.patch.outputs.VERSION }}${{ matrix.suffix }} \
-                      loader/Desktop-app.xml \
-                      -extdir loader/libs \
-                      -C loader \
-                        Desktop.swf \
-                        icons/icon-16x16.png \
-                        icons/icon-32x32.png \
-                        icons/icon-36x36.png \
-                        icons/icon-48x48.png \
-                        icons/icon-72x72.png \
-                        icons/icon-96x96.png \
-                        icons/icon-128x128.png \
-                        icons/icon-144x144.png \
-                        icons/icon-192x192.png \
-                        gamefiles/game.swf \
-                        gamefiles/world-map.swf \
-                        gamefiles/book-of-lore.swf \
-                        gamefiles/character-select.swf
+  build-android:
+    needs: prepare
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - architecture: "armv8"
+            render-mode: "auto"
+            suffix: ""
+          - architecture: "armv8"
+            render-mode: "direct"
+            suffix: "-direct"
+          - architecture: "armv8"
+            render-mode: "gpu"
+            suffix: "-gpu"
+          - architecture: "armv7"
+            render-mode: "auto"
+            suffix: ""
+          - architecture: "x86"
+            render-mode: "auto"
+            suffix: ""
+          - architecture: "x64"
+            render-mode: "auto"
+            suffix: ""
+    steps:
+      - name: Download workspace
+        uses: actions/download-artifact@v4
+        with:
+          name: workspace-patched
+          path: .
 
-            -   name: Zip
-                run: zip -r AQWPocket-${{ needs.patch.outputs.VERSION }}${{ matrix.suffix }}.zip AQWPocket-${{ needs.patch.outputs.VERSION }}${{ matrix.suffix }}/
+      - name: Setup AIR SDK
+        uses: joshtynjala/setup-adobe-air-action@v2
+        with:
+          air-version: "51.3.1"
+          accept-license: yes
 
-            -   name: Upload
-                uses: actions/upload-artifact@v7
-                with:
-                    name: build${{ matrix.suffix }}
-                    path: "AQWPocket-${{ needs.patch.outputs.VERSION }}${{ matrix.suffix }}.zip"
+      - name: Build Android APK
+        run: |
+          sed -i "s|<renderMode>.*</renderMode>|<renderMode>${{ matrix.render-mode }}</renderMode>|" loader/Mobile-app.xml
+          adt -package \
+            -target apk-captive-runtime \
+            -arch ${{ matrix.architecture }} \
+            -storetype JKS \
+            -keystore aqwpocket_keystore.jks \
+            -storepass password \
+            -keypass password \
+            AQWPocket-Mod-${{ matrix.architecture }}${{ matrix.suffix }}.apk \
+            loader/Mobile-app.xml \
+            -C loader \
+              Mobile.swf \
+              assets \
+              icons/icon-36x36.png \
+              icons/icon-48x48.png \
+              icons/icon-72x72.png \
+              icons/icon-96x96.png \
+              icons/icon-144x144.png \
+              icons/icon-192x192.png \
+              gamefiles/game.swf \
+              gamefiles/world-map.swf \
+              gamefiles/book-of-lore.swf \
+              gamefiles/character-select.swf
 
-    publish:
-        needs: [patch, build-android, build-windows, build-macos]
-        runs-on: ubuntu-latest
-        permissions:
-            contents: write
-        
-        steps:
-            -   name: Checkout
-                uses: actions/checkout@v7
-                
-            -   name: Download builds
-                uses: actions/download-artifact@v7
-                with:
-                    pattern: build-*
-                    merge-multiple: true
-            
-            -   name: Release
-                uses: softprops/action-gh-release@v2
-                with:
-                    tag_name: ${{ needs.patch.outputs.VERSION }}
-                    name: ${{ needs.patch.outputs.VERSION }}${{ github.event.inputs.prerelease == 'true' && ' (test)' || '' }}
-                    prerelease: ${{ github.event.inputs.prerelease }}
-                    body: |
-                        ## Which file should I download?
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-${{ matrix.architecture }}${{ matrix.suffix }}
+          path: "*.apk"
 
-                        ### Android
+  build-windows:
+    needs: prepare
+    runs-on: windows-latest
+    strategy:
+      matrix:
+        include:
+          - architecture: "x64"
+            render-mode: "direct"
+            suffix: "-windows-x64"
+    steps:
+      - name: Download workspace
+        uses: actions/download-artifact@v4
+        with:
+          name: workspace-patched
+          path: .
 
-                        * **armv8 (recommended)**
-                        `AQWPocket-${{ needs.patch.outputs.VERSION }}-armv8.apk`
-                        → For most modern devices
+      - name: Setup AIR SDK
+        uses: joshtynjala/setup-adobe-air-action@v2
+        with:
+          air-version: "51.3.1"
+          accept-license: yes
 
-                        * **armv8-direct (alternative)**
-                        `AQWPocket-${{ needs.patch.outputs.VERSION }}-armv8-direct.apk`
-                        → Use if the recommended version has issues
+      - name: Build Windows
+        run: |
+          (Get-Content loader/Desktop-app.xml) -replace '<renderMode>.*</renderMode>', '<renderMode>${{ matrix.render-mode }}</renderMode>' | Set-Content loader/Desktop-app.xml
+          adt -package -storetype PKCS12 -keystore aqwpocket_keystore.p12 -storepass password -keypass password -target bundle -arch ${{ matrix.architecture }} AQWPocket-Mod${{ matrix.suffix }} loader/Desktop-app.xml -extdir loader/libs -C loader Desktop.swf assets icons/icon-16x16.png icons/icon-32x32.png icons/icon-36x36.png icons/icon-48x48.png icons/icon-72x72.png icons/icon-96x96.png icons/icon-128x128.png icons/icon-144x144.png icons/icon-192x192.png gamefiles/game.swf gamefiles/world-map.swf gamefiles/book-of-lore.swf gamefiles/character-select.swf
 
-                        * **armv8-gpu (legacy)**
-                        `AQWPocket-${{ needs.patch.outputs.VERSION }}-armv8-gpu.apk`
-                        → Not recommended; fallback only
+      - name: Zip
+        run: Compress-Archive -Path "AQWPocket-Mod${{ matrix.suffix }}" -DestinationPath "AQWPocket-Mod${{ matrix.suffix }}.zip"
 
-                        * **armv7 (32-bit)**
-                        `AQWPocket-${{ needs.patch.outputs.VERSION }}-armv7.apk`
-                        → For older devices only
+      - name: Upload Zip
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows${{ matrix.suffix }}
+          path: "*.zip"
 
-                        ---
+  publish:
+    needs: [build-android, build-windows]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download all builds
+        uses: actions/download-artifact@v4
+        with:
+          pattern: '*'
+          merge-multiple: true
 
-                        ### ChromeOS
-
-                        * `AQWPocket-${{ needs.patch.outputs.VERSION }}-x86.apk`
-                        * `AQWPocket-${{ needs.patch.outputs.VERSION }}-x64.apk`
-
-                        ---
-
-                        ### Windows
-
-                        * **x64 (recommended)**
-                        `AQWPocket-${{ needs.patch.outputs.VERSION }}-windows-x64.zip`
-
-                        * **x64-direct (alternative)**
-                        `AQWPocket-${{ needs.patch.outputs.VERSION }}-windows-x64-direct.zip`
-
-                        * **x86 (older systems)**
-                        `AQWPocket-${{ needs.patch.outputs.VERSION }}-windows-x86.zip`
-
-                        ---
-
-                        ### macOS
-
-                        * **x64 (recommended)**
-                        `AQWPocket-${{ needs.patch.outputs.VERSION }}-macos-x64.zip`
-
-                        * **x64-direct (alternative)**
-                        `AQWPocket-${{ needs.patch.outputs.VERSION }}-macos-x64-direct.zip`
-                    files: |
-                        *.apk
-                        *.zip
+      - name: Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: "v3.4.2-mod"
+          name: "AQW Mobile Mod v3.4.2"
+          files: |
+            *.apk
+            *.zip
