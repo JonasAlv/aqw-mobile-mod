@@ -26,3 +26,4 @@ echo "=> Gamefiles ready:"
 ls -lh "$GAMEFILES_DIR/"
 echo ""
 echo "=> Done! You can now run ./run.sh to test locally."
+
