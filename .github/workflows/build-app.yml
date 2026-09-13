@@ -63,7 +63,15 @@ jobs:
 
       - name: Download Anthony's Precompiled gamefiles
         run: |
-          cd aqw-mobile/loader
+          cd aqw-mobile
+          
+          # Update app descriptor versions to match upstream version (strip leading v)
+          RAW_VERSION="${{ inputs.upstream_version }}"
+          CLEAN_VERSION="${RAW_VERSION#v}"
+          sed -i "s|<versionNumber>.*</versionNumber>|<versionNumber>${CLEAN_VERSION}</versionNumber>|" loader/Mobile-app.xml
+          sed -i "s|<versionNumber>.*</versionNumber>|<versionNumber>${CLEAN_VERSION}</versionNumber>|" loader/Desktop-app.xml
+          
+          cd loader
           mkdir -p gamefiles
           wget https://github.com/anthony-hyo/aqw-mobile/releases/download/${{ inputs.upstream_version }}/AQWPocket-${{ inputs.upstream_version }}-armv8.apk -O anthony.apk
           unzip -q anthony.apk "assets/gamefiles/*" -d extracted
