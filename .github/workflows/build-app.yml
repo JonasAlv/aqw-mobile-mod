@@ -63,11 +63,6 @@ jobs:
           cp -r extracted/assets/gamefiles/* gamefiles/
           rm -rf anthony.apk extracted
 
-      - name: Inject skills_custom.json
-        run: |
-          cd aqw-mobile/loader
-          mkdir -p assets
-          cp ../../aqw-api-enhanced/assets/skills_custom.json assets/skills.json
 
       - name: Generate Dynamic Keystore
         run: |

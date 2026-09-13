@@ -36,8 +36,6 @@ echo "Injecting into Desktop.swf..."
 cp Desktop_base.swf Desktop.swf
 abcreplace Desktop.swf 0 Desktop_code-0.abc
 
-mkdir -p assets
-cp ../../aqw-api-enhanced/assets/skills_custom.json assets/skills.json
 
 echo "Launching ADL (Windows AIR Debug Launcher) via Wine..."
 wine /home/me/Music/AIRSDK_Windows/bin/adl.exe -profile extendedDesktop Desktop-app.xml -extdir libs
