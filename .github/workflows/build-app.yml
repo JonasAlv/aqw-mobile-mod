@@ -40,14 +40,14 @@ jobs:
         run: |
           cd aqw-mobile/loader
           
-          echo "Compiling Mobile_code.swf"
-          amxmlc +configname=air -define+=POCKET::IS_DESKTOP,false -define+=POCKET::IS_MOBILE,true -library-path+=libs -source-path+=src -source-path+=../../aqw-api-enhanced/src -output Mobile_code.swf src/Pocket.as
-          abcexport Mobile_code.swf
-          abcreplace Mobile.swf 0 Mobile_code-0.abc
-          
           echo "Compiling WorkerMain.swf"
           mkdir -p gamefiles/embed
           amxmlc worker-src/WorkerMain.as -source-path+=src -source-path+=../../aqw-api-enhanced/src -source-path+=worker-src -output gamefiles/embed/WorkerMain.swf -swf-version=18
+          
+          echo "Compiling Mobile_code.swf"
+          amxmlc +configname=air -define+=POCKET::IS_DESKTOP,false -define+=POCKET::IS_MOBILE,true -library-path+=libs -source-path+=worker-src -source-path+=src -source-path+=../../aqw-api-enhanced/src -output Mobile_code.swf src/Pocket.as
+          abcexport Mobile_code.swf
+          abcreplace Mobile.swf 0 Mobile_code-0.abc
           
           echo "Compiling Desktop_code.swf"
           amxmlc +configname=air -define+=POCKET::IS_DESKTOP,true -define+=POCKET::IS_MOBILE,false -library-path+=libs -source-path+=worker-src -source-path+=src -source-path+=../../aqw-api-enhanced/src -output Desktop_code.swf src/Pocket.as
