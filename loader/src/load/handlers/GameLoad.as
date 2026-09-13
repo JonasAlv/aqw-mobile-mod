@@ -3,6 +3,7 @@ package load.handlers {
 	import flash.display.Loader;
 	import flash.display.MovieClip;
 	import com.aqwapi.AqwApi;
+
 	import flash.events.Event;
 	import flash.events.IOErrorEvent;
 	import flash.events.ProgressEvent;
@@ -32,8 +33,8 @@ package load.handlers {
 		override protected function onCompleted(event:Event):void {
 			this.pocket.overlay.debug.log("Game client loaded");
 
-			if (this.pocket.overlay != null && this.pocket.contains(this.pocket.overlay)) this.pocket.removeChild(this.pocket.overlay);
-			if (this.pocket.gameUI != null && this.pocket.contains(this.pocket.gameUI)) this.pocket.removeChild(this.pocket.gameUI);
+			this.pocket.removeChild(this.pocket.overlay);
+			this.pocket.removeChild(this.pocket.gameUI);
 
 			var gameMC:MovieClip = MovieClip(Loader(event.target.loader).content);
 
