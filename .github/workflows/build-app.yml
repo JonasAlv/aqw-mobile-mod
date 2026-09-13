@@ -180,7 +180,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: windows${{ matrix.suffix }}
-          path: "*.zip"
+          path: "AQWPocket-Mod*.zip"
 
   publish:
     needs: [build-android, build-windows]
@@ -202,4 +202,4 @@ jobs:
           body: "Modded AQW Mobile Build v3.4.2."
           files: |
             *.apk
-            *.zip
+            AQWPocket-Mod*.zip
