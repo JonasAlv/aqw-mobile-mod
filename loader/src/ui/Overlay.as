@@ -236,10 +236,10 @@ package ui {
 					"Freeze monster animations to improve FPS in battle.",
 					true,
 					function (option:Check):void {
-						Config.IS_GRAPHIC_ANIMATION_MONSTER_OFF = option.state;
+						Pocket.SINGLETON.config.option_animation_monster_off = option.state;
 					},
 					function (frame:String):void {
-						Config.IS_GRAPHIC_ANIMATION_MONSTER_OFF = HelperSetting.getBool(HelperSetting.OPTION_ANIMATION_MONSTER);
+						Pocket.SINGLETON.config.option_animation_monster_off = HelperSetting.getBool(HelperSetting.OPTION_ANIMATION_MONSTER);
 					}
 				),
 				new Check(
@@ -249,10 +249,10 @@ package ui {
 					"Freeze animations.",
 					true,
 					function (option:Check):void {
-						Config.IS_GRAPHIC_ANIMATION_HELM_OFF = option.state;
+						Pocket.SINGLETON.config.option_animation_helm_off = option.state;
 					},
 					function (frame:String):void {
-						Config.IS_GRAPHIC_ANIMATION_HELM_OFF = HelperSetting.getBool(HelperSetting.OPTION_ANIMATION_HELM);
+						Pocket.SINGLETON.config.option_animation_helm_off = HelperSetting.getBool(HelperSetting.OPTION_ANIMATION_HELM);
 					}
 				),
 				new Check(
@@ -262,10 +262,10 @@ package ui {
 					"Freeze animations.",
 					true,
 					function (option:Check):void {
-						Config.IS_GRAPHIC_ANIMATION_ARMOR_OFF = option.state;
+						Pocket.SINGLETON.config.option_animation_armor_off = option.state;
 					},
 					function (frame:String):void {
-						Config.IS_GRAPHIC_ANIMATION_ARMOR_OFF = HelperSetting.getBool(HelperSetting.OPTION_ANIMATION_ARMOR);
+						Pocket.SINGLETON.config.option_animation_armor_off = HelperSetting.getBool(HelperSetting.OPTION_ANIMATION_ARMOR);
 					}
 				),
 				new Check(
@@ -275,10 +275,10 @@ package ui {
 					"Freeze animations.",
 					true,
 					function (option:Check):void {
-						Config.IS_GRAPHIC_ANIMATION_CAPE_OFF = option.state;
+						Pocket.SINGLETON.config.option_animation_cape_off = option.state;
 					},
 					function (frame:String):void {
-						Config.IS_GRAPHIC_ANIMATION_CAPE_OFF = HelperSetting.getBool(HelperSetting.OPTION_ANIMATION_CAPE);
+						Pocket.SINGLETON.config.option_animation_cape_off = HelperSetting.getBool(HelperSetting.OPTION_ANIMATION_CAPE);
 					}
 				),
 				new Check(
@@ -288,10 +288,10 @@ package ui {
 					"Freeze animations.",
 					true,
 					function (option:Check):void {
-						Config.IS_GRAPHIC_ANIMATION_HAIR_OFF = option.state;
+						Pocket.SINGLETON.config.option_animation_hair_off = option.state;
 					},
 					function (frame:String):void {
-						Config.IS_GRAPHIC_ANIMATION_HAIR_OFF = HelperSetting.getBool(HelperSetting.OPTION_ANIMATION_HAIR);
+						Pocket.SINGLETON.config.option_animation_hair_off = HelperSetting.getBool(HelperSetting.OPTION_ANIMATION_HAIR);
 					}
 				),
 				new Check(
@@ -301,10 +301,10 @@ package ui {
 					"Freeze animations.",
 					true,
 					function (option:Check):void {
-						Config.IS_GRAPHIC_ANIMATION_WEAPON_OFF = option.state;
+						Pocket.SINGLETON.config.option_animation_weapon_off = option.state;
 					},
 					function (frame:String):void {
-						Config.IS_GRAPHIC_ANIMATION_WEAPON_OFF = HelperSetting.getBool(HelperSetting.OPTION_ANIMATION_WEAPON);
+						Pocket.SINGLETON.config.option_animation_weapon_off = HelperSetting.getBool(HelperSetting.OPTION_ANIMATION_WEAPON);
 					}
 				),
 				new Check(
@@ -314,10 +314,10 @@ package ui {
 					"Freeze animations.",
 					true,
 					function (option:Check):void {
-						Config.IS_GRAPHIC_ANIMATION_MISC_OFF = option.state;
+						Pocket.SINGLETON.config.option_animation_misc_off = option.state;
 					},
 					function (frame:String):void {
-						Config.IS_GRAPHIC_ANIMATION_MISC_OFF = HelperSetting.getBool(HelperSetting.OPTION_ANIMATION_MISC);
+						Pocket.SINGLETON.config.option_animation_misc_off = HelperSetting.getBool(HelperSetting.OPTION_ANIMATION_MISC);
 					}
 				),
 				new Check(
@@ -327,10 +327,10 @@ package ui {
 					"Freeze animations.",
 					true,
 					function (option:Check):void {
-						Config.IS_GRAPHIC_ANIMATION_PET_OFF = option.state;
+						Pocket.SINGLETON.config.option_animation_pet_off = option.state;
 					},
 					function (frame:String):void {
-						Config.IS_GRAPHIC_ANIMATION_PET_OFF = HelperSetting.getBool(HelperSetting.OPTION_ANIMATION_PET);
+						Pocket.SINGLETON.config.option_animation_pet_off = HelperSetting.getBool(HelperSetting.OPTION_ANIMATION_PET);
 					}
 				),
 				new Check(
@@ -342,14 +342,14 @@ package ui {
 					function (option:Check):void {
 						const pocket:Pocket = Pocket.SINGLETON;
 
-						Config.IS_GRAPHIC_FILTER_OFF = option.state;
+						Pocket.SINGLETON.config.option_filter_off = option.state;
 
 						if (pocket.game) {
 							pocket.game.MsgBox.notify("Filter setting saved. Join a new map/relog to take effect.");
 						}
 					},
 					function (frame:String):void {
-						Config.IS_GRAPHIC_FILTER_OFF = HelperSetting.getBool(HelperSetting.OPTION_FILTER);
+						Pocket.SINGLETON.config.option_filter_off = HelperSetting.getBool(HelperSetting.OPTION_FILTER);
 					}
 				)
 			]),

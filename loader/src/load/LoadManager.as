@@ -37,58 +37,58 @@ package load {
 
 		private static const CATEGORY_MAP:Vector.<CategoryMap> = new <CategoryMap> [
 			new CategoryMap("gamefiles/mon/", function ():Boolean {
-				return Config.IS_GRAPHIC_ANIMATION_MONSTER_OFF;
+				return Pocket.SINGLETON.config.option_animation_monster_off;
 			}),
 			new CategoryMap("gamefiles/hairs", function ():Boolean {
-				return Config.IS_GRAPHIC_ANIMATION_HAIR_OFF;
+				return Pocket.SINGLETON.config.option_animation_hair_off;
 			}),
 			new CategoryMap("gamefiles/classes", function ():Boolean {
-				return Config.IS_GRAPHIC_ANIMATION_ARMOR_OFF;
+				return Pocket.SINGLETON.config.option_animation_armor_off;
 			}),
 			new CategoryMap("gamefiles/items/helms", function ():Boolean {
-				return Config.IS_GRAPHIC_ANIMATION_HELM_OFF;
+				return Pocket.SINGLETON.config.option_animation_helm_off;
 			}),
 			new CategoryMap("gamefiles/items/capes", function ():Boolean {
-				return Config.IS_GRAPHIC_ANIMATION_CAPE_OFF;
+				return Pocket.SINGLETON.config.option_animation_cape_off;
 			}),
 			new CategoryMap("gamefiles/items/grounds", function ():Boolean {
-				return Config.IS_GRAPHIC_ANIMATION_MISC_OFF;
+				return Pocket.SINGLETON.config.option_animation_misc_off;
 			}),
 			new CategoryMap("gamefiles/items/pets", function ():Boolean {
-				return Config.IS_GRAPHIC_ANIMATION_PET_OFF;
+				return Pocket.SINGLETON.config.option_animation_pet_off;
 			}),
 			new CategoryMap("gamefiles/items/swords", function ():Boolean {
-				return Config.IS_GRAPHIC_ANIMATION_WEAPON_OFF;
+				return Pocket.SINGLETON.config.option_animation_weapon_off;
 			}),
 			new CategoryMap("gamefiles/items/maces", function ():Boolean {
-				return Config.IS_GRAPHIC_ANIMATION_WEAPON_OFF;
+				return Pocket.SINGLETON.config.option_animation_weapon_off;
 			}),
 			new CategoryMap("gamefiles/items/gauntlets", function ():Boolean {
-				return Config.IS_GRAPHIC_ANIMATION_WEAPON_OFF;
+				return Pocket.SINGLETON.config.option_animation_weapon_off;
 			}),
 			new CategoryMap("gamefiles/items/daggers", function ():Boolean {
-				return Config.IS_GRAPHIC_ANIMATION_WEAPON_OFF;
+				return Pocket.SINGLETON.config.option_animation_weapon_off;
 			}),
 			new CategoryMap("gamefiles/items/polearms", function ():Boolean {
-				return Config.IS_GRAPHIC_ANIMATION_WEAPON_OFF;
+				return Pocket.SINGLETON.config.option_animation_weapon_off;
 			}),
 			new CategoryMap("gamefiles/items/guns", function ():Boolean {
-				return Config.IS_GRAPHIC_ANIMATION_WEAPON_OFF;
+				return Pocket.SINGLETON.config.option_animation_weapon_off;
 			}),
 			new CategoryMap("gamefiles/items/staves", function ():Boolean {
-				return Config.IS_GRAPHIC_ANIMATION_WEAPON_OFF;
+				return Pocket.SINGLETON.config.option_animation_weapon_off;
 			}),
 			new CategoryMap("gamefiles/items/scythes", function ():Boolean {
-				return Config.IS_GRAPHIC_ANIMATION_WEAPON_OFF;
+				return Pocket.SINGLETON.config.option_animation_weapon_off;
 			}),
 			new CategoryMap("gamefiles/items/axes", function ():Boolean {
-				return Config.IS_GRAPHIC_ANIMATION_WEAPON_OFF;
+				return Pocket.SINGLETON.config.option_animation_weapon_off;
 			}),
 			new CategoryMap("gamefiles/items/bows", function ():Boolean {
-				return Config.IS_GRAPHIC_ANIMATION_WEAPON_OFF;
+				return Pocket.SINGLETON.config.option_animation_weapon_off;
 			}),
 			new CategoryMap("gamefiles/items/whips", function ():Boolean {
-				return Config.IS_GRAPHIC_ANIMATION_WEAPON_OFF;
+				return Pocket.SINGLETON.config.option_animation_weapon_off;
 			})
 		];
 
@@ -223,7 +223,7 @@ package load {
 
 				const categoryCheck:Function = resolveCategoryCheck(loadData.url);
 				const animationOn:Boolean = categoryCheck != null && categoryCheck();
-				const filterOn:Boolean = categoryCheck != null && Config.IS_GRAPHIC_FILTER_OFF;
+				const filterOn:Boolean = categoryCheck != null && Pocket.SINGLETON.config.option_filter_off;
 
 				const finishLoad:Function = function (finalBytes:ByteArray):void {
 					const byteLoader:Loader = loadData.loader == null ? new Loader() : loadData.loader;
