@@ -23,6 +23,8 @@ package ui {
 	import util.HelperScroll;
 	import util.HelperSetting;
 
+	import com.aqwapi.modules.SettingsManager;
+
 	public class Overlay extends MovieClip {
 
 		public function Overlay(pocket:Pocket) {
@@ -735,6 +737,36 @@ package ui {
 			this.contentMenu.removeChildren();
 
 			this.hidePanelBtn.addEventListener(MouseEvent.CLICK, onHidePanel);
+
+			if (SettingsManager.customMenus.length > 0) {
+				for each (var customMenu:Object in SettingsManager.customMenus) {
+					if (!customMenu.injected) {
+						var optionsVec:Vector.<Option> = new <Option>[];
+						for each (var optData:Object in customMenu.options) {
+							if (optData.type == "check") {
+								optionsVec.push(new Check(
+									optData.key,
+									optData.defaultState,
+									optData.name,
+									optData.info,
+									true,
+									optData.onChange
+								));
+							} else if (optData.type == "button") {
+								optionsVec.push(new Button(
+									optData.key,
+									optData.name,
+									optData.info,
+									optData.label || "Click",
+									optData.onChange
+								));
+							}
+						}
+						this.menus.push(new Menu(customMenu.name, optionsVec));
+						customMenu.injected = true;
+					}
+				}
+			}
 
 			var heightTotal:uint = 0;
 
