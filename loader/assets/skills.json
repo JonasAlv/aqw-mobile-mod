@@ -1,2255 +1,262 @@
 {
-    "archmage": [
-        2,
-        5,
-        3,
-        4,
-        1
-    ],
-    "archivist of time": [
-        1,
-        3,
-        4,
-        1,
-        2,
-        3,
-        1,
-        4,
-        4
-    ],
-    "abyssal angel": [
-        5,
-        3,
-        2,
-        4,
-        1
-    ],
-    "abyssal angel's shadow": [
-        5,
-        3,
-        2,
-        4,
-        1
-    ],
-    "acolyte": [
-        4,
-        5,
-        3,
-        3,
-        2,
-        1
-    ],
-    "alpha doommega": [
-        4,
-        2,
-        5,
-        3,
-        1
-    ],
-    "alpha omega": [
-        4,
-        2,
-        5,
-        3,
-        1
-    ],
-    "alpha pirate": [
-        5,
-        2,
-        4,
-        3,
-        1
-    ],
-    "arachnomancer": [
-        5,
-        2,
-        4,
-        3,
-        5,
-        2,
-        4,
-        3,
-        1
-    ],
-    "arcana invoker": [
-        2,
-        2,
-        2,
-        3,
-        4,
-        3,
-        5,
-        1
-    ],
-    "arcane dark caster": [
-        5,
-        4,
-        4,
-        3,
-        2,
-        1
-    ],
-    "archfiend": [
-        4,
-        2,
-        3,
-        1
-    ],
-    "archpaladin": [
-        2,
-        3,
-        4,
-        3,
-        5,
-        3,
-        2,
-        3,
-        2,
-        3,
-        2,
-        3,
-        1
-    ],
-    "artifact hunter": [
-        5,
-        4,
-        3,
-        2,
-        1
-    ],
-    "assassin": [
-        5,
-        4,
-        2,
-        3,
-        1
-    ],
-    "barber": [
-        5,
-        2,
-        4,
-        3,
-        1
-    ],
-    "bard": [
-        2,
-        5,
-        3,
-        4,
-        2,
-        3,
-        4,
-        5,
-        2,
-        4,
-        5,
-        3,
-        1
-    ],
-    "battle bard": [
-        2,
-        4,
-        5,
-        2,
-        1
-    ],
-    "battlemage": [
-        3,
-        4,
-        5,
-        3,
-        4,
-        5,
-        1
-    ],
-    "battlemage of love": [
-        3,
-        4,
-        5,
-        3,
-        4,
-        5,
-        1
-    ],
-    "beast warrior": [
-        2,
-        3,
-        4,
-        5,
-        1
-    ],
-    "beastmaster": [
-        2,
-        3,
-        4,
-        5,
-        1
-    ],
-    "berserker": [
-        5,
-        4,
-        2,
-        3,
-        1
-    ],
-    "beta berserker": [
-        5,
-        4,
-        2,
-        3,
-        1
-    ],
-    "blademaster": [
-        3,
-        4,
-        2,
-        5,
-        1
-    ],
-    "blademaster assassin": [
-        3,
-        4,
-        2,
-        5,
-        1
-    ],
-    "blaze binder": [
-        3,
-        2,
-        4,
-        5,
-        1
-    ],
-    "blood ancient": [
-        5,
-        4,
-        3,
-        2,
-        1
-    ],
-    "blood sorceress": [
-        5,
-        3,
-        2,
-        4,
-        1
-    ],
-    "blood titan": [
-        3,
-        5,
-        4,
-        3,
-        1
-    ],
-    "cardclasher": [
-        5,
-        2,
-        3,
-        5,
-        2,
-        4,
-        1
-    ],
-    "chaos avenger": [
-        5,
-        4,
-        2,
-        3,
-        1
-    ],
-    "chaos avenger member preview": [
-        5,
-        4,
-        2,
-        3,
-        1
-    ],
-    "chaos champion prime": [
-        2,
-        4,
-        3,
-        1
-    ],
-    "chaos shaper": [
-        3,
-        2,
-        4,
-        5,
-        1
-    ],
-    "chaos slayer berserker": [
-        4,
-        3,
-        5,
-        2,
-        1
-    ],
-    "chaos slayer cleric": [
-        4,
-        3,
-        5,
-        2,
-        1
-    ],
-    "chaos slayer mystic": [
-        4,
-        3,
-        5,
-        2,
-        1
-    ],
-    "chaos slayer thief": [
-        4,
-        3,
-        5,
-        2,
-        1
-    ],
-    "corrupted chronomancer": [
-        5,
-        4,
-        2,
-        2,
-        4,
-        2,
-        2,
-        4,
-        2,
-        5,
-        3,
-        1
-    ],
-    "chrono assassin": [
-        5,
-        2,
-        3,
-        4,
-        2,
-        3,
-        4,
-        2,
-        3,
-        4,
-        2,
-        3,
-        4,
-        2,
-        3,
-        4,
-        4,
-        3,
-        2,
-        3,
-        1
-    ],
-    "chrono chaorruptor": [
-        5,
-        3,
-        4,
-        2,
-        2,
-        2,
-        4,
-        2,
-        5,
-        4,
-        2,
-        2,
-        2,
-        4,
-        2,
-        5,
-        1
-    ],
-    "chrono commandant": [
-        5,
-        2,
-        2,
-        2,
-        2,
-        3,
-        4,
-        1
-    ],
-    "chrono dataknight": [
-        2,
-        3,
-        4,
-        2,
-        3,
-        4,
-        2,
-        3,
-        4,
-        2,
-        5,
-        1
-    ],
-    "chrono dragonknight": [
-        2,
-        2,
-        2,
-        2,
-        2,
-        5,
-        3,
-        4,
-        1
-    ],
-    "chrono shadowslayer": [
-        2,
-        3,
-        4,
-        5,
-        1
-    ],
-    "chrono shadowhunter": [
-        2,
-        3,
-        4,
-        5,
-        1
-    ],
-    "chronocommander": [
-        5,
-        2,
-        2,
-        2,
-        2,
-        3,
-        4,
-        1
-    ],
-    "chronomancer prime": [
-        3,
-        5,
-        2,
-        2,
-        2,
-        2,
-        3,
-        2,
-        2,
-        2,
-        2,
-        2,
-        4,
-        1
-    ],
-    "chunin": [
-        2,
-        3,
-        5,
-        4,
-        1
-    ],
-    "classic alpha pirate": [
-        5,
-        2,
-        4,
-        3,
-        1
-    ],
-    "classic barber": [
-        5,
-        2,
-        4,
-        3,
-        1
-    ],
-    "classic defender": [
-        3,
-        4,
-        3,
-        5,
-        4,
-        1
-    ],
-    "classic doomknight": [
-        5,
-        4,
-        2,
-        3,
-        4,
-        2,
-        5,
-        2,
-        4,
-        1
-    ],
-    "doom metal necro": [
-        4,
-        2,
-        5,
-        3,
-        1
-    ],
-    "classic dragonlord": [
-        3,
-        4,
-        2,
-        2,
-        5,
-        1
-    ],
-    "classic exalted soul cleaver": [
-        2,
-        3,
-        4,
-        5,
-        1
-    ],
-    "classic guardian": [
-        2,
-        3,
-        4,
-        5,
-        1
-    ],
-    "classic legion doomknight": [
-        2,
-        3,
-        4,
-        5,
-        1
-    ],
-    "classic paladin": [
-        2,
-        3,
-        4,
-        5,
-        1
-    ],
-    "classic pirate": [
-        2,
-        3,
-        4,
-        5,
-        1
-    ],
-    "classic soul cleaver": [
-        2,
-        3,
-        4,
-        5,
-        1
-    ],
-    "clawsuit": [
-        2,
-        3,
-        4,
-        5,
-        1
-    ],
-    "continuum chronomancer": [
-        3,
-        2,
-        2,
-        2,
-        4,
-        2,
-        5,
-        1
-    ],
-    "cryomancer": [
-        2,
-        5,
-        3,
-        2,
-        4,
-        3,
-        2,
-        3,
-        1
-    ],
-    "cryomancer mini pet coming soon": [
-        4,
-        2,
-        3,
-        5,
-        2,
-        3,
-        2,
-        3,
-        1
-    ],
-    "daimon": [
-        2,
-        4,
-        3,
-        1
-    ],
-    "dark battlemage": [
-        3,
-        4,
-        5,
-        3,
-        4,
-        5,
-        1
-    ],
-    "dark caster": [
-        2,
-        3,
-        4,
-        5,
-        1
-    ],
-    "dark chaos berserker": [
-        2,
-        4,
-        3,
-        1
-    ],
-    "dark cryomancer": [
-        4,
-        2,
-        3,
-        5,
-        2,
-        3,
-        2,
-        3,
-        1
-    ],
-    "dark harbinger": [
-        2,
-        3,
-        4,
-        5,
-        1
-    ],
-    "dark legendary hero": [
-        2,
-        5,
-        3,
-        4,
-        3,
-        1
-    ],
-    "dark lord": [
-        2,
-        3,
-        4,
-        5,
-        5,
-        1
-    ],
-    "dark master of moglins": [
-        3,
-        3,
-        4,
-        2,
-        5,
-        1
-    ],
-    "dark metal necro": [
-        2,
-        5,
-        3,
-        4,
-        3,
-        1
-    ],
-    "dark ultra omninight": [
-        2,
-        3,
-        4,
-        5,
-        1
-    ],
-    "darkblood stormking": [
-        2,
-        3,
-        4,
-        5,
-        1
-    ],
-    "darkside": [
-        2,
-        3,
-        4,
-        5,
-        5,
-        1
-    ],
-    "deathknight": [
-        2,
-        3,
-        4,
-        5,
-        1
-    ],
-    "deathknight lord": [
-        2,
-        3,
-        4,
-        5,
-        1
-    ],
-    "defender": [
-        2,
-        3,
-        4,
-        5,
-        1
-    ],
-    "doomknight": [
-        2,
-        3,
-        4,
-        5,
-        1
-    ],
-    "doomknight overlord": [
-        2,
-        3,
-        4,
-        5,
-        1
-    ],
-    "dragon knight": [
-        2,
-        3,
-        4,
-        5,
-        1
-    ],
-    "dragon of time": [2,3],
-    "dragon shinobi": [
-        2,
-        3,
-        4,
-        5,
-        1
-    ],
-    "dragonlord": [
-        2,
-        3,
-        4,
-        5,
-        1
-    ],
-    "dragonslayer": [
-        2,
-        3,
-        4,
-        5,
-        1
-    ],
-    "dragonslayer general": [
-        2,
-        3,
-        4,
-        5,
-        1
-    ],
-    "dragonsoul shinobi": [
-        2,
-        3,
-        4,
-        5,
-        1
-    ],
-    "drakel warlord": [
-        2,
-        3,
-        4,
-        5,
-        1
-    ],
-    "drakkar knight": [
-        2,
-        3,
-        4,
-        5,
-        1
-    ],
-    "elemental dracomancer": [
-        4,
-        5,
-        3,
-        2,
-        1
-    ],
-    "empyrean chronomancer": [
-        5,
-        3,
-        5,
-        3,
-        2,
-        3,
-        2,
-        3,
-        2,
-        5,
-        3,
-        2,
-        4,
-        1
-    ],
-    "enchanted vampire lord": [
-        3,
-        5,
-        4,
-        2,
-        2,
-        4,
-        1
-    ],
-    "enforcer": [
-        2,
-        3,
-        4,
-        5,
-        1
-    ],
-    "eternal chronomancer": [
-        5,
-        3,
-        5,
-        3,
-        2,
-        3,
-        2,
-        3,
-        2,
-        5,
-        3,
-        2,
-        4,
-        1
-    ],
-    "eternal inversionist": [
-        3,
-        5,
-        2,
-        4,
-        1
-    ],
-    "evolved clawsuit": [
-        3,
-        4,
-        2,
-        5,
-        2,
-        4,
-        2,
-        2,
-        1
-    ],
-    "evolved dark caster": [
-        4,
-        5,
-        3,
-        2,
-        1
-    ],
-    "evolved leprechaun": [
-        5,
-        4,
-        2,
-        3,
-        1
-    ],
-    "evolved pumpkin lord": [
-        4,
-        5,
-        3,
-        2,
-        1
-    ],
-    "evolved shaman": [
-        4,
-        5,
-        3,
-        2,
-        1
-    ],
-    "exalted harbinger": [
-        4,
-        4,
-        2,
-        3,
-        4,
-        2,
-        3,
-        5,
-        2,
-        3,
-        4,
-        4,
-        1
-    ],
-    "exalted soul cleaver": [
-        3,
-        4,
-        3,
-        3,
-        4,
-        1
-    ],
-    "firelord summoner": [
-        4,
-        3,
-        2,
-        5,
-        1
-    ],
-    "flame dragon warrior": [
-        2,
-        3,
-        2,
-        3,
-        5,
-        4,
-        1
-    ],
-    "frostblood titan": [
-        3,
-        5,
-        4,
-        3,
-        1
-    ],
-    "frost spiritreaver": [
-        2,
-        4,
-        5,
-        3,
-        2,
-        4,
-        2,
-        4,
-        2,
-        3,
-        2,
-        4,
-        2,
-        4,
-        2,
-        4,
-        3,
-        2,
-        4,
-        5,
-        2,
-        4,
-        1
-    ],
-    "frostval barbarian": [
-        5,
-        2,
-        5,
-        3,
-        5,
-        1
-    ],
-    "giftbox": [
-        2,
-        3,
-        4,
-        5,
-        1
-    ],
-    "glacial berserker": [
-        2,
-        4,
-        3,
-        5,
-        1
-    ],
-    "glacial berserker test": [
-        2,
-        4,
-        3,
-        5,
-        1
-    ],
-    "glacial warlord": [
-        2,
-        3,
-        2,
-        2,
-        2,
-        3,
-        4,
-        5,
-        1
-    ],
-    "glaceran warlord": [
-        2,
-        3,
-        2,
-        2,
-        2,
-        3,
-        4,
-        5,
-        1
-    ],
-    "savage glaceran warlord": [
-        2,
-        3,
-        2,
-        2,
-        2,
-        3,
-        4,
-        5,
-        1
-    ],
-    "dark glaceran warlord": [
-        2,
-        3,
-        2,
-        2,
-        2,
-        3,
-        4,
-        5,
-        1
-    ],
-    "great thief": [
-        3,
-        4,
-        5,
-        2,
-        1
-    ],
-    "grim necromancer": [
-        2,
-        3,
-        4,
-        5,
-        1
-    ],
-    "grunge rocker": [
-        2,
-        3,
-        4,
-        5,
-        1
-    ],
-    "guardian": [
-        2,
-        3,
-        4,
-        5,
-        1
-    ],
-    "healer": [
-        2,
-        3,
-        4,
-        5,
-        1
-    ],
-    "healer (rare)": [
-        2,
-        3,
-        4,
-        5,
-        1
-    ],
-    "heavy metal necro": [
-        2,
-        5,
-        3,
-        4,
-        3,
-        1
-    ],
-    "heavy metal rockstar": [
-        2,
-        5,
-        3,
-        4,
-        3,
-        1
-    ],
-    "heroic naval commander": [
-        4,
-        5,
-        3,
-        2,
-        1
-    ],
-    "highseas commander": [
-        2,
-        4,
-        2,
-        5,
-        3,
-        2,
-        2,
-        1
-    ],
-    "hobo highlord": [
-        2,
-        1
-    ],
-    "horc evader": [
-        3,
-        2,
-        4,
-        5,
-        1
-    ],
-    "hollowborn vindicator member preview": [
-        5,
-        2,
-        5,
-        2,
-        5,
-        2,
-        4,
-        2,
-        3,
-        5,
-        2,
-        1
-    ],
-    "hollowborn vindicator": [
-        5,
-        2,
-        5,
-        2,
-        5,
-        2,
-        4,
-        2,
-        3,
-        5,
-        2,
-        1
-    ],
-    "immortal dark caster": [
-        2,
-        3,
-        4,
-        3,
-        2,
-        3,
-        2,
-        4,
-        5,
-        1
-    ],
-    "immortal chronomancer": [
-        5,
-        3,
-        5,
-        3,
-        2,
-        3,
-        2,
-        3,
-        2,
-        5,
-        3,
-        2,
-        4,
-        1
-    ],
-    "imperial chunin": [
-        2,
-        3,
-        4,
-        5,
-        1
-    ],
-    "infinite dark caster": [
-        2,
-        3,
-        4,
-        5,
-        1
-    ],
-    "infinite legion dark caster": [
-        2,
-        3,
-        4,
-        5,
-        1
-    ],
-    "infinity titan": [
-        4,
-        3,
-        2,
-        5,
-        1
-    ],
-    "infinity knight": [
-        5,
-        3,
-        2,
-        2,
-        2,
-        3,
-        2,
-        2,
-        2,
-        3,
-        5,
-        4,
-        1
-    ],
-    "interstellar knight": [
-        5,
-        3,
-        2,
-        2,
-        2,
-        3,
-        2,
-        2,
-        2,
-        3,
-        5,
-        4,
-        1
-    ],
-    "king's echo": [
-        2,
-        3,
-        5,
-        5,
-        4,
-        1
-    ],
-    "legendary elemental warrior": [
-        2,
-        4,
-        5,
-        2,
-        3,
-        5,
-        2,
-        4,
-        3,
-        2,
-        5,
-        3,
-        1
-    ],
-    "legendary archfiend": [
-        2,
-        3,
-        4,
-        5,
-        1
-    ],
-    "legendary hero": [
-        2,
-        3,
-        4,
-        5,
-        1
-    ],
-    "legendary naval commander": [
-        4,
-        5,
-        3,
-        2,
-        1
-    ],
-    "legion blademaster assassin": [
-        2,
-        3,
-        4,
-        5,
-        1
-    ],
-    "legion doomknight": [
-        2,
-        3,
-        4,
-        5,
-        1
-    ],
-    "legion doomknight tester": [
-        2,
-        3,
-        4,
-        5,
-        1
-    ],
-    "legion evolved dark caster": [
-        2,
-        3,
-        4,
-        5,
-        1
-    ],
-    "legion paladin": [
-        2,
-        3,
-        4,
-        5,
-        1
-    ],
-    "legion revenant": [
-        4,
-        5,
-        2,
-        3,
-        1
-    ],
-    "legion revenant member test": [
-        4,
-        5,
-        2,
-        3,
-        1
-    ],
-    "legion swordmaster assassin": [
-        2,
-        3,
-        4,
-        5,
-        4,
-        4,
-        4,
-        4,
-        3,
-        1
-    ],
-    "leprechaun": [
-        2,
-        3,
-        4,
-        5,
-        1
-    ],
-    "lich": [
-        5,
-        4,
-        3,
-        2,
-        3,
-        2,
-        1
-    ],
-    "lightcaster": [
-        4,
-        2,
-        3,
-        5,
-        1
-    ],
-    "lightcaster test": [
-        4,
-        5,
-        2,
-        3,
-        2,
-        3,
-        2,
-        3,
-        1
-    ],
-    "lightmage": [
-        4,
-        5,
-        2,
-        3,
-        1
-    ],
-    "lord of order": [
-        5,
-        4,
-        2,
-        3,
-        1
-    ],
-    "love caster": [
-        2,
-        3,
-        4,
-        5,
-        1
-    ],
-    "lycan": [
-        5,
-        4,
-        3,
-        2,
-        3,
-        2,
-        1
-    ],
-    "mage": [
-        5,
-        3,
-        2,
-        4,
-        1
-    ],
-    "mage (rare)": [
-        5,
-        3,
-        2,
-        4,
-        1
-    ],
-    "master of moglins": [
-        3,
-        3,
-        4,
-        2,
-        5,
-        1
-    ],
-    "master ranger": [
-        2,
-        2,
-        2,
-        5,
-        3,
-        4
-    ],
-    "mechajouster": [
-        2,
-        3,
-        4,
-        5,
-        1
-    ],
-    "mindbreaker": [
-        2,
-        3,
-        4,
-        5,
-        1
-    ],
-    "mystical dark caster": [
-        2,
-        3,
-        4,
-        5,
-        1
-    ],
-    "naval commander": [
-        4,
-        5,
-        3,
-        2,
-        1
-    ],
-    "nechronomancer": [
-        5,
-        4,
-        3,
-        2,
-        1
-    ],
-    "necrotic chronomancer": [
-        5,
-        4,
-        3,
-        2,
-        1
-    ],
-    "necromancer": [
-        2,
-        3,
-        4,
-        5,
-        1
-    ],
-    "neo metal necro": [
-        2,
-        3,
-        4,
-        5,
-        1
-    ],
-    "ninja": [
-        5,
-        4,
-        2,
-        3,
-        1
-    ],
-    "classic ninja": [
-        2,
-        3,
-        4,
-        5,
-        1
-    ],
-    "ninja (rare)": [
-        2,
-        3,
-        4,
-        5,
-        1
-    ],
-    "ninja warrior": [
-        2,
-        3,
-        4,
-        5,
-        1
-    ],
-    "northlands monk": [
-        2,
-        3,
-        4,
-        5,
-        1
-    ],
-    "not a mod": [
-        2,
-        2,
-        2,
-        2,
-        2,
-        2,
-        2,
-        2,
-        2,
-        5,
-        4,
-        3,
-        1
-    ],
-    "nu metal necro": [
-        2,
-        3,
-        4,
-        5,
-        1
-    ],
-    "oracle": [
-        2,
-        4,
-        5,
-        3,
-        1
-    ],
-    "overworld chronomancer": [
-        6,
-        3,
-        4,
-        2,
-        2,
-        2,
-        4,
-        2,
-        5,
-        4,
-        2,
-        2,
-        2,
-        4,
-        2,
-        5,
-        1
-    ],
-    "paladin": [
-        2,
-        3,
-        4,
-        5,
-        1
-    ],
-    "paladin chronomancer": [
-        4,
-        3,
-        2,
-        2,
-        2,
-        2,
-        5,
-        1
-    ],
-    "phantom chronomancer": [
-        4,
-        3,
-        2,
-        3,
-        2,
-        3,
-        2,
-        3,
-        2,
-        4,
-        2,
-        4,
-        3,
-        5,
-        1
-    ],
-    "phantasm chronomancer": [
-        4,
-        2,
-        3,
-        2,
-        3,
-        2,
-        3,
-        2,
-        3,
-        4,
-        2,
-        4,
-        3,
-        5,
-        1
-    ],
-    "obsidian paladin chronomancer": [
-        4,
-        3,
-        2,
-        2,
-        2,
-        2,
-        5,
-        1
-    ],
-    "obsidian no class": [
-        2,
-        1
-    ],
-    "paladin highlord": [
-        5,
-        2,
-        4,
-        3,
-        1
-    ],
-    "paladinslayer": [
-        2,
-        3,
-        4,
-        5,
-        1
-    ],
-    "pink romancer": [
-        2,
-        3,
-        4,
-        5,
-        1
-    ],
-    "pinkomancer": [
-        2,
-        3,
-        4,
-        5,
-        1
-    ],
-    "pirate": [
-        2,
-        3,
-        4,
-        5,
-        1
-    ],
-    "prismatic clawsuit": [
-        2,
-        3,
-        4,
-        5,
-        1
-    ],
-    "protosartorium": [
-        2,
-        3,
-        4,
-        5,
-        1
-    ],
-    "psionic mindbreaker": [
-        2,
-        3,
-        4,
-        2,
-        5,
-        1
-    ],
-    "pumpkin lord": [
-        2,
-        3,
-        4,
-        5,
-        1
-    ],
-    "pvp test  |  bard": [
-        5,
-        2,
-        4,
-        3,
-        1
-    ],
-    "pvp test  |  healer": [
-        5,
-        2,
-        4,
-        3,
-        1
-    ],
-    "pyromancer": [
-        2,
-        5,
-        3,
-        4,
-        1
-    ],
-    "renegade": [
-        2,
-        3,
-        4,
-        5,
-        1
-    ],
-    "rogue": [
-        3,
-        4,
-        2,
-        5,
-        1
-    ],
-    "rogue (rare)": [
-        3,
-        4,
-        2,
-        5,
-        1
-    ],
-    "royal battlemage": [
-        2,
-        3,
-        4,
-        5,
-        1
-    ],
-    "royal vampire lord": [
-        3,
-        5,
-        4,
-        2,
-        2,
-        4,
-        1
-    ],
-    "rustbucket": [
-        4,
-        3,
-        2,
-        5,
-        1
-    ],
-    "quantum chronomancer": [
-        3,
-        2,
-        2,
-        2,
-        4,
-        2,
-        5,
-        1
-    ],
-    "sakura cryomancer": [
-        4,
-        2,
-        3,
-        5,
-        2,
-        3,
-        2,
-        3,
-        1
-    ],
-    "scarlet sorceress": [
-        5,
-        3,
-        2,
-        4,
-        1
-    ],
-    "scion of flames": [
-        5,
-        2,
-        3,
-        4,
-        2,
-        2,
-        2,
-        1,
-        3,
-        5,
-        2,
-        2,
-        4,
-        2,
-        2,
-        2,
-        1
-    ],
-    "sentinel": [
-        2,
-        3,
-        4,
-        5,
-        1
-    ],
-    "shadow dragon shinobi": [
-        2,
-        3,
-        4,
-        5,
-        1
-    ],
-    "shadow ripper": [
-        2,
-        3,
-        4,
-        5,
-        1
-    ],
-    "shadow rocker": [
-        2,
-        3,
-        4,
-        5,
-        1
-    ],
-    "shadowflame dragonlord": [
-        2,
-        3,
-        4,
-        5,
-        1
-    ],
-    "shadowscythe general": [
-        2,
-        3,
-        4,
-        5,
-        1
-    ],
-    "shadowstalker of time": [
-        4,
-        3,
-        5,
-        2,
-        3,
-        2,
-        3,
-        2,
-        5,
-        3,
-        4,
-        2,
-        3,
-        2,
-        3,
-        1
-    ],
-    "shadowwalker of time": [
-        4,
-        3,
-        5,
-        2,
-        3,
-        2,
-        3,
-        2,
-        5,
-        3,
-        4,
-        2,
-        3,
-        2,
-        3,
-        1
-    ],
-    "shadowweaver of time": [
-        4,
-        3,
-        5,
-        2,
-        3,
-        2,
-        3,
-        2,
-        5,
-        3,
-        4,
-        2,
-        3,
-        2,
-        3,
-        1
-    ],
-    "shaman": [
-        5,
-        2,
-        3,
-        4,
-        1
-    ],
-    "silver paladin": [
-        2,
-        3,
-        4,
-        5,
-        1
-    ],
-    "skycharged grenadier": [
-        2,
-        3,
-        4,
-        5,
-        1
-    ],
-    "skyguard grenadier": [
-        2,
-        3,
-        4,
-        5,
-        1
-    ],
-    "sorcerer": [
-        5,
-        5,
-        5,
-        3,
-        2,
-        4,
-        1
-    ],
-    "sovereign of storms": [
-        3,
-        4,
-        2,
-        2,
-        2,
-        2,
-        2,
-        2,
-        2,
-        2,
-        5,
-        1
-    ],
-    "soul cleaver": [
-        2,
-        3,
-        4,
-        5,
-        1
-    ],
-    "star captain": [
-        2,
-        2,
-        3,
-        4,
-        5,
-        2,
-        1
-    ],
-    "starlord": [
-        2,
-        3,
-        4,
-        5,
-        1
-    ],
-    "stonecrusher": [
-        4,
-        3,
-        2,
-        5,
-        1
-    ],
-    "swordmaster": [
-        2,
-        3,
-        4,
-        5,
-        1
-    ],
-    "swordmaster assassin": [
-        2,
-        3,
-        4,
-        5,
-        1
-    ],
-    "the collector": [
-        2,
-        4,
-        5,
-        2,
-        1
-    ],
-    "thief of hours": [
-        5,
-        2,
-        4,
-        3,
-        1
-    ],
-    "timekeeper": [
-        3,
-        5,
-        2,
-        2,
-        2,
-        5,
-        4,
-        3,
-        2,
-        2,
-        5,
-        2,
-        3,
-        2,
-        2,
-        4,
-        1
-    ],
-    "timekiller": [
-        3,
-        5,
-        2,
-        2,
-        2,
-        5,
-        4,
-        3,
-        2,
-        2,
-        5,
-        2,
-        3,
-        2,
-        2,
-        4,
-        1
-    ],
-    "timeless chronomancer": [
-        5,
-        4,
-        2,
-        2,
-        4,
-        2,
-        2,
-        4,
-        2,
-        5,
-        3,
-        1
-    ],
-    "timeless dark caster": [
-        2,
-        3,
-        4,
-        5,
-        1
-    ],
-    "troll spellsmith": [
-        2,
-        3,
-        4,
-        5,
-        1
-    ],
-    "troubador of love": [
-        2,
-        3,
-        4,
-        5,
-        1
-    ],
-    "ultra omniknight": [
-        2,
-        3,
-        4,
-        5,
-        1
-    ],
-    "underworld chronomancer": [
-        5,
-        3,
-        4,
-        2,
-        2,
-        2,
-        4,
-        2,
-        5,
-        4,
-        2,
-        2,
-        2,
-        4,
-        2,
-        5,
-        1
-    ],
-    "unchained rocker": [
-        2,
-        3,
-        4,
-        5,
-        1
-    ],
-    "unchained rockstar": [
-        2,
-        3,
-        4,
-        5,
-        1
-    ],
-    "undead goat": [
-        4,
-        5,
-        3,
-        2,
-        1
-    ],
-    "unundead goat": [
-        4,
-        5,
-        3,
-        2,
-        1
-    ],
-    "undead leperchaun": [
-        2,
-        3,
-        4,
-        5,
-        1
-    ],
-    "undeadslayer": [
-        2,
-        4,
-        3,
-        1
-    ],
-    "unlucky leperchaun": [
-        2,
-        3,
-        4,
-        5,
-        1
-    ],
-    "vampire": [
-        3,
-        5,
-        4,
-        2,
-        1
-    ],
-    "vampire lord": [
-        3,
-        5,
-        4,
-        2,
-        2,
-        4,
-        1
-    ],
-    "verus doomknight": [
-        2,
-        3,
-        4,
-        5,
-        2,
-        3,
-        4,
-        1
-    ],
-    "vindicator of they": [
-        2,
-        4,
-        5,
-        2,
-        1
-    ],
-    "debris highlord": [
-        4,
-        3,
-        5,
-        2,
-        1
-    ],
-    "void highlord": [
-        4,
-        3,
-        5,
-        2,
-        1
-    ],
-    "void highlord (ioda)": [
-        4,
-        3,
-        5,
-        2,
-        1
-    ],
-    "void highlord tester": [
-        4,
-        3,
-        5,
-        4,
-        3,
-        2,
-        4,
-        3,
-        2,
-        1
-    ],
-    "warlord": [
-        2,
-        3,
-        4,
-        5,
-        1
-    ],
-    "warrior": [
-        2,
-        3,
-        4,
-        5,
-        1
-    ],
-    "warrior (rare)": [
-        2,
-        3,
-        4,
-        5,
-        1
-    ],
-    "warriorscythe general": [
-        2,
-        3,
-        4,
-        5,
-        1
-    ],
-    "witch": [
-        2,
-        3,
-        4,
-        5,
-        1
-    ],
-    "yami no ronin": [
-        3,
-        2,
-        2,
-        5,
-        2,
-        2,
-        5,
-        1
-    ]
+    "archmage": [3, 2, 5],
+    "archivist of time": [1, 3, 4, 1, 2, 3, 1, 4, 4],
+    "abyssal angel": [5, 3, 2, 4],
+    "abyssal angel's shadow": [5, 3, 2, 4],
+    "acolyte": [4, 5, 3, 2],
+    "alpha doommega": [4, 2, 5, 3],
+    "alpha omega": [4, 2, 5, 3],
+    "alpha pirate": [5, 2, 4, 3],
+    "arachnomancer": [5, 4, 2, 3],
+    "arcana invoker": [2, 2, 2, 3, 4, 3, 5],
+    "arcane dark caster": [5, 4, 2, 3],
+    "archfiend": [2, 3, 4, 5],
+    "archpaladin": [2, 3, 2, 3, 2, 3, 4, 5],
+    "artifact hunter": [5, 4, 3, 2],
+    "assassin": [5, 4, 2, 3],
+    "barber": [5, 2, 4, 3],
+    "bard": [2, 5, 3, 4, 2, 3, 4, 5],
+    "battle bard": [2, 4, 5, 3],
+    "battlemage": [3, 4, 5, 2],
+    "battlemage of love": [3, 4, 5, 2],
+    "beast warrior": [2, 3, 4, 5],
+    "beastmaster": [2, 3, 4, 5],
+    "berserker": [5, 4, 2, 3],
+    "beta berserker": [5, 4, 2, 3],
+    "blademaster": [3, 4, 2, 5],
+    "blademaster assassin": [3, 4, 2, 5],
+    "blaze binder": [2, 3, 5, 4],
+    "blood ancient": [5, 4, 3, 2],
+    "blood sorceress": [2, 3, 5, 4],
+    "blood titan": [3, 5, 4, 2],
+    "cardclasher": [5, 2, 3, 4],
+    "chaos avenger": [2, 3, 5, 4],
+    "chaos avenger member preview": [2, 3, 5, 4],
+    "chaos champion prime": [2, 4, 3, 5],
+    "chaos shaper": [3, 2, 4, 5],
+    "chaos slayer berserker": [4, 3, 5, 2],
+    "chaos slayer cleric": [4, 3, 5, 2],
+    "chaos slayer mystic": [4, 3, 5, 2],
+    "chaos slayer thief": [4, 3, 5, 2],
+    "corrupted chronomancer": [5, 4, 2, 2, 2, 3],
+    "chrono assassin": [2, 3, 4, 2, 3, 4, 2, 3, 4, 5],
+    "chrono chaorruptor": [5, 3, 4, 2, 2, 2, 4, 2, 5],
+    "chrono commandant": [5, 2, 2, 2, 2, 3, 4],
+    "chrono dataknight": [2, 3, 4, 2, 3, 4, 2, 3, 4, 2, 5],
+    "chrono dragonknight": [2, 2, 2, 2, 2, 5, 3, 4],
+    "chrono shadowslayer": [2, 3, 4, 5],
+    "chrono shadowhunter": [2, 3, 4, 5],
+    "chronocommander": [5, 2, 2, 2, 2, 3, 4],
+    "chronomancer prime": [3, 5, 2, 2, 2, 2, 3, 2, 2, 2, 2, 2, 4],
+    "chunin": [2, 3, 5, 4],
+    "classic alpha pirate": [5, 2, 4, 3],
+    "classic barber": [5, 2, 4, 3],
+    "classic defender": [3, 4, 3, 5, 4],
+    "classic doomknight": [5, 4, 2, 3],
+    "doom metal necro": [4, 2, 5, 3],
+    "classic dragonlord": [3, 4, 2, 5],
+    "classic exalted soul cleaver": [2, 3, 4, 5],
+    "classic guardian": [2, 3, 4, 5],
+    "classic legion doomknight": [2, 3, 4, 5],
+    "classic paladin": [2, 3, 4, 5],
+    "classic pirate": [2, 3, 4, 5],
+    "classic soul cleaver": [2, 3, 4, 5],
+    "clawsuit": [2, 3, 4, 5],
+    "continuum chronomancer": [3, 2, 2, 2, 4, 2, 5],
+    "cryomancer": [2, 5, 3, 4],
+    "cryomancer mini pet coming soon": [2, 5, 3, 4],
+    "daimon": [2, 4, 3, 5],
+    "dark battlemage": [3, 4, 5, 2],
+    "dark caster": [2, 3, 4, 5],
+    "dark chaos berserker": [2, 4, 3, 5],
+    "dark cryomancer": [2, 5, 3, 4],
+    "dark harbinger": [2, 3, 4, 5],
+    "dark legendary hero": [2, 5, 3, 4],
+    "dark lord": [2, 3, 4, 5],
+    "dark master of moglins": [3, 4, 2, 5],
+    "dark metal necro": [2, 5, 3, 4],
+    "dark ultra omninight": [2, 3, 4, 5],
+    "darkblood stormking": [2, 3, 4, 5],
+    "darkside": [2, 3, 4, 5],
+    "deathknight": [2, 3, 4, 5],
+    "deathknight lord": [2, 3, 4, 5],
+    "defender": [2, 3, 4, 5],
+    "doomknight": [2, 3, 4, 5],
+    "doomknight overlord": [2, 3, 4, 5],
+    "dragon knight": [2, 3, 4, 5],
+    "dragon of time": [2, 3, 4, 5, 3, 2, 4, 3],
+    "dragon shinobi": [2, 3, 4, 5],
+    "dragonlord": [2, 3, 4, 5],
+    "dragonslayer": [2, 3, 4, 5],
+    "dragonslayer general": [2, 3, 4, 5],
+    "dragonsoul shinobi": [2, 3, 4, 5],
+    "drakel warlord": [2, 3, 4, 5],
+    "drakkar knight": [2, 3, 4, 5],
+    "elemental dracomancer": [4, 5, 3, 2],
+    "empyrean chronomancer": [5, 3, 5, 3, 2, 3, 2, 3, 2, 5, 3, 2, 4],
+    "enchanted vampire lord": [3, 5, 4, 2],
+    "enforcer": [2, 3, 4, 5],
+    "eternal chronomancer": [5, 3, 5, 3, 2, 3, 2, 3, 2, 5, 3, 2, 4],
+    "eternal inversionist": [3, 5, 2, 4],
+    "evolved clawsuit": [3, 4, 2, 5],
+    "evolved dark caster": [4, 5, 3, 2],
+    "evolved leprechaun": [5, 4, 2, 3],
+    "evolved pumpkin lord": [4, 5, 3, 2],
+    "evolved shaman": [4, 5, 3, 2],
+    "exalted harbinger": [4, 2, 3, 5],
+    "exalted soul cleaver": [3, 4, 2, 5],
+    "firelord summoner": [4, 3, 2, 5],
+    "flame dragon warrior": [2, 3, 5, 4],
+    "frostblood titan": [3, 5, 4, 2],
+    "frost spiritreaver": [2, 4, 5, 3],
+    "frostval barbarian": [5, 2, 3, 4],
+    "giftbox": [2, 3, 4, 5],
+    "glacial berserker": [2, 4, 3, 5],
+    "glacial berserker test": [2, 4, 3, 5],
+    "glacial warlord": [2, 3, 2, 2, 2, 3, 4, 5],
+    "glaceran warlord": [2, 3, 2, 2, 2, 3, 4, 5],
+    "savage glaceran warlord": [2, 3, 2, 2, 2, 3, 4, 5],
+    "dark glaceran warlord": [2, 3, 2, 2, 2, 3, 4, 5],
+    "great thief": [3, 4, 5, 2],
+    "grim necromancer": [2, 3, 4, 5],
+    "grunge rocker": [2, 3, 4, 5],
+    "guardian": [2, 3, 4, 5],
+    "healer": [2, 3, 4, 5],
+    "healer (rare)": [2, 3, 4, 5],
+    "heavy metal necro": [2, 5, 3, 4],
+    "heavy metal rockstar": [2, 5, 3, 4],
+    "heroic naval commander": [4, 5, 3, 2],
+    "highseas commander": [2, 4, 2, 5, 3],
+    "hobo highlord": [2],
+    "horc evader": [3, 2, 4, 5],
+    "hollowborn vindicator member preview": [5, 2, 4, 3],
+    "hollowborn vindicator": [5, 2, 4, 3],
+    "immortal dark caster": [2, 3, 4, 5],
+    "immortal chronomancer": [5, 3, 5, 3, 2, 3, 2, 3, 2, 5, 3, 2, 4],
+    "imperial chunin": [2, 3, 4, 5],
+    "infinite dark caster": [2, 3, 4, 5],
+    "infinite legion dark caster": [2, 3, 4, 5],
+    "infinity titan": [3, 4, 2, 5],
+    "infinity knight": [5, 3, 2, 2, 2, 3, 2, 2, 2, 3, 5, 4],
+    "interstellar knight": [5, 3, 2, 2, 2, 3, 2, 2, 2, 3, 5, 4],
+    "king's echo": [2, 3, 5, 4],
+    "legendary elemental warrior": [2, 4, 5, 3],
+    "legendary archfiend": [2, 3, 4, 5],
+    "legendary hero": [2, 3, 4, 5],
+    "legendary naval commander": [4, 5, 3, 2],
+    "legion blademaster assassin": [2, 3, 4, 5],
+    "legion doomknight": [2, 3, 4, 5],
+    "legion doomknight tester": [2, 3, 4, 5],
+    "legion evolved dark caster": [2, 3, 4, 5],
+    "legion paladin": [2, 3, 4, 5],
+    "legion revenant": [4, 2, 3, 5],
+    "legion revenant member test": [4, 2, 3, 5],
+    "legion swordmaster assassin": [2, 3, 4, 5],
+    "leprechaun": [2, 3, 4, 5],
+    "lich": [5, 4, 3, 2],
+    "lightcaster": [3, 4, 2, 5],
+    "lightcaster test": [3, 4, 2, 5],
+    "lightmage": [3, 4, 2, 5],
+    "lord of order": [2, 3, 4, 5],
+    "love caster": [2, 3, 4, 5],
+    "lycan": [5, 4, 3, 2],
+    "mage": [5, 3, 2, 4],
+    "mage (rare)": [5, 3, 2, 4],
+    "master of moglins": [3, 4, 2, 5],
+    "master ranger": [2, 2, 2, 5, 3, 4],
+    "mechajouster": [2, 3, 4, 5],
+    "mindbreaker": [2, 3, 4, 5],
+    "mystical dark caster": [2, 3, 4, 5],
+    "naval commander": [4, 5, 3, 2],
+    "nechronomancer": [4, 2, 3, 5],
+    "necrotic chronomancer": [4, 2, 3, 5],
+    "necromancer": [2, 3, 4, 5],
+    "neo metal necro": [2, 3, 4, 5],
+    "ninja": [5, 4, 2, 3],
+    "classic ninja": [2, 3, 4, 5],
+    "ninja (rare)": [2, 3, 4, 5],
+    "ninja warrior": [2, 3, 4, 5],
+    "northlands monk": [2, 3, 4, 5],
+    "not a mod": [2, 3, 4, 5],
+    "nu metal necro": [2, 3, 4, 5],
+    "oracle": [2, 4, 5, 3],
+    "overworld chronomancer": [4, 3, 2, 2, 2, 4, 2, 5],
+    "paladin": [2, 3, 4, 5],
+    "paladin chronomancer": [4, 3, 2, 2, 2, 2, 5],
+    "phantom chronomancer": [4, 3, 2, 3, 2, 3, 2, 3, 2, 4, 2, 4, 3, 5],
+    "phantasm chronomancer": [4, 2, 3, 2, 3, 2, 3, 2, 3, 4, 2, 4, 3, 5],
+    "obsidian paladin chronomancer": [4, 3, 2, 2, 2, 2, 5],
+    "obsidian no class": [2],
+    "paladin highlord": [5, 2, 4, 3],
+    "paladinslayer": [2, 3, 4, 5],
+    "pink romancer": [2, 3, 4, 5],
+    "pinkomancer": [2, 3, 4, 5],
+    "pirate": [2, 3, 4, 5],
+    "prismatic clawsuit": [2, 3, 4, 5],
+    "protosartorium": [2, 3, 4, 5],
+    "psionic mindbreaker": [2, 3, 4, 5],
+    "pumpkin lord": [2, 3, 4, 5],
+    "pyromancer": [2, 5, 3, 4],
+    "renegade": [2, 3, 4, 5],
+    "rogue": [3, 4, 2, 5],
+    "rogue (rare)": [3, 4, 2, 5],
+    "royal battlemage": [2, 3, 4, 5],
+    "royal vampire lord": [3, 5, 4, 2],
+    "rustbucket": [4, 3, 2, 5],
+    "quantum chronomancer": [3, 2, 2, 2, 4, 2, 5],
+    "sakura cryomancer": [2, 5, 3, 4],
+    "scarlet sorceress": [2, 3, 5, 4],
+    "scion of flames": [5, 2, 3, 4],
+    "sentinel": [2, 3, 4, 5],
+    "shadow dragon shinobi": [2, 3, 4, 5],
+    "shadow ripper": [2, 3, 4, 5],
+    "shadow rocker": [2, 3, 4, 5],
+    "shadowflame dragonlord": [2, 3, 4, 5],
+    "shadowscythe general": [2, 3, 4, 5],
+    "shadowstalker of time": [4, 3, 2, 5, 3, 2, 3],
+    "shadowwalker of time": [4, 3, 2, 5, 3, 2, 3],
+    "shadowweaver of time": [4, 3, 2, 5, 3, 2, 3],
+    "shaman": [5, 2, 3, 4],
+    "silver paladin": [2, 3, 4, 5],
+    "skycharged grenadier": [2, 3, 4, 5],
+    "skyguard grenadier": [2, 3, 4, 5],
+    "sorcerer": [5, 3, 2, 4],
+    "sovereign of storms": [3, 4, 2, 5],
+    "soul cleaver": [2, 3, 4, 5],
+    "star captain": [2, 3, 4, 5],
+    "starlord": [2, 3, 4, 5],
+    "stonecrusher": [3, 4, 2, 5],
+    "swordmaster": [2, 3, 4, 5],
+    "swordmaster assassin": [2, 3, 4, 5],
+    "the collector": [2, 4, 5, 2],
+    "thief of hours": [5, 2, 4, 3],
+    "timekeeper": [3, 2, 4, 5],
+    "timekiller": [3, 2, 4, 5],
+    "timeless chronomancer": [5, 4, 2, 2, 4, 2, 2, 4, 2, 5, 3],
+    "timeless dark caster": [2, 3, 4, 5],
+    "troll spellsmith": [2, 3, 4, 5],
+    "troubador of love": [2, 3, 4, 5],
+    "ultra omniknight": [2, 3, 4, 5],
+    "underworld chronomancer": [5, 4, 2, 2, 2, 3],
+    "unchained rocker": [2, 3, 4, 5],
+    "unchained rockstar": [2, 3, 4, 5],
+    "undead goat": [4, 5, 3, 2],
+    "unundead goat": [4, 5, 3, 2],
+    "undead leperchaun": [2, 3, 4, 5],
+    "undeadslayer": [2, 4, 3, 5],
+    "unlucky leperchaun": [2, 3, 4, 5],
+    "vampire": [3, 5, 4, 2],
+    "vampire lord": [3, 5, 4, 2],
+    "verus doomknight": [2, 3, 4, 5, 2, 3, 4],
+    "vindicator of they": [2, 4, 5, 3],
+    "debris highlord": [4, 3, 5, 2],
+    "void highlord": [4, 3, 5, 2],
+    "void highlord (ioda)": [4, 3, 5, 2],
+    "void highlord tester": [4, 3, 5, 2],
+    "warlord": [2, 3, 4, 5],
+    "warrior": [2, 3, 4, 5],
+    "warrior (rare)": [2, 3, 4, 5],
+    "warriorscythe general": [2, 3, 4, 5],
+    "witch": [2, 3, 4, 5],
+    "yami no ronin": [3, 2, 2, 5]
 }
