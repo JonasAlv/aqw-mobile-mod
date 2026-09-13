@@ -7,27 +7,19 @@ package ui {
 
 	public class Notification extends Sprite {
 
-		public var id:String;
-		private var _sticky:Boolean;
-
-		public function Notification(message:String, sticky:Boolean = false) {
-			this._sticky = sticky;
+		public function Notification(message:String) {
 			this.messageTxt.htmlText = message;
 
-			this.closeBtn.addEventListener(MouseEvent.CLICK, function(e:MouseEvent):void { onClose(); }, false, 0, true);
+			this.closeBtn.addEventListener(MouseEvent.CLICK, onClose, false, 0, true);
 		}
 
 		public var messageTxt:TextField;
 		public var closeBtn:SimpleButton;
 
-		public function onClose():void {
+		private function onClose(e:MouseEvent):void {
 			if (this.parent) {
 				this.parent.removeChild(this);
 			}
-		}
-
-		public function get sticky():Boolean {
-			return _sticky;
 		}
 
 	}
