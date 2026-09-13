@@ -1,0 +1,27 @@
+# Build output
+/target
+
+# IDE
+/.idea/
+/.vscode/settings.json
+
+# Assets
+*.fla
+/patches/*/build/*
+
+# Generated / runtime files
+/loader/gamefiles/
+/patches-final/
+/pocket-patches/
+/patches/*
+loader.iml
+
+.env
+build-desktop.sh
+build-android.sh
+android_builds/
+loader/Desktop_base.swf
+loader/Desktop_code.swf
+loader/Desktop_code-0.abc
+loader/Mobile_code.swf
+loader/Mobile_code-0.abc
