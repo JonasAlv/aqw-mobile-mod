@@ -14,6 +14,7 @@ package ui {
 	import com.aqwapi.modules.ScriptManager;
 	import com.aqwapi.modules.CombatManager;
 	import com.aqwapi.AqwApi;
+	import com.aqwapi.events.ApiEvent;
 	import util.HelperSetting;
 	
 	POCKET::IS_DESKTOP { 
@@ -54,7 +55,7 @@ package ui {
 						var txt:String = stream.readUTFBytes(stream.bytesAvailable);
 						stream.close();
 						ScriptManager.SINGLETON.loadScript(txt);
-						pocket.overlay.notification("Script loaded successfully!");
+						AqwApi.dispatcher.dispatchEvent(new ApiEvent(ApiEvent.NOTIFICATION, "Script loaded successfully!"));
 					});
 					file.browseForOpen("Select Script", [new FileFilter("Text Files", "*.txt")]);
 				}));
@@ -65,10 +66,10 @@ package ui {
 				if (c.state) {
 					ScriptManager.SINGLETON.reset();
 					ScriptManager.SINGLETON.start();
-					pocket.overlay.notification("Script Started!");
+					AqwApi.dispatcher.dispatchEvent(new ApiEvent(ApiEvent.NOTIFICATION, "Script Started!"));
 				} else {
 					ScriptManager.SINGLETON.stop();
-					pocket.overlay.notification("Script Stopped!");
+					AqwApi.dispatcher.dispatchEvent(new ApiEvent(ApiEvent.NOTIFICATION, "Script Stopped!"));
 				}
 			});
 			startScriptCheck.addEventListener(Event.ENTER_FRAME, function(e:Event):void {
@@ -83,10 +84,10 @@ package ui {
 				var c:Check = o as Check;
 				if (c.state) {
 					AqwApi.combat.startSmart(); 
-					pocket.overlay.notification("Smart Combat Started!"); 
+					AqwApi.dispatcher.dispatchEvent(new ApiEvent(ApiEvent.NOTIFICATION, "Smart Combat Started!")); 
 				} else {
 					AqwApi.combat.stopAuto();
-					pocket.overlay.notification("Combat Stopped!");
+					AqwApi.dispatcher.dispatchEvent(new ApiEvent(ApiEvent.NOTIFICATION, "Combat Stopped!"));
 				}
 			});
 			smartCombatCheck.addEventListener(Event.ENTER_FRAME, function(e:Event):void {
@@ -103,7 +104,7 @@ package ui {
 					showCombatPrompt(pocket); 
 				} else {
 					AqwApi.combat.stopAuto();
-					pocket.overlay.notification("Combat Stopped!");
+					AqwApi.dispatcher.dispatchEvent(new ApiEvent(ApiEvent.NOTIFICATION, "Combat Stopped!"));
 				}
 			});
 			customCombatCheck.addEventListener(Event.ENTER_FRAME, function(e:Event):void {
@@ -120,7 +121,7 @@ package ui {
 					showQuestPrompt(pocket); 
 				} else {
 					AqwApi.quest.stopAuto();
-					pocket.overlay.notification("Quests Stopped!");
+					AqwApi.dispatcher.dispatchEvent(new ApiEvent(ApiEvent.NOTIFICATION, "Quests Stopped!"));
 				}
 			});
 			autoQuestCheck.addEventListener(Event.ENTER_FRAME, function(e:Event):void {
@@ -137,10 +138,10 @@ package ui {
 					ScriptManager.SINGLETON.reset();
 					ScriptManager.SINGLETON.loadScript(script);
 					ScriptManager.SINGLETON.start();
-					pocket.overlay.notification("Leveling Bot Started!");
+					AqwApi.dispatcher.dispatchEvent(new ApiEvent(ApiEvent.NOTIFICATION, "Leveling Bot Started!"));
 				} else {
 					ScriptManager.SINGLETON.stop();
-					pocket.overlay.notification("Leveling Bot Stopped!");
+					AqwApi.dispatcher.dispatchEvent(new ApiEvent(ApiEvent.NOTIFICATION, "Leveling Bot Stopped!"));
 				}
 			});
 			levelingBotCheck.addEventListener(Event.ENTER_FRAME, function(e:Event):void {
@@ -359,7 +360,7 @@ package ui {
 				}
 				if (validIds.length > 0) {
 					AqwApi.quest.startAuto(validIds.join(","));
-					pocket.overlay.notification("Auto Quest started: " + validIds.join(", "));
+					AqwApi.dispatcher.dispatchEvent(new ApiEvent(ApiEvent.NOTIFICATION, "Auto Quest started: " + validIds.join(", ")));
 				}
 				hidePrompt();
 			});
@@ -459,7 +460,7 @@ package ui {
 				}
 				if (validSeq.length > 0) {
 					AqwApi.combat.startCustom(validSeq.join(","));
-					pocket.overlay.notification("Custom Combat started: " + validSeq.join(", "));
+					AqwApi.dispatcher.dispatchEvent(new ApiEvent(ApiEvent.NOTIFICATION, "Custom Combat started: " + validSeq.join(", ")));
 				}
 				hidePrompt();
 			});
@@ -553,7 +554,7 @@ package ui {
 				var sid:int = parseInt(String(_promptInput.text).replace(/^\s+|\s+$/g, ""));
 				if (sid > 0) {
 					AqwApi.shop.loadShop(sid);
-					pocket.overlay.notification("Loading Shop: " + sid);
+					AqwApi.dispatcher.dispatchEvent(new ApiEvent(ApiEvent.NOTIFICATION, "Loading Shop: " + sid));
 				}
 				hidePrompt();
 			});
@@ -651,7 +652,7 @@ package ui {
 				var text:String = _promptInput.text;
 				hidePrompt();
 				ScriptManager.SINGLETON.loadScript(text);
-				pocket.overlay.notification("Script loaded successfully!");
+				AqwApi.dispatcher.dispatchEvent(new ApiEvent(ApiEvent.NOTIFICATION, "Script loaded successfully!"));
 			});
 			_promptContainer.addChild(loadBtn);
 			
