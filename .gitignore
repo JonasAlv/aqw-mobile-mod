@@ -24,3 +24,8 @@ loader/Mobile_code.swf
 loader/Mobile_code-0.abc
 loader/Desktop-app-local.xml
 loader/gamefiles/
+aqwpocket_keystore_local.p12
+loader/Mobile-app-gpu.xml
+loader/Mobile_code.swf
+loader/Mobile_code-0.abc
+*.apk
