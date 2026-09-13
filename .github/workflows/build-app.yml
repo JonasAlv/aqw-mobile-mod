@@ -64,12 +64,6 @@ jobs:
           rm -rf anthony.apk extracted
 
 
-      - name: Generate Dynamic Keystore
-        run: |
-          cd aqw-mobile
-          adt -certificate -cn "AQWPocket" 2048-RSA aqwpocket_keystore.p12 password
-          
-          
 
       - name: Upload patched workspace
         uses: actions/upload-artifact@v4
@@ -116,6 +110,7 @@ jobs:
 
       - name: Build Android APK
         run: |
+          adt -certificate -cn "AQWPocket" 2048-RSA aqwpocket_keystore.p12 password
           sed -i "s|<renderMode>.*</renderMode>|<renderMode>${{ matrix.render-mode }}</renderMode>|" loader/Mobile-app.xml
           adt -package \
             -target apk-captive-runtime \
@@ -170,6 +165,7 @@ jobs:
 
       - name: Build Windows
         run: |
+          adt -certificate -cn "AQWPocket" 2048-RSA aqwpocket_keystore.p12 password
           (Get-Content loader/Desktop-app.xml) -replace '<renderMode>.*</renderMode>', '<renderMode>${{ matrix.render-mode }}</renderMode>' | Set-Content loader/Desktop-app.xml
           adt -package -storetype PKCS12 -keystore aqwpocket_keystore.p12 -storepass password -target bundle -arch ${{ matrix.architecture }} AQWPocket-Mod${{ matrix.suffix }} loader/Desktop-app.xml -extdir loader/libs -C loader Desktop.swf assets icons/icon-16x16.png icons/icon-32x32.png icons/icon-36x36.png icons/icon-48x48.png icons/icon-72x72.png icons/icon-96x96.png icons/icon-128x128.png icons/icon-144x144.png icons/icon-192x192.png gamefiles/game.swf gamefiles/world-map.swf gamefiles/book-of-lore.swf gamefiles/character-select.swf
 
