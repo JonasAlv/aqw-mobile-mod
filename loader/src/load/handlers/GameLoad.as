@@ -12,6 +12,8 @@ package load.handlers {
 
 	import util.HelperLoader;
 
+	import com.aqwapi.AqwApi;
+
 	public class GameLoad extends Load {
 
 		public function GameLoad(pocket:Pocket) {
@@ -59,6 +61,8 @@ package load.handlers {
 			this.pocket.networkCore = new Network(this.pocket);
 
 			this.pocket.gameCore.onFrameChange("Init");
+
+			AqwApi.init(this.pocket.game);
 
 			this.pocket.advance();
 		}

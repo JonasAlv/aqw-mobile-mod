@@ -40,11 +40,6 @@ package ui {
 			_injected = true;
 			_overlay = overlay;
 			
-			_overlay.addEventListener(Event.ENTER_FRAME, function(e:Event):void {
-				if (!AqwApi.isReady && Pocket.SINGLETON.game != null) {
-					AqwApi.init(Pocket.SINGLETON.game);
-				}
-			});
 			var pocket:* = overlay.parent;
 
 			anthonyMenus = overlay.menus;

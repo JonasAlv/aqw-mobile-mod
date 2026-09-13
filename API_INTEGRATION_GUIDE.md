@@ -3,19 +3,35 @@
 This document explains exactly how our custom API (`AqwApi`) is hooked into Anthony's upstream `aqw-mobile` base game files. If you ever update Anthony's base files again, these are the ONLY hooks you need to ensure remain intact.
 
 ## 1. The Goal
-Our goal is to **not hack his core logic** (`Pocket.as`, `Game.as`, `Core.as`, etc.). We keep his base game completely clean and only hook into his UI overlay to inject our standalone API.
+Our goal is to **minimize changes to his core logic**. We keep his base game as clean as possible, enforcing direct, explicit, and deterministic hooks so developers aren't running in circles tracking down background magic.
 
-## 2. Core Hook: `ui/Overlay.as`
-This is the single entry point where we intercept his UI to load our custom bot menus and notification manager.
+## 2. API Initialization Hook: `load/handlers/GameLoad.as`
+This is where we explicitly initialize `AqwApi` the exact millisecond the game object is successfully loaded and appended to the stage.
+
+**Location:** Inside `load.handlers.GameLoad` -> `onCompleted()`
+**What to add:**
+```actionscript
+    import com.aqwapi.AqwApi;
+    // ...
+    this.pocket.gameCore.onFrameChange("Init");
+
+    // [MOD] Initialize our custom API with the fresh game object!
+    AqwApi.init(this.pocket.game);
+
+    this.pocket.advance();
+```
+
+## 3. UI Hook: `ui/Overlay.as`
+This is where we intercept his UI to load our custom bot menus and notification manager.
 
 **Location:** Inside `ui.Overlay` -> `initFrame()`
 **What to add:**
 ```actionscript
 private function initFrame():void {
-    // 1. Inject our custom BotMenus so they appear in the UI
+    // [MOD] Inject our custom BotMenus so they appear in the UI
     BotMenus.inject(this);
     
-    // 2. Initialize our independent ApiNotificationManager
+    // [MOD] Initialize our independent ApiNotificationManager
     apiNotifications = Sprite(addChild(new Sprite()));
     ApiNotificationManager.instance.init(apiNotifications);
 
@@ -23,7 +39,7 @@ private function initFrame():void {
 }
 ```
 
-## 3. Configuration Overrides (Optional): `ui/Overlay.as`
+## 4. Configuration Overrides (Optional): `ui/Overlay.as`
 Anthony uses `Pocket.SINGLETON.config.*` to save his settings. We override some of these in `Overlay.as` to use our custom `Config` class instead, completely detaching his config system from ours.
 
 **Example Change in his Checkboxes:**
@@ -34,7 +50,7 @@ function (option:Check):void {
 }
 ```
 
-## 4. Standalone UI Components (No Upstream Modifications Required)
+## 5. Standalone UI Components (No Upstream Modifications Required)
 We added the following files natively to `loader/src/ui/`. These files completely replace his `Notification.as` dependency:
 *   `BotMenus.as`: Contains the UI for the bot options and completely relies on `AqwApi.dispatcher`.
 *   `ApiNotificationManager.as`: Intercepts `ApiEvent.NOTIFICATION` events globally.
@@ -42,10 +58,11 @@ We added the following files natively to `loader/src/ui/`. These files completel
 
 Because these are standalone, an update from Anthony will **never** overwrite them.
 
-## 5. Summary
-By keeping `Pocket.as` 100% untouched and injecting our code exclusively via `Overlay.as.initFrame()`, we achieved a fully modular architecture. 
+## 6. Summary
+By keeping hooks strictly to `GameLoad.as` (initialization) and `Overlay.as` (UI injection), we maintain a fully deterministic and modular architecture. 
 
 **Updating to a new version is as simple as:**
 1. Downloading his new `src` folder.
 2. Dropping our `BotMenus.as`, `ApiNotification.as`, and `ApiNotificationManager.as` files inside.
-3. Adding the two hook lines back into `Overlay.as.initFrame()`.
+3. Adding the initialization hook into `GameLoad.as`.
+4. Adding the UI hook into `Overlay.as`.
