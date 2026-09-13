@@ -12,16 +12,15 @@
 /pocket-patches/
 /patches/*
 loader.iml
+
+#this is generated for local testing
+loader/skills_custom.json 
+
 .env
-build-desktop.sh
-build-android.sh
-android_builds/
 loader/Desktop_base.swf
 loader/Desktop_code.swf
 loader/Desktop_code-0.abc
 loader/Mobile_code.swf
 loader/Mobile_code-0.abc
-desktop_builds/
-build_workspace/
 loader/Desktop-app-local.xml
 loader/gamefiles/
