@@ -81,7 +81,7 @@ package ui {
 			if (_container != null && _container.stage != null && _container.numChildren > 0) {
 				var firstNotif:ApiNotification = _notifications[0];
 				if (firstNotif != null) {
-					_container.x = _container.stage.stageWidth - firstNotif.width - 10;
+					_container.x = (_container.stage.stageWidth - 300) / 2;
 					_container.y = 10;
 				}
 			}

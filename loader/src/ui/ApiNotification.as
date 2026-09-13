@@ -80,6 +80,7 @@ package ui {
 				_timer.start();
 			}
 
+			this.alpha = 0;
 			this.addEventListener(Event.ENTER_FRAME, onEnterFrame);
 		}
 
@@ -116,11 +117,10 @@ package ui {
 		}
 
 		private function onEnterFrame(e:Event):void {
-			if (_slideOffset > 0) {
-				_slideOffset -= 8;
-				if (_slideOffset < 0) { _slideOffset = 0; }
+			if (this.alpha < 1) {
+				this.alpha += FADE_SPEED * 1.5;
+				if (this.alpha > 1) { this.alpha = 1; }
 			}
-			this.x = WIDTH + _slideOffset;
 		}
 
 		private function onFadeOut(e:Event):void {
