@@ -2,14 +2,16 @@
 # setup.sh - First-time local dev setup
 # Downloads gamefiles from Anthony's latest APK release.
 # Run this once after cloning, or whenever Anthony releases a new version.
+# Usage: ./setup.sh [version] (e.g. ./setup.sh v3.5.0)
 
 set -e
 
-ANTHONY_APK_URL="https://github.com/anthony-hyo/aqw-mobile/releases/download/v3.5.0/AQWPocket-v3.5.0-armv8.apk"
+VERSION=${1:-v3.5.0}
+ANTHONY_APK_URL="https://github.com/anthony-hyo/aqw-mobile/releases/download/${VERSION}/AQWPocket-${VERSION}-armv8.apk"
 APK_FILE="/tmp/anthony-aqw.apk"
 GAMEFILES_DIR="loader/gamefiles"
 
-echo "=> Downloading Anthony's APK (v3.5.0)..."
+echo "=> Downloading Anthony's APK (${VERSION})..."
 wget -q --show-progress "$ANTHONY_APK_URL" -O "$APK_FILE"
 
 echo "=> Extracting gamefiles..."

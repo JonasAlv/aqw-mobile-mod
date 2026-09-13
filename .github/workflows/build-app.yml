@@ -2,6 +2,11 @@ name: Build Modded Pocket
 
 on:
   workflow_dispatch:
+    inputs:
+      upstream_version:
+        description: 'Upstream release version to pull gamefiles from (e.g., v3.5.0)'
+        required: true
+        default: 'v3.5.0'
 
 jobs:
   prepare:
@@ -60,7 +65,7 @@ jobs:
         run: |
           cd aqw-mobile/loader
           mkdir -p gamefiles
-          wget https://github.com/anthony-hyo/aqw-mobile/releases/download/v3.5.0/AQWPocket-v3.5.0-armv8.apk -O anthony.apk
+          wget https://github.com/anthony-hyo/aqw-mobile/releases/download/${{ inputs.upstream_version }}/AQWPocket-${{ inputs.upstream_version }}-armv8.apk -O anthony.apk
           unzip -q anthony.apk "assets/gamefiles/*" -d extracted
           cp -r extracted/assets/gamefiles/* gamefiles/
           rm -rf anthony.apk extracted
@@ -197,9 +202,9 @@ jobs:
       - name: Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: "v3.5.0-mod"
-          name: "AQW Mobile Mod v3.5.0"
-          body: "Modded AQW Mobile Build v3.5.0."
+          tag_name: "${{ inputs.upstream_version }}-mod"
+          name: "AQW Mobile Mod ${{ inputs.upstream_version }}"
+          body: "Modded AQW Mobile Build ${{ inputs.upstream_version }}."
           files: |
             *.apk
             AQWPocket-Mod*.zip
