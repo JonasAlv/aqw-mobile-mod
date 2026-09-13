@@ -34,6 +34,15 @@ package {
 		public var option_skill_tooltips:Boolean = true;
 		public var option_disable_cutscenes:Boolean = false;
 		public var option_slow_walk:Boolean = false;
+		
+		public var option_player_animation_skill:Boolean = true;
+		public var option_player_animation_aura:Boolean = true;
+		
+		public var option_monster_animation_skill:Boolean = true;
+		public var option_monster_animation_aura:Boolean = true;
+		
+		public var option_self_animation_skill:Boolean = true;
+		public var option_self_animation_aura:Boolean = true;
 
 	}
 

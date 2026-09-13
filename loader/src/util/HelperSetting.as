@@ -20,7 +20,16 @@ package util {
 		
 		public static const OPTION_SKILL_TOOLTIPS:String = "option_skill_tooltips";
 		public static const OPTION_DISABLE_CUTSCENES:String = "option_disable_cutscenes";
-		public static const OPTION_SLOW_WALK:String = "option_slow_walk";
+		public static const OPTION_SLOW_WALK:String = "option_slow_walk"
+		
+		public static const OPTION_PLAYER_ANIMATION_SKILL:String = "option_player_animation_skill";
+		public static const OPTION_PLAYER_ANIMATION_AURA:String = "option_player_animation_aura";
+		
+		public static const OPTION_MONSTER_ANIMATION_SKILL:String = "option_monster_animation_skill";
+		public static const OPTION_MONSTER_ANIMATION_AURA:String = "option_monster_animation_aura";
+		
+		public static const OPTION_SELF_ANIMATION_SKILL:String = "option_self_animation_skill";
+		public static const OPTION_SELF_ANIMATION_AURA:String = "option_self_animation_aura";
 
 		public static const OPTION_SHORTCUTS:String = "shortcut_buttons";
 

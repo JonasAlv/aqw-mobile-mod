@@ -226,7 +226,85 @@ package ui {
 					function (frame:String):void {
 						Pocket.SINGLETON.config.option_slow_walk = HelperSetting.getBool(HelperSetting.OPTION_SLOW_WALK);
 					}
-				)
+				),
+				new Check(
+					HelperSetting.OPTION_PLAYER_ANIMATION_SKILL,
+					true,
+					"Player Skill Animations",
+					"Disable other players' skill animations.",
+					true,
+					function (option:Check):void {
+						Pocket.SINGLETON.config.option_player_animation_skill = option.state;
+					},
+					function (frame:String):void {
+						Pocket.SINGLETON.config.option_player_animation_skill = HelperSetting.getBool(HelperSetting.OPTION_PLAYER_ANIMATION_SKILL);
+					}
+				),
+				new Check(
+					HelperSetting.OPTION_PLAYER_ANIMATION_AURA,
+					true,
+					"Player Aura Animations",
+					"May hide other players' important buffs.",
+					true,
+					function (option:Check):void {
+						Pocket.SINGLETON.config.option_player_animation_aura = option.state;
+					},
+					function (frame:String):void {
+						Pocket.SINGLETON.config.option_player_animation_aura = HelperSetting.getBool(HelperSetting.OPTION_PLAYER_ANIMATION_AURA);
+					}
+				),
+				new Check(
+					HelperSetting.OPTION_MONSTER_ANIMATION_SKILL,
+					true,
+					"Monster Skill Animations",
+					"Disable monster skill animations.",
+					true,
+					function (option:Check):void {
+						Pocket.SINGLETON.config.option_monster_animation_skill = option.state;
+					},
+					function (frame:String):void {
+						Pocket.SINGLETON.config.option_monster_animation_skill = HelperSetting.getBool(HelperSetting.OPTION_MONSTER_ANIMATION_SKILL);
+					}
+				),
+				new Check(
+					HelperSetting.OPTION_MONSTER_ANIMATION_AURA,
+					true,
+					"Monster Aura Animations",
+					"May hide important boss mechanics.",
+					true,
+					function (option:Check):void {
+						Pocket.SINGLETON.config.option_monster_animation_aura = option.state;
+					},
+					function (frame:String):void {
+						Pocket.SINGLETON.config.option_monster_animation_aura = HelperSetting.getBool(HelperSetting.OPTION_MONSTER_ANIMATION_AURA);
+					}
+				),
+				new Check(
+					HelperSetting.OPTION_SELF_ANIMATION_SKILL,
+					true,
+					"Self Skill Animations",
+					"Disable your own skill animations.",
+					true,
+					function (option:Check):void {
+						Pocket.SINGLETON.config.option_self_animation_skill = option.state;
+					},
+					function (frame:String):void {
+						Pocket.SINGLETON.config.option_self_animation_skill = HelperSetting.getBool(HelperSetting.OPTION_SELF_ANIMATION_SKILL);
+					}
+				),
+				new Check(
+					HelperSetting.OPTION_SELF_ANIMATION_AURA,
+					true,
+					"Self Aura Animations",
+					"Disable your own aura animations.",
+					true,
+					function (option:Check):void {
+						Pocket.SINGLETON.config.option_self_animation_aura = option.state;
+					},
+					function (frame:String):void {
+						Pocket.SINGLETON.config.option_self_animation_aura = HelperSetting.getBool(HelperSetting.OPTION_SELF_ANIMATION_AURA);
+					}
+				),
 			]),
 			new Menu("Graphics", new <Option>[
 				new Check(
