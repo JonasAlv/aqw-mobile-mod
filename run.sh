@@ -10,9 +10,11 @@ if [ "$1" == "--build" ] || [ "$1" == "-b" ]; then
 fi
 
 echo "=> Launching ADL (Windows AIR Debug Launcher) via Wine..."
+echo "   (Using Desktop-app-local.xml - Discord RPC disabled for local testing)"
 cd loader
 
-# Run ADL, filtering out the known Discord RPC extension error that causes wine to complain
-wine /home/me/Music/AIRSDK_Windows/bin/adl.exe -profile extendedDesktop Desktop-app.xml -extdir libs 2>&1 | grep -v "fi.joniaromaa.adobeair.discordrpc"
+# Use the local app descriptor which has Discord RPC stripped out.
+# ADL on Wine crashes immediately if a native extension is declared but not loadable.
+wine /home/me/Music/AIRSDK_Windows/bin/adl.exe -profile extendedDesktop Desktop-app-local.xml
 
 echo "=> ADL closed."
