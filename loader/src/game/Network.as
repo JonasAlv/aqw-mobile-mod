@@ -5,6 +5,7 @@ package game {
 	import util.HelperSetting;
 
 	public class Network {
+
 		public function Network(pocket:Pocket) {
 			this.pocket = pocket;
 			this.pocket.game.sfc.addEventListener("onExtensionResponse", onExtensionResponseHandler, false, 0, true);
@@ -13,13 +14,13 @@ package game {
 		private var pocket:Pocket;
 
 		private function onExtensionResponseHandler(event:*):void {
-			// Forward all responses to the API event dispatcher
-			import com.aqwapi.AqwApi;
-			if (AqwApi.transport != null) {
-				AqwApi.transport.handleResponse(event);
-			}
-
 			switch (event.params.type) {
+				/*case "str":
+					switch (event.params.dataObj[0]) {
+						case "whisper":
+							break;
+					}
+					break;*/
 				case "json":
 					switch (event.params.dataObj.cmd) {
 						case "sAct":

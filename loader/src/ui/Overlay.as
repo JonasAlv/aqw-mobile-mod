@@ -22,13 +22,6 @@ package ui {
 	import util.Helper;
 	import util.HelperScroll;
 	import util.HelperSetting;
-	POCKET::IS_DESKTOP { 
-		import flash.filesystem.File; 
-		import flash.filesystem.FileStream; 
-		import flash.filesystem.FileMode; 
-		import flash.net.FileFilter; 
-		
-	}
 
 	public class Overlay extends MovieClip {
 
@@ -60,6 +53,7 @@ package ui {
 
 		public var debug:Debug = new Debug();
 		public var notifications:Sprite;
+		public var apiNotifications:Sprite;
 
 		private var pocket:Pocket;
 		private var scrollHelper:HelperScroll;
@@ -612,6 +606,9 @@ package ui {
 		private function initFrame():void {
 			BotMenus.inject(this);
 			this.showPanelBtn.addEventListener(MouseEvent.CLICK, onShowPanel);
+
+			apiNotifications = Sprite(addChild(new Sprite()));
+			ApiNotificationManager.instance.init(apiNotifications);
 
 			for each (var menu:Menu in menus) {
 				for each (var option:Option in menu.options) {

@@ -2,8 +2,6 @@ package load.handlers {
 
 	import flash.display.Loader;
 	import flash.display.MovieClip;
-	import com.aqwapi.AqwApi;
-
 	import flash.events.Event;
 	import flash.events.IOErrorEvent;
 	import flash.events.ProgressEvent;
@@ -41,7 +39,6 @@ package load.handlers {
 			gameMC.pocket = this.pocket;
 
 			this.pocket.game = MovieClip(this.pocket.stage.addChild(gameMC));
-			AqwApi.init(this.pocket.game);
 
 			this.pocket.game.addChild(this.pocket.overlay);
 			this.pocket.game.addChild(this.pocket.gameUI);
