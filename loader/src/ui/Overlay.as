@@ -23,6 +23,15 @@ package ui {
 	import util.HelperScroll;
 	import util.HelperSetting;
 
+	POCKET::IS_DESKTOP { 
+		import flash.filesystem.File; 
+		import flash.filesystem.FileStream; 
+		import flash.filesystem.FileMode; 
+		import flash.net.FileFilter; 
+		
+	}
+
+
 	public class Overlay extends MovieClip {
 
 		public function Overlay(pocket:Pocket) {
@@ -130,26 +139,6 @@ package ui {
 							stage.autoOrients = false;
 							stage.setAspectRatio(StageAspectRatio.ANY);
 							stage.setOrientation(Helper.ORIENTATIONS[savedIndex]);
-						}
-					}
-				),
-				new Check(
-					HelperSetting.OPTION_DISCORD_RPC,
-					true,
-					"Discord RPC",
-					"Enable Discord Rich Presence",
-					POCKET::IS_DESKTOP,
-					function (option:Check):void {
-						//noinspection JSUnresolvedReference
-						POCKET::IS_DESKTOP {
-							const pocket:Pocket = Pocket.SINGLETON;
-
-							if (option.state) {
-								pocket.discordRichPresence.enable();
-								return;
-							}
-
-							pocket.discordRichPresence.disable();
 						}
 					}
 				),
@@ -353,6 +342,7 @@ package ui {
 					}
 				)
 			]),
+			
 			new Menu("Controls", new <Option>[
 				new Check(
 					HelperSetting.OPTION_SHOW_JOYSTICK_MOUSE,
@@ -603,7 +593,7 @@ package ui {
 		];
 
 		private function initFrame():void {
-t		BotMenus.inject(this);
+			BotMenus.inject(this);
 			this.showPanelBtn.addEventListener(MouseEvent.CLICK, onShowPanel);
 
 			for each (var menu:Menu in menus) {
@@ -704,6 +694,7 @@ t		BotMenus.inject(this);
 			navigateToURL(new URLRequest("https://discord.gg/EXS5qM35ff"), "_blank");
 		}
 
+
 		public function notification(message:String):void {
 			const index:uint = this.notifications.numChildren;
 			const notification:Notification = Notification(this.notifications.addChild(new Notification(message)));
@@ -715,6 +706,7 @@ t		BotMenus.inject(this);
 
 			notification.y = index * (notification.height + 10);
 		}
+
 
 		public function setOverlayButtonTransform():void {
 			if (!this.pocket.game) {

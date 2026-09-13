@@ -129,7 +129,7 @@ package load {
 		public function load(loader:Loader, url:String, context:LoaderContext, onComplete:Function = null, onProgress:Function = null, onError:Function = null, onHTTPError:Function = null):void {
 			HelperLoader.prepareContext(context);
 
-			onLoad(new LoadData(KIND_NO_QUEUE, null, loader, context, url, onComplete, onProgress, onError, onHTTPError, false));
+			onLoad(new LoadData(KIND_NO_QUEUE, null, loader, context, url, onComplete, onProgress, onError, onHTTPError));
 		}
 
 		/**
@@ -214,12 +214,14 @@ package load {
 		 * @param loadData
 		 */
 		private function onLoad(loadData:LoadData):void {
+			const isQueued:Boolean = loadData.kind != KIND_NO_QUEUE;
+
 			const urlLoader:URLLoader = new URLLoader();
 
 			urlLoader.dataFormat = URLLoaderDataFormat.BINARY;
 
 			urlLoader.addEventListener(Event.COMPLETE, function (event:Event):void {
-				const rawBytes:ByteArray = URLLoader(event.target).data as ByteArray;
+				const rawBytes:ByteArray = event.target.data as ByteArray;
 
 				const categoryCheck:Function = resolveCategoryCheck(loadData.url);
 				const animationOn:Boolean = categoryCheck != null && categoryCheck();
@@ -228,7 +230,7 @@ package load {
 				const finishLoad:Function = function (finalBytes:ByteArray):void {
 					const byteLoader:Loader = loadData.loader == null ? new Loader() : loadData.loader;
 
-					if (loadData.isQueued) {
+					if (isQueued) {
 						byteLoader.contentLoaderInfo.addEventListener(Event.COMPLETE, function (e:Event):void {
 							try {
 								if (loadData.onComplete != null) {
@@ -303,7 +305,7 @@ package load {
 
 			urlLoader.addEventListener(IOErrorEvent.IO_ERROR, function (event:IOErrorEvent):void {
 				if (loadData.onError != null) {
-					if (loadData.isQueued) {
+					if (isQueued) {
 						try {
 							loadData.onError(event);
 						} catch (error:Error) {
@@ -312,11 +314,11 @@ package load {
 					} else {
 						loadData.onError(event);
 					}
-				} else if (!loadData.isQueued && loadData.loader != null) {
+				} else if (!isQueued && loadData.loader != null) {
 					loadData.loader.dispatchEvent(event);
 				}
 
-				if (loadData.isQueued) {
+				if (isQueued) {
 					concurrentCount--;
 
 					loadNext();

@@ -2,6 +2,7 @@ package load.handlers {
 
 	import flash.display.Loader;
 	import flash.display.MovieClip;
+	import com.aqwapi.AqwApi;
 	import flash.events.Event;
 	import flash.events.IOErrorEvent;
 	import flash.events.ProgressEvent;
@@ -31,14 +32,15 @@ package load.handlers {
 		override protected function onCompleted(event:Event):void {
 			this.pocket.overlay.debug.log("Game client loaded");
 
-			this.pocket.removeChild(this.pocket.overlay);
-			this.pocket.removeChild(this.pocket.gameUI);
+			if (this.pocket.overlay != null && this.pocket.contains(this.pocket.overlay)) this.pocket.removeChild(this.pocket.overlay);
+			if (this.pocket.gameUI != null && this.pocket.contains(this.pocket.gameUI)) this.pocket.removeChild(this.pocket.gameUI);
 
 			var gameMC:MovieClip = MovieClip(Loader(event.target.loader).content);
 
 			gameMC.pocket = this.pocket;
 
 			this.pocket.game = MovieClip(this.pocket.stage.addChild(gameMC));
+			AqwApi.init(this.pocket.game);
 
 			this.pocket.game.addChild(this.pocket.overlay);
 			this.pocket.game.addChild(this.pocket.gameUI);

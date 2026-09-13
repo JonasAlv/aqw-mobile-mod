@@ -8,7 +8,7 @@ export PATH=$AIR_HOME/bin:$JAVA_HOME/bin:$PATH
 echo "Compiling WorkerMain.swf"
 cd /home/me/Music/aqw-mobile/loader
 mkdir -p gamefiles/embed
-$AIR_HOME/bin/amxmlc worker-src/WorkerMain.as -source-path+=../../air-aqw-enhanced/src_pocket -source-path+=../../aqw-api-enhanced/src -source-path+=src -source-path+=worker-src -output gamefiles/embed/WorkerMain.swf -swf-version=18
+$AIR_HOME/bin/amxmlc worker-src/WorkerMain.as  -source-path+=../../aqw-api-enhanced/src -source-path+=src -source-path+=worker-src -output gamefiles/embed/WorkerMain.swf -swf-version=18
 
 if [ ! -f Desktop_base.swf ]; then
     cp Desktop.swf Desktop_base.swf
@@ -22,11 +22,11 @@ $AIR_HOME/bin/amxmlc \
   -define+=POCKET::IS_MOBILE,false \
   -library-path+=loader/libs \
   -source-path+=loader/worker-src \
-  -source-path+=../air-aqw-enhanced/src_pocket \
+   \
   -source-path+=loader/src \
   -source-path+=../aqw-api-enhanced/src \
   -output loader/Desktop_code.swf \
-  ../air-aqw-enhanced/src_pocket/Pocket.as
+  loader/src/Pocket.as
 
 echo "Extracting ABC..."
 cd loader

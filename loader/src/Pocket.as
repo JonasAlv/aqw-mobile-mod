@@ -5,6 +5,7 @@
 
 	import flash.desktop.NativeApplication;
 	import flash.desktop.SystemIdleMode;
+		import flash.events.Event;
 	import flash.display.MovieClip;
 	import flash.display.Sprite;
 	import flash.text.TextField;
@@ -15,7 +16,6 @@
 	import load.LoadManager;
 	import load.handlers.BackgroundLoad;
 	import load.handlers.GameLoad;
-	import load.handlers.UpdateLoad;
 	import load.handlers.VersionLoad;
 
 	import ui.GameUI;
@@ -27,11 +27,6 @@
 	POCKET::IS_MOBILE {
 		import flash.ui.Multitouch;
 		import flash.ui.MultitouchInputMode;
-	}
-
-	//noinspection JSUnresolvedReference
-	POCKET::IS_DESKTOP {
-		import discord.DiscordRichPresence;
 	}
 
 	public class Pocket extends Sprite {
@@ -65,9 +60,25 @@
 
 			this.overlay.debug.log("Init");
 
-			check();
+						check();
 
 			_SINGLETON = this;
+			
+			this.addEventListener(Event.ENTER_FRAME, onEnterFrame);
+		}
+
+				public function onEnterFrame(e:Event):void {
+			if (this.config.option_disable_cutscenes && this.game != null && this.game.world != null) {
+				if (("mcExtSWF" in this.game.world) && this.game.world.mcExtSWF != null && this.game.world.mcExtSWF.numChildren > 0) {
+					var ext:* = this.game.world.mcExtSWF.getChildAt(0);
+					// Verify it's a cutscene and not a minigame? 
+					// Cutscenes usually have cutsceneHandler or something. But removing all children skips everything loaded there.
+					this.game.world.mcExtSWF.removeAllChildren();
+					if ("showInterface" in this.game.world) {
+						this.game.world.showInterface();
+					}
+				}
+			}
 		}
 
 		public var loadingTxt:TextField;
@@ -82,16 +93,10 @@
 
 		public const gameCore:Core = new Core(this);
 
-		//noinspection JSUnresolvedReference
-		POCKET::IS_DESKTOP {
-			public const discordRichPresence:DiscordRichPresence = new DiscordRichPresence(this);
-		}
-
 		public var networkCore:Network;
 
 		private const backgroundLoad:BackgroundLoad = new BackgroundLoad(this);
 		private const gameLoader:GameLoad = new GameLoad(this);
-		private const updateLoad:UpdateLoad = new UpdateLoad(this);
 		private const versionLoad:VersionLoad = new VersionLoad(this);
 
 		public var version:Version;
@@ -110,7 +115,7 @@
 					this.backgroundLoad.start();
 					break;
 				case 2:
-					this.updateLoad.start();
+					this.gameLoader.start();
 					break;
 				case 3:
 					this.gameLoader.start();

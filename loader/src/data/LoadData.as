@@ -19,9 +19,7 @@ package data {
 		public var onError:Function;
 		public var onHTTPError:Function;
 		
-		public var isQueued:Boolean;
-		
-		public function LoadData(kind:String, key:String, loader:Loader, context:LoaderContext, url:String, onComplete:Function, onProgress:Function = null, onError:Function = null, onHTTPError:Function = null, isQueued:Boolean = true) {
+		public function LoadData(kind:String, key:String, loader:Loader, context:LoaderContext, url:String, onComplete:Function, onProgress:Function = null, onError:Function = null, onHTTPError:Function = null) {
 			this.kind = kind;
 			this.key = key;
 			
@@ -34,8 +32,6 @@ package data {
 			this.onProgress = onProgress;
 			this.onError = onError;
 			this.onHTTPError = onHTTPError;
-			
-			this.isQueued = isQueued;
 		}
 
 	}
