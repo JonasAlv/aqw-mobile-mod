@@ -6,6 +6,8 @@ on:
 jobs:
   prepare:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - name: Checkout aqw-mobile-mod
         uses: actions/checkout@v4
@@ -74,6 +76,8 @@ jobs:
   build-android:
     needs: prepare
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     strategy:
       matrix:
         include:
@@ -181,6 +185,8 @@ jobs:
   publish:
     needs: [build-android, build-windows]
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - name: Download all builds
         uses: actions/download-artifact@v4
@@ -193,6 +199,7 @@ jobs:
         with:
           tag_name: "v3.4.2-mod"
           name: "AQW Mobile Mod v3.4.2"
+          body: "Modded AQW Mobile Build v3.4.2."
           files: |
             *.apk
             *.zip
