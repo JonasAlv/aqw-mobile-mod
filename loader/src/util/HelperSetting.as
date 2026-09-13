@@ -18,6 +18,9 @@ package util {
 		public static const OPTION_LOCK_ORIENTATION:String = "option_lock_orientation";
 		public static const OPTION_DISCORD_RPC:String = "option_discord_rpc";
 		
+		public static const OPTION_PAGINATION:String = "option_pagination";
+		public static const OPTION_EQUIPPED_ON_TOP:String = "option_equipped_on_top";
+		
 		public static const OPTION_SKILL_TOOLTIPS:String = "option_skill_tooltips";
 		public static const OPTION_DISABLE_CUTSCENES:String = "option_disable_cutscenes";
 		public static const OPTION_SLOW_WALK:String = "option_slow_walk"

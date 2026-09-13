@@ -134,6 +134,32 @@ package ui {
 					}
 				),
 				new Check(
+					HelperSetting.OPTION_PAGINATION,
+					true,
+					"Pagination",
+					"Enable pagination in the inventory, bank...",
+					true,
+					function (option:Check):void {
+						Pocket.SINGLETON.config.option_pagination = option.state;
+					},
+					function (frame:String):void {
+						Pocket.SINGLETON.config.option_pagination = HelperSetting.getBool(HelperSetting.OPTION_PAGINATION);
+					}
+				),
+				new Check(
+					HelperSetting.OPTION_EQUIPPED_ON_TOP,
+					true,
+					"Equipped On Top",
+					"Show equipped items at the top of the inventory, bank...",
+					true,
+					function (option:Check):void {
+						Pocket.SINGLETON.config.option_equipped_on_top = option.state;
+					},
+					function (frame:String):void {
+						Pocket.SINGLETON.config.option_equipped_on_top = HelperSetting.getBool(HelperSetting.OPTION_EQUIPPED_ON_TOP);
+					}
+				),
+				new Check(
 					HelperSetting.OPTION_DISCORD_RPC,
 					true,
 					"Discord RPC",

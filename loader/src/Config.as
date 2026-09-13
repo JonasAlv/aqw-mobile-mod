@@ -18,6 +18,9 @@ package {
 		}
 
 		public static const GITHUB_RELEASES_URL:String = "https://api.github.com/repos/anthony-hyo/aqw-mobile/releases/latest";
+		
+		public var option_pagination:Boolean = true;
+		public var option_equipped_on_top:Boolean = true;
 
 		public var option_animation_monster_off:Boolean = false;
 		public var option_animation_helm_off:Boolean = false;

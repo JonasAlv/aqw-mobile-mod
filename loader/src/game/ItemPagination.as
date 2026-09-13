@@ -151,7 +151,7 @@ package game {
 				listA = listA.concat(sortedGroup);
 			}
 
-			if (layout.sMode != "bank") {
+			if (layout.sMode != "bank" && this.pocket.config.option_equipped_on_top) {
 				const pinnedItems:Array = [];
 				const unpinnedItems:Array = [];
 
@@ -174,25 +174,35 @@ package game {
 			itemConfig.bLimited = bLimited && layout.sMode == "shopBuy";
 
 			const listLength:int = listA.length;
-			const totalPages:int = Math.max(1, Math.ceil(listLength / itemsPerPage));
 
-			if (iList.curPage >= totalPages) {
-				iList.curPage = totalPages - 1;
-			}
+			var totalPages:int = 1;
+			var curPage:int = 0;
+			var startIndex:int = 0;
+			var endIndex:int = listLength;
 
-			if (iList.curPage < 0) {
+			if (this.pocket.config.option_pagination) {
+				totalPages = Math.max(1, Math.ceil(listLength / itemsPerPage));
+
+				if (iList.curPage >= totalPages) {
+					iList.curPage = totalPages - 1;
+				}
+
+				if (iList.curPage < 0) {
+					iList.curPage = 0;
+				}
+
+				curPage = iList.curPage;
+				startIndex = curPage * itemsPerPage;
+				endIndex = Math.min(startIndex + itemsPerPage, listLength);
+			} else {
 				iList.curPage = 0;
 			}
-
-			const curPage:int = iList.curPage;
-			const startIndex:int = curPage * itemsPerPage;
-			const endIndex:int = Math.min(startIndex + itemsPerPage, listLength);
 
 			for (i = startIndex; i < endIndex; i++) {
 				addListItem(iList, lpf, lpfElementListItemItemCls, itemConfig, listA, iSel, i - startIndex);
 			}
 
-			if (totalPages > 1) {
+			if (this.pocket.config.option_pagination && totalPages > 1) {
 				const pagination:Pagination = Pagination(iList.addChild(new Pagination()));
 
 				pagination.y = iList.height + 6.5;
