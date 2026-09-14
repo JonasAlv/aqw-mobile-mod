@@ -27,13 +27,13 @@ jobs:
           path: aqw-api-enhanced
 
       - name: Setup Java 21
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: 'temurin'
           java-version: '21'
 
       - name: Setup Dlang
-        uses: dlang-community/setup-dlang@v1
+        uses: dlang-community/setup-dlang@v2
 
       - name: Install RABCDAsm & Dependencies
         run: |
@@ -127,7 +127,7 @@ jobs:
           path: .
 
       - name: Setup Java 21
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: 'temurin'
           java-version: '21'
@@ -194,7 +194,7 @@ jobs:
           path: .
 
       - name: Setup Java 21
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: 'temurin'
           java-version: '21'
@@ -253,7 +253,7 @@ jobs:
           path: .
 
       - name: Setup Java 21
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: 'temurin'
           java-version: '21'
