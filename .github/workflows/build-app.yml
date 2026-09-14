@@ -328,4 +328,4 @@ jobs:
           body: "Modded AQW Mobile Build ${{ inputs.upstream_version }}."
           files: |
             *.apk
-            AQWPocket-Mod*.zip
+            *.zip
