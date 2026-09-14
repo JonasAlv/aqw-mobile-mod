@@ -113,12 +113,12 @@ jobs:
           - architecture: "armv7"
             render-mode: "auto"
             suffix: ""
-          - architecture: "x86"
-            render-mode: "auto"
-            suffix: ""
-          - architecture: "x64"
-            render-mode: "auto"
-            suffix: ""
+          - architecture: "armv7"
+            render-mode: "direct"
+            suffix: "-direct"
+          - architecture: "armv7"
+            render-mode: "gpu"
+            suffix: "-gpu"
     steps:
       - name: Download workspace
         uses: actions/download-artifact@v4
@@ -183,9 +183,9 @@ jobs:
           - architecture: "x64"
             render-mode: "direct"
             suffix: "-windows-x64-direct"
-          - architecture: "x86"
-            render-mode: "auto"
-            suffix: "-windows-x86"
+          - architecture: "x64"
+            render-mode: "gpu"
+            suffix: "-windows-x64-gpu"
     steps:
       - name: Download workspace
         uses: actions/download-artifact@v4
@@ -233,6 +233,18 @@ jobs:
           - architecture: "x64"
             render-mode: "direct"
             suffix: "-macos-x64-direct"
+          - architecture: "x64"
+            render-mode: "gpu"
+            suffix: "-macos-x64-gpu"
+          - architecture: "armv8"
+            render-mode: "auto"
+            suffix: "-macos-armv8"
+          - architecture: "armv8"
+            render-mode: "direct"
+            suffix: "-macos-armv8-direct"
+          - architecture: "armv8"
+            render-mode: "gpu"
+            suffix: "-macos-armv8-gpu"
     steps:
       - name: Download workspace
         uses: actions/download-artifact@v4
@@ -283,7 +295,7 @@ jobs:
               gamefiles/character-select.swf
 
       - name: Zip
-        run: zip -r AQWPocket-Mod${{ matrix.suffix }}.zip AQWPocket-Mod${{ matrix.suffix }}/
+        run: zip -r AQWPocket-Mod${{ matrix.suffix }}.zip AQWPocket-Mod${{ matrix.suffix }}.app/
 
       - name: Upload
         uses: actions/upload-artifact@v4
