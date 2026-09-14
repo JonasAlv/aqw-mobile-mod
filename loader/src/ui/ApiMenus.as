@@ -159,6 +159,7 @@ import ui.option.Dropdown;
 				var c:Check = o as Check;
 				if (c.state) {
 					var script:String = "LOADQUEST 9421,9422,9423\nJOIN shadowbattleon,Enter,Spawn\nAUTOQUEST 9421,9422,9423\nCOMBAT smart\n";
+					var script:String = "EQUIPCLASS farm\nLOADQUEST 9421,9422,9423\nJOIN shadowbattleon,Enter,Spawn\nAUTOQUEST 9421,9422,9423\nCOMBAT smart\n";
 					ScriptManager.SINGLETON.reset();
 					ScriptManager.SINGLETON.loadScript(script);
 					ScriptManager.SINGLETON.start();

@@ -1,4 +1,4 @@
-﻿package {
+package {
 
 	import data.Release;
 	import data.Version;
@@ -32,6 +32,7 @@
 	//noinspection JSUnresolvedReference
 	POCKET::IS_DESKTOP {
 		import discord.DiscordRichPresence;
+		import controller.gamepad.DesktopInputManager;
 	}
 
 	public class Pocket extends Sprite {
@@ -68,6 +69,11 @@
 			check();
 
 			_SINGLETON = this;
+			
+			//noinspection JSUnresolvedReference
+			POCKET::IS_DESKTOP {
+				new DesktopInputManager(this);
+			}
 		}
 
 		public var loadingTxt:TextField;
