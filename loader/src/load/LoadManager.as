@@ -213,88 +213,107 @@ package load {
 		 *
 		 * @param loadData
 		 */
-		private function onLoad(loadData:LoadData):void {
-			const urlLoader:URLLoader = new URLLoader();
+		private var ramCache:Dictionary = new Dictionary();
 
+		private function processLoadedBytes(rawBytes:ByteArray, loadData:LoadData):void {
+			const categoryCheck:Function = resolveCategoryCheck(loadData.url);
+			const animationOn:Boolean = categoryCheck != null && categoryCheck();
+			const filterOn:Boolean = categoryCheck != null && Pocket.SINGLETON.config.option_filter_off;
+
+			const finishLoad:Function = function (finalBytes:ByteArray):void {
+				const byteLoader:Loader = loadData.loader == null ? new Loader() : loadData.loader;
+
+				if (loadData.isQueued) {
+					byteLoader.contentLoaderInfo.addEventListener(Event.COMPLETE, function (e:Event):void {
+						try {
+							if (loadData.onComplete != null) {
+								loadData.onComplete(e);
+							}
+
+							if (loadData.key != null) {
+								clearLoader(loadData.key);
+
+								loaderStack[loadData.key] = {
+									kind: loadData.kind,
+									loader: byteLoader
+								};
+							}
+						} catch (error:Error) {
+							trace("Failed to load: " + error.getStackTrace());
+						}
+
+						concurrentCount--;
+						loadNext();
+					});
+
+					if (loadData.onHTTPError != null) {
+						byteLoader.contentLoaderInfo.addEventListener(HTTPStatusEvent.HTTP_STATUS, loadData.onHTTPError);
+					}
+
+					byteLoader.contentLoaderInfo.addEventListener(IOErrorEvent.IO_ERROR, function (event:IOErrorEvent):void {
+						if (loadData.onError != null) {
+							try {
+								loadData.onError(event);
+							} catch (error:Error) {
+								trace("Failed to load bytes: " + error.getStackTrace());
+							}
+						}
+
+						concurrentCount--;
+						loadNext();
+					});
+				} else {
+					if (loadData.onComplete != null) {
+						byteLoader.contentLoaderInfo.addEventListener(Event.COMPLETE, loadData.onComplete);
+					}
+
+					if (loadData.onHTTPError != null) {
+						byteLoader.contentLoaderInfo.addEventListener(HTTPStatusEvent.HTTP_STATUS, loadData.onHTTPError);
+					}
+
+					byteLoader.contentLoaderInfo.addEventListener(IOErrorEvent.IO_ERROR, function (event:IOErrorEvent):void {
+						if (loadData.onError != null) {
+							loadData.onError(event);
+							return;
+						}
+						byteLoader.dispatchEvent(event);
+					});
+				}
+
+				byteLoader.loadBytes(finalBytes, loadData.context);
+			};
+
+			if (animationOn || filterOn) {
+				SWFWorkerClient.instance.process(rawBytes, animationOn, filterOn, finishLoad);
+			} else {
+				finishLoad(rawBytes);
+			}
+		}
+
+		private function onLoad(loadData:LoadData):void {
+			if (Pocket.SINGLETON.config.option_swf_cache && ramCache[loadData.url] != null) {
+				var cachedBytes:ByteArray = new ByteArray();
+				var originalBytes:ByteArray = ramCache[loadData.url] as ByteArray;
+				originalBytes.position = 0;
+				cachedBytes.writeBytes(originalBytes);
+				cachedBytes.position = 0;
+				processLoadedBytes(cachedBytes, loadData);
+				return;
+			}
+
+			const urlLoader:URLLoader = new URLLoader();
 			urlLoader.dataFormat = URLLoaderDataFormat.BINARY;
 
 			urlLoader.addEventListener(Event.COMPLETE, function (event:Event):void {
 				const rawBytes:ByteArray = event.target.data as ByteArray;
-
-				const categoryCheck:Function = resolveCategoryCheck(loadData.url);
-				const animationOn:Boolean = categoryCheck != null && categoryCheck();
-				const filterOn:Boolean = categoryCheck != null && Pocket.SINGLETON.config.option_filter_off;
-
-				const finishLoad:Function = function (finalBytes:ByteArray):void {
-					const byteLoader:Loader = loadData.loader == null ? new Loader() : loadData.loader;
-
-					if (loadData.isQueued) {
-						byteLoader.contentLoaderInfo.addEventListener(Event.COMPLETE, function (e:Event):void {
-							try {
-								if (loadData.onComplete != null) {
-									loadData.onComplete(e);
-								}
-
-								if (loadData.key != null) {
-									clearLoader(loadData.key);
-
-									loaderStack[loadData.key] = {
-										kind: loadData.kind,
-										loader: byteLoader
-									};
-								}
-							} catch (error:Error) {
-								trace("Failed to load: " + error.getStackTrace());
-							}
-
-							concurrentCount--;
-
-							loadNext();
-						});
-
-						if (loadData.onHTTPError != null) {
-							byteLoader.contentLoaderInfo.addEventListener(HTTPStatusEvent.HTTP_STATUS, loadData.onHTTPError);
-						}
-
-						byteLoader.contentLoaderInfo.addEventListener(IOErrorEvent.IO_ERROR, function (event:IOErrorEvent):void {
-							if (loadData.onError != null) {
-								try {
-									loadData.onError(event);
-								} catch (error:Error) {
-									trace("Failed to load bytes: " + error.getStackTrace());
-								}
-							}
-
-							concurrentCount--;
-
-							loadNext();
-						});
-					} else {
-						if (loadData.onComplete != null) {
-							byteLoader.contentLoaderInfo.addEventListener(Event.COMPLETE, loadData.onComplete);
-						}
-
-						if (loadData.onHTTPError != null) {
-							byteLoader.contentLoaderInfo.addEventListener(HTTPStatusEvent.HTTP_STATUS, loadData.onHTTPError);
-						}
-
-						byteLoader.contentLoaderInfo.addEventListener(IOErrorEvent.IO_ERROR, function (event:IOErrorEvent):void {
-							if (loadData.onError != null) {
-								loadData.onError(event);
-								return;
-							}
-							byteLoader.dispatchEvent(event);
-						});
-					}
-
-					byteLoader.loadBytes(finalBytes, loadData.context);
-				};
-
-				if (animationOn || filterOn) {
-					SWFWorkerClient.instance.process(rawBytes, animationOn, filterOn, finishLoad);
-				} else {
-					finishLoad(rawBytes);
+				if (Pocket.SINGLETON.config.option_swf_cache) {
+					var clonedBytes:ByteArray = new ByteArray();
+					rawBytes.position = 0;
+					clonedBytes.writeBytes(rawBytes);
+					clonedBytes.position = 0;
+					ramCache[loadData.url] = clonedBytes;
 				}
+				processLoadedBytes(rawBytes, loadData);
 			});
 
 			if (loadData.onProgress != null) {
