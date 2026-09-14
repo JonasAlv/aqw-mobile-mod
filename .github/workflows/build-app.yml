@@ -165,8 +165,14 @@ jobs:
       matrix:
         include:
           - architecture: "x64"
-            render-mode: "direct"
+            render-mode: "auto"
             suffix: "-windows-x64"
+          - architecture: "x64"
+            render-mode: "direct"
+            suffix: "-windows-x64-direct"
+          - architecture: "x86"
+            render-mode: "auto"
+            suffix: "-windows-x86"
     steps:
       - name: Download workspace
         uses: actions/download-artifact@v4
@@ -195,8 +201,73 @@ jobs:
           name: windows${{ matrix.suffix }}
           path: "AQWPocket-Mod*.zip"
 
+
+  build-macos:
+    needs: prepare
+    runs-on: macos-latest
+    strategy:
+      matrix:
+        include:
+          - architecture: "x64"
+            render-mode: "auto"
+            suffix: "-macos-x64"
+          - architecture: "x64"
+            render-mode: "direct"
+            suffix: "-macos-x64-direct"
+    steps:
+      - name: Download workspace
+        uses: actions/download-artifact@v4
+        with:
+          name: workspace-patched
+          path: .
+
+      - name: Setup AIR SDK
+        uses: joshtynjala/setup-adobe-air-action@v2
+        with:
+          air-version: "51.3.1"
+          accept-license: yes
+
+      - name: Build macOS
+        run: |
+          adt -certificate -cn "AQWPocket" 2048-RSA aqwpocket_keystore.p12 password
+          sed -i '' "s|<renderMode>.*</renderMode>|<renderMode>${{ matrix.render-mode }}</renderMode>|" loader/Desktop-app.xml
+          adt -package \
+            -storetype PKCS12 \
+            -keystore aqwpocket_keystore.p12 \
+            -storepass password \
+            -target bundle \
+            -arch ${{ matrix.architecture }} \
+            AQWPocket-Mod${{ matrix.suffix }} \
+            loader/Desktop-app.xml \
+            -extdir loader/libs \
+            -C loader \
+              Desktop.swf \
+              assets \
+              icons/icon-16x16.png \
+              icons/icon-32x32.png \
+              icons/icon-36x36.png \
+              icons/icon-48x48.png \
+              icons/icon-72x72.png \
+              icons/icon-96x96.png \
+              icons/icon-128x128.png \
+              icons/icon-144x144.png \
+              icons/icon-192x192.png \
+              gamefiles/game.swf \
+              gamefiles/world-map.swf \
+              gamefiles/book-of-lore.swf \
+              gamefiles/character-select.swf
+
+      - name: Zip
+        run: zip -r AQWPocket-Mod${{ matrix.suffix }}.zip AQWPocket-Mod${{ matrix.suffix }}/
+
+      - name: Upload
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos${{ matrix.suffix }}
+          path: "AQWPocket-Mod${{ matrix.suffix }}.zip"
+
   publish:
-    needs: [build-android, build-windows]
+    needs: [build-android, build-windows, build-macos]
     runs-on: ubuntu-latest
     permissions:
       contents: write
