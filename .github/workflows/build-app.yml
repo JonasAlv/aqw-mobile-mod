@@ -20,11 +20,17 @@ jobs:
           path: aqw-mobile
           
       - name: Checkout API
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           repository: JonasAlv/aqw-api
           ref: class-loadouts
           path: aqw-api-enhanced
+
+      - name: Setup Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
 
       - name: Setup Dlang
         uses: dlang-community/setup-dlang@v1
@@ -32,7 +38,7 @@ jobs:
       - name: Install RABCDAsm & Dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y wget unzip git curl liblzma-dev default-jdk default-jre
+          sudo apt-get install -y wget unzip git curl liblzma-dev
           git clone --depth 1 https://github.com/CyberShadow/RABCDAsm.git
           cd RABCDAsm
           dmd -run build_rabcdasm.d
@@ -120,6 +126,12 @@ jobs:
           name: workspace-patched
           path: .
 
+      - name: Setup Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
       - name: Setup AIR SDK
         uses: joshtynjala/setup-adobe-air-action@v2
         with:
@@ -181,6 +193,12 @@ jobs:
           name: workspace-patched
           path: .
 
+      - name: Setup Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
       - name: Setup AIR SDK
         uses: joshtynjala/setup-adobe-air-action@v2
         with:
@@ -221,6 +239,12 @@ jobs:
         with:
           name: workspace-patched
           path: .
+
+      - name: Setup Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
 
       - name: Setup AIR SDK
         uses: joshtynjala/setup-adobe-air-action@v2
