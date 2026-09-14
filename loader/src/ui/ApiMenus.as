@@ -227,6 +227,9 @@ import ui.option.Dropdown;
 					new Check("api_accept_ac_drops", false, "Accept AC Drops", "Automatically accept all AC-tagged (coin) drops.", true, function(o:Option):void {
 						var c:Check = o as Check;
 						if (AqwApi.drops != null) AqwApi.drops.acceptACs = c.state;
+					}),
+					new Check(HelperSetting.OPTION_SWF_CACHE, false, "SWF RAM Cache", "Caches loaded maps and classes to RAM to eliminate reloading. (Requires more RAM)", true, function(o:Option):void {
+						Pocket.SINGLETON.config.option_swf_cache = Check(o).state;
 					})
 				])
 			];

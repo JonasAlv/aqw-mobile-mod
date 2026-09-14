@@ -215,18 +215,33 @@ package load {
 		 */
 		private function onLoad(loadData:LoadData):void {
 			const urlLoader:URLLoader = new URLLoader();
+		private var ramCache:Dictionary = new Dictionary();
 
 			urlLoader.dataFormat = URLLoaderDataFormat.BINARY;
+		private function processLoadedBytes(rawBytes:ByteArray, loadData:LoadData):void {
+			const categoryCheck:Function = resolveCategoryCheck(loadData.url);
+			const animationOn:Boolean = categoryCheck != null && categoryCheck();
+			const filterOn:Boolean = categoryCheck != null && Pocket.SINGLETON.config.option_filter_off;
 
 			urlLoader.addEventListener(Event.COMPLETE, function (event:Event):void {
 				const rawBytes:ByteArray = event.target.data as ByteArray;
+			const finishLoad:Function = function (finalBytes:ByteArray):void {
+				const byteLoader:Loader = loadData.loader == null ? new Loader() : loadData.loader;
 
 				const categoryCheck:Function = resolveCategoryCheck(loadData.url);
 				const animationOn:Boolean = categoryCheck != null && categoryCheck();
 				const filterOn:Boolean = categoryCheck != null && Pocket.SINGLETON.config.option_filter_off;
+				if (loadData.isQueued) {
+					byteLoader.contentLoaderInfo.addEventListener(Event.COMPLETE, function (e:Event):void {
+						try {
+							if (loadData.onComplete != null) {
+								loadData.onComplete(e);
+							}
 
 				const finishLoad:Function = function (finalBytes:ByteArray):void {
 					const byteLoader:Loader = loadData.loader == null ? new Loader() : loadData.loader;
+							if (loadData.key != null) {
+								clearLoader(loadData.key);
 
 					if (loadData.isQueued) {
 						byteLoader.contentLoaderInfo.addEventListener(Event.COMPLETE, function (e:Event):void {
@@ -234,27 +249,67 @@ package load {
 								if (loadData.onComplete != null) {
 									loadData.onComplete(e);
 								}
+								loaderStack[loadData.key] = {
+									kind: loadData.kind,
+									loader: byteLoader
+								};
+							}
+						} catch (error:Error) {
+							trace("Failed to load: " + error.getStackTrace());
+						}
 
 								if (loadData.key != null) {
 									clearLoader(loadData.key);
+						concurrentCount--;
 
 									loaderStack[loadData.key] = {
 										kind: loadData.kind,
 										loader: byteLoader
 									};
 								}
+						loadNext();
+					});
+
+					if (loadData.onHTTPError != null) {
+						byteLoader.contentLoaderInfo.addEventListener(HTTPStatusEvent.HTTP_STATUS, loadData.onHTTPError);
+					}
+
+					byteLoader.contentLoaderInfo.addEventListener(IOErrorEvent.IO_ERROR, function (event:IOErrorEvent):void {
+						if (loadData.onError != null) {
+							try {
+								loadData.onError(event);
 							} catch (error:Error) {
 								trace("Failed to load: " + error.getStackTrace());
+								trace("Failed to load bytes: " + error.getStackTrace());
 							}
+						}
 
 							concurrentCount--;
+						concurrentCount--;
 
 							loadNext();
 						});
+						loadNext();
+					});
+				} else {
+					if (loadData.onComplete != null) {
+						byteLoader.contentLoaderInfo.addEventListener(Event.COMPLETE, loadData.onComplete);
+					}
 
 						if (loadData.onHTTPError != null) {
 							byteLoader.contentLoaderInfo.addEventListener(HTTPStatusEvent.HTTP_STATUS, loadData.onHTTPError);
+					if (loadData.onHTTPError != null) {
+						byteLoader.contentLoaderInfo.addEventListener(HTTPStatusEvent.HTTP_STATUS, loadData.onHTTPError);
+					}
+
+					byteLoader.contentLoaderInfo.addEventListener(IOErrorEvent.IO_ERROR, function (event:IOErrorEvent):void {
+						if (loadData.onError != null) {
+							loadData.onError(event);
+							return;
 						}
+						byteLoader.dispatchEvent(event);
+					});
+				}
 
 						byteLoader.contentLoaderInfo.addEventListener(IOErrorEvent.IO_ERROR, function (event:IOErrorEvent):void {
 							if (loadData.onError != null) {
@@ -264,8 +319,16 @@ package load {
 									trace("Failed to load bytes: " + error.getStackTrace());
 								}
 							}
+				byteLoader.loadBytes(finalBytes, loadData.context);
+			};
 
 							concurrentCount--;
+			if (animationOn || filterOn) {
+				SWFWorkerClient.instance.process(rawBytes, animationOn, filterOn, finishLoad);
+			} else {
+				finishLoad(rawBytes);
+			}
+		}
 
 							loadNext();
 						});
@@ -273,10 +336,25 @@ package load {
 						if (loadData.onComplete != null) {
 							byteLoader.contentLoaderInfo.addEventListener(Event.COMPLETE, loadData.onComplete);
 						}
+		/**
+		 * Hell.
+		 *
+		 * @param loadData
+		 */
+		private function onLoad(loadData:LoadData):void {
+			if (Pocket.SINGLETON.config.option_swf_cache && ramCache[loadData.url] != null) {
+				var cachedBytes:ByteArray = new ByteArray();
+				var originalBytes:ByteArray = ramCache[loadData.url] as ByteArray;
+				originalBytes.position = 0;
+				cachedBytes.writeBytes(originalBytes);
+				cachedBytes.position = 0;
 
 						if (loadData.onHTTPError != null) {
 							byteLoader.contentLoaderInfo.addEventListener(HTTPStatusEvent.HTTP_STATUS, loadData.onHTTPError);
 						}
+				processLoadedBytes(cachedBytes, loadData);
+				return;
+			}
 
 						byteLoader.contentLoaderInfo.addEventListener(IOErrorEvent.IO_ERROR, function (event:IOErrorEvent):void {
 							if (loadData.onError != null) {
@@ -286,15 +364,28 @@ package load {
 							byteLoader.dispatchEvent(event);
 						});
 					}
+			const urlLoader:URLLoader = new URLLoader();
 
 					byteLoader.loadBytes(finalBytes, loadData.context);
 				};
+			urlLoader.dataFormat = URLLoaderDataFormat.BINARY;
 
 				if (animationOn || filterOn) {
 					SWFWorkerClient.instance.process(rawBytes, animationOn, filterOn, finishLoad);
 				} else {
 					finishLoad(rawBytes);
+			urlLoader.addEventListener(Event.COMPLETE, function (event:Event):void {
+				const rawBytes:ByteArray = event.target.data as ByteArray;
+
+				if (Pocket.SINGLETON.config.option_swf_cache) {
+					var clonedBytes:ByteArray = new ByteArray();
+					rawBytes.position = 0;
+					clonedBytes.writeBytes(rawBytes);
+					clonedBytes.position = 0;
+					ramCache[loadData.url] = clonedBytes;
 				}
+
+				processLoadedBytes(rawBytes, loadData);
 			});
 
 			if (loadData.onProgress != null) {

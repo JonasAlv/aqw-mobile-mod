@@ -22,6 +22,7 @@ package {
 	import ui.Overlay;
 
 	import util.HelperLoader;
+	import util.HelperSetting;
 
 	//noinspection JSUnresolvedReference
 	POCKET::IS_MOBILE {
@@ -65,6 +66,8 @@ package {
 			this.versionTxt.text = "Version " + Config.APP_VERSION;
 
 			this.overlay.debug.log("Init");
+
+			config.option_swf_cache = HelperSetting.getBool(HelperSetting.OPTION_SWF_CACHE);
 
 			check();
 
