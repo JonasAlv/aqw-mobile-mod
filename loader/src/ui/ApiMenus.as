@@ -90,19 +90,23 @@ import ui.option.Dropdown;
 			});
 			scriptsOpts.push(startScriptCheck);
 
-			var combatSetupBtn:Button = new Button(null, "Auto Combat Setup", "Configure class and mode for smart combat.", "Setup", function(o:Option):void {
+			var combatSetupBtn:Button = new Button(null, "AutoCombat (Setup)", "Configure class and mode for smart combat.", "Setup", function(o:Option):void {
 				showSmartCombatPrompt(pocket);
 			});
-						var loadoutsBtn:Button = new Button(null, "Class Loadouts", "Configure your default Farm and Solo classes for script auto-swapping.", "Setup", function(o:Option):void {
+			var loadoutsBtn:Button = new Button(null, "Class Loadouts", "Configure your default Farm, Solo, Boss and Dodge classes for script auto-swapping.", "Setup", function(o:Option):void {
 				showLoadoutsPrompt(pocket);
 			});
 			scriptsOpts.push(loadoutsBtn);
-			scriptsOpts.push(combatSetupBtn);
 
-			var smartCombatCheck:Check = new Check(null, false, "Smart Combat", "Start smart auto combat.", true, function(o:Option):void { 
+			var smartCombatCheck:Check = new Check(null, false, "AutoCombat (Smart)", "Start smart auto combat.", true, function(o:Option):void { 
 				var c:Check = o as Check;
 				if (c.state) {
-					AqwApi.combat.mode = "Base";
+					var confClass:String = HelperSetting.getString("api_smart_class", "");
+					var confMode:String = HelperSetting.getString("api_smart_mode", "Base");
+					if (confClass != "" && AqwApi.inventory) {
+						AqwApi.inventory.equip(confClass);
+					}
+					AqwApi.combat.mode = confMode;
 					AqwApi.combat.startSmart(); 
 					AqwApi.dispatcher.dispatchEvent(new ApiEvent(ApiEvent.NOTIFICATION, "Smart Combat Started!")); 
 				} else {
@@ -117,7 +121,7 @@ import ui.option.Dropdown;
 				}
 			});
 
-			var customCombatCheck:Check = new Check(null, false, "Custom Combat", "Start custom combat sequence.", true, function(o:Option):void { 
+			var customCombatCheck:Check = new Check(null, false, "AutoCombat (Custom)", "Start custom combat sequence.", true, function(o:Option):void { 
 				var c:Check = o as Check;
 				if (c.state) {
 					pocket.overlay.gotoAndStop("Init");
@@ -154,7 +158,7 @@ import ui.option.Dropdown;
 			var autoLevelingCheck:Check = new Check(null, false, "Auto Leveling", "Auto grind XP in shadowbattleon.", true, function(o:Option):void {
 				var c:Check = o as Check;
 				if (c.state) {
-					var script:String = "JOIN shadowbattleon,Enter,Spawn\nAUTOQUEST 9421,9422,9423\nCOMBAT smart\n";
+					var script:String = "LOADQUEST 9421,9422,9423\nJOIN shadowbattleon,Enter,Spawn\nAUTOQUEST 9421,9422,9423\nCOMBAT smart\n";
 					ScriptManager.SINGLETON.reset();
 					ScriptManager.SINGLETON.loadScript(script);
 					ScriptManager.SINGLETON.start();
@@ -204,11 +208,11 @@ import ui.option.Dropdown;
 				apiMenus = new <Menu>[
 					new Menu("Scripts", scriptsOpts),
 					new Menu("Automation", new <Option>[
-						autoLevelingCheck,
 						combatSetupBtn,
 						smartCombatCheck,
 						customCombatCheck,
-						autoQuestCheck
+						autoQuestCheck,
+						autoLevelingCheck
 					]),
 					new Menu("Enhancements", enhOpts),
 
@@ -647,7 +651,7 @@ import ui.option.Dropdown;
 			
 			var title:TextField = new TextField();
 			title.defaultTextFormat = new TextFormat("_sans", 16, 0xE0E0E0, true, null, null, null, null, TextFormatAlign.CENTER);
-			title.text = "Auto Combat Setup";
+			title.text = "AutoCombat Setup";
 			title.width = 400;
 			title.y = 10;
 			title.selectable = false;
@@ -688,11 +692,13 @@ import ui.option.Dropdown;
 			}
 			if (availableClasses.length == 0) availableClasses.push("No Classes Found");
 			
-			if (_selectedClassStr == "" || availableClasses.indexOf(_selectedClassStr) == -1) {
+			_selectedClassStr = HelperSetting.getString("api_smart_class", currentClass != "" ? currentClass : availableClasses[0]);
+			if (availableClasses.indexOf(_selectedClassStr) == -1) {
 				_selectedClassStr = currentClass != "" ? currentClass : availableClasses[0];
 			}
 			
 			var availableModes:Array = CombatManager.getAvailableModes(_selectedClassStr);
+			_selectedModeStr = HelperSetting.getString("api_smart_mode", "Base");
 			if (availableModes.indexOf(_selectedModeStr) == -1) {
 				_selectedModeStr = availableModes[0];
 			}
@@ -728,7 +734,7 @@ import ui.option.Dropdown;
 			
 			var startTxt:TextField = new TextField();
 			startTxt.defaultTextFormat = new TextFormat("_sans", 14, 0xFFFFFF, true, null, null, null, null, TextFormatAlign.CENTER);
-			startTxt.text = "Start Auto Attack";
+			startTxt.text = "Save Configuration";
 			startTxt.width = 150;
 			startTxt.y = 8;
 			startTxt.selectable = false;
@@ -736,11 +742,9 @@ import ui.option.Dropdown;
 			startBtn.addChild(startTxt);
 			
 			startBtn.addEventListener(MouseEvent.CLICK, function(e:MouseEvent):void {
-				if (AqwApi.inventory && _selectedClassStr != currentClass) {
-					AqwApi.inventory.equip(_selectedClassStr);
-				}
-				AqwApi.combat.mode = _selectedModeStr;
-				AqwApi.combat.startSmart();
+				HelperSetting.setString("api_smart_class", _selectedClassStr);
+				HelperSetting.setString("api_smart_mode", _selectedModeStr);
+				AqwApi.dispatcher.dispatchEvent(new ApiEvent(ApiEvent.NOTIFICATION, "Smart Combat Configuration Saved!"));
 				hidePrompt();
 			});
 			_promptContainer.addChild(startBtn);

@@ -56,6 +56,7 @@ package ui {
 
 		private var pocket:Pocket;
 		private var scrollHelper:HelperScroll;
+		public var lastSelectedMenu:Menu = null;
 
 		public var menus:Vector.<Menu> = new <Menu> [
 			new Menu("General", new <Option>[
@@ -752,8 +753,11 @@ package ui {
 				}
 			}
 
-			Pocket.SINGLETON.overlay.selectMenu(menus[0]);
-
+				var targetMenu:Menu = menus[0];
+				if (lastSelectedMenu != null && menus.indexOf(lastSelectedMenu) != -1) {
+					targetMenu = lastSelectedMenu;
+				}
+				Pocket.SINGLETON.overlay.selectMenu(targetMenu);
 			this.reportBugBtn.addEventListener(MouseEvent.CLICK, onReportBug);
 			this.updateBtn.addEventListener(MouseEvent.CLICK, onUpdate);
 			this.discordBtn.addEventListener(MouseEvent.CLICK, onDiscord);
@@ -764,6 +768,7 @@ package ui {
 		}
 
 		public function selectMenu(menu:Menu):void {
+			this.lastSelectedMenu = menu;
 			this.contentOptions.removeChildren();
 
 			var heightTotal:uint = 0;
