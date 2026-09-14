@@ -19,10 +19,11 @@ jobs:
         with:
           path: aqw-mobile
           
-      - name: Checkout aqw-api
-        uses: actions/checkout@v4
+      - name: Checkout API
+        uses: actions/checkout@v3
         with:
           repository: JonasAlv/aqw-api
+          ref: class-loadouts
           path: aqw-api-enhanced
 
       - name: Setup Dlang
