@@ -22,6 +22,8 @@ package ui {
 			_notifications = new Vector.<ApiNotification>();
 			_pendingMessages = new Vector.<Object>();
 			AqwApi.dispatcher.addEventListener(ApiEvent.NOTIFICATION, onApiNotification);
+			AqwApi.dispatcher.addEventListener(ApiEvent.STICKY_NOTIFICATION, onStickyNotification);
+			AqwApi.dispatcher.addEventListener(ApiEvent.REMOVE_STICKY, onRemoveSticky);
 		}
 
 		public function init(container:Sprite):void {
@@ -42,7 +44,34 @@ package ui {
 			}
 		}
 
+		private function onStickyNotification(e:ApiEvent):void {
+			// ID is stored in e.data.id
+			var id:String = e.data && e.data.id ? e.data.id : "default_sticky";
+			if (_initialized) {
+				createSticky(id, e.message);
+			} else {
+				_pendingMessages.push({ id: id, message: e.message, sticky: true });
+			}
+		}
+
+		private function onRemoveSticky(e:ApiEvent):void {
+			var id:String = e.data && e.data.id ? e.data.id : "default_sticky";
+			if (_initialized) {
+				removeSticky(id);
+			} else {
+				// Remove it from pending if it hasn't shown yet
+				for (var i:int = _pendingMessages.length - 1; i >= 0; i--) {
+					if (_pendingMessages[i].id == id) {
+						_pendingMessages.splice(i, 1);
+					}
+				}
+			}
+		}
+
 		public function createSticky(id:String, message:String):void {
+			if (id != null) {
+				removeSticky(id);
+			}
 			showNotification(id, message, true);
 		}
 

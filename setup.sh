@@ -6,7 +6,7 @@
 
 set -e
 
-VERSION=${1:-v3.5.0}
+VERSION=${1:-v3.5.1}
 ANTHONY_APK_URL="https://github.com/anthony-hyo/aqw-mobile/releases/download/${VERSION}/AQWPocket-${VERSION}-armv8.apk"
 APK_FILE="/tmp/anthony-aqw.apk"
 GAMEFILES_DIR="loader/gamefiles"
