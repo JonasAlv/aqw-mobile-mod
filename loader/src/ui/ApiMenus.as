@@ -5,6 +5,8 @@ package ui {
 	import flash.text.TextField;
 	import flash.text.TextFieldType;
 	import flash.text.TextFormat;
+	import flash.utils.setTimeout;
+import ui.option.Dropdown;
 	import flash.text.TextFormatAlign;
 	import ui.Overlay;
 	import ui.option.Menu;
@@ -24,7 +26,7 @@ package ui {
 		import flash.net.FileFilter; 
 	}
 
-	public class BotMenus {
+	public class ApiMenus {
 		private static var _injected:Boolean = false;
 		private static var _overlay:Overlay;
 		private static var _promptContainer:Sprite;
@@ -33,7 +35,7 @@ package ui {
 		private static var _lastCombat:String = "";
 		
 		public static var anthonyMenus:Vector.<Menu>;
-		public static var botMenus:Vector.<Menu>;
+		public static var apiMenus:Vector.<Menu>;
 		
 		public static function inject(overlay:Overlay):void {
 			if (_injected) return;
@@ -82,9 +84,15 @@ package ui {
 			});
 			scriptsOpts.push(startScriptCheck);
 
+			var combatSetupBtn:Button = new Button(null, "Auto Combat Setup", "Configure class and mode for smart combat.", "Setup", function(o:Option):void {
+				showSmartCombatPrompt(pocket);
+			});
+			scriptsOpts.push(combatSetupBtn);
+
 			var smartCombatCheck:Check = new Check(null, false, "Smart Combat", "Start smart auto combat.", true, function(o:Option):void { 
 				var c:Check = o as Check;
 				if (c.state) {
+					AqwApi.combat.mode = "Base";
 					AqwApi.combat.startSmart(); 
 					AqwApi.dispatcher.dispatchEvent(new ApiEvent(ApiEvent.NOTIFICATION, "Smart Combat Started!")); 
 				} else {
@@ -133,42 +141,75 @@ package ui {
 				}
 			});
 
-			var levelingBotCheck:Check = new Check(null, false, "Leveling Bot", "Auto grind XP in shadowbattleon.", true, function(o:Option):void {
+			var autoLevelingCheck:Check = new Check(null, false, "Auto Leveling", "Auto grind XP in shadowbattleon.", true, function(o:Option):void {
 				var c:Check = o as Check;
 				if (c.state) {
 					var script:String = "JOIN shadowbattleon,Enter,Spawn\nAUTOQUEST 9421,9422,9423\nCOMBAT smart\n";
 					ScriptManager.SINGLETON.reset();
 					ScriptManager.SINGLETON.loadScript(script);
 					ScriptManager.SINGLETON.start();
-					AqwApi.dispatcher.dispatchEvent(new ApiEvent(ApiEvent.NOTIFICATION, "Leveling Bot Started!"));
+					AqwApi.dispatcher.dispatchEvent(new ApiEvent(ApiEvent.NOTIFICATION, "Auto Leveling Started!"));
 				} else {
 					ScriptManager.SINGLETON.stop();
-					AqwApi.dispatcher.dispatchEvent(new ApiEvent(ApiEvent.NOTIFICATION, "Leveling Bot Stopped!"));
+					AqwApi.dispatcher.dispatchEvent(new ApiEvent(ApiEvent.NOTIFICATION, "Auto Leveling Stopped!"));
 				}
 			});
-			levelingBotCheck.addEventListener(Event.ENTER_FRAME, function(e:Event):void {
-				if (levelingBotCheck.state != ScriptManager.SINGLETON.isRunning) {
-					levelingBotCheck.state = ScriptManager.SINGLETON.isRunning;
-					levelingBotCheck.syncState();
+			autoLevelingCheck.addEventListener(Event.ENTER_FRAME, function(e:Event):void {
+				if (autoLevelingCheck.state != ScriptManager.SINGLETON.isRunning) {
+					autoLevelingCheck.state = ScriptManager.SINGLETON.isRunning;
+					autoLevelingCheck.syncState();
 				}
 			});
 
-			botMenus = new <Menu>[
-				new Menu("Scripts", scriptsOpts),
-				new Menu("Automation", new <Option>[
-					levelingBotCheck,
-					smartCombatCheck,
-					customCombatCheck,
-					autoQuestCheck
-				]),
+			
+				var lvl50Shops:Array = [
+					{ name: "Healer Enh", id: 762 },
+					{ name: "Lucky Enh", id: 763 },
+					{ name: "Spellbreaker Enh", id: 764 },
+					{ name: "Wizard Enh", id: 765 },
+					{ name: "Hybrid Enh", id: 766 },
+					{ name: "Thief Enh", id: 767 },
+					{ name: "Fighter Enh", id: 768 }
+				];
+				var aweShops:Array = [
+					{ name: "Fighter Awe", id: 635 },
+					{ name: "Wizard Awe", id: 636 },
+					{ name: "Thief Awe", id: 637 },
+					{ name: "Healer Awe", id: 638 },
+					{ name: "Lucky Awe", id: 639 },
+					{ name: "Hybrid Awe", id: 633 }
+				];
+				var forgeShops:Array = [
+					{ name: "Weapon Enh", id: 2142 },
+					{ name: "Cape Enh", id: 2143 },
+					{ name: "Helmet Enh", id: 2164 }
+				];
+				
+				var enhOpts:Vector.<Option> = new <Option>[
+					new Button(null, "Lvl 50+ Enhancements", "Load level 50+ normal enhancements.", "Open", function(o:Option):void { pocket.overlay.gotoAndStop("Init"); showEnhancementPrompt(pocket, "Lvl 50+ Enhancements", lvl50Shops, false); }),
+					new Button(null, "Awe Enhancements", "Load Awe enhancements.", "Open", function(o:Option):void { pocket.overlay.gotoAndStop("Init"); showEnhancementPrompt(pocket, "Awe Enhancements", aweShops, false); }),
+					new Button(null, "Forge Enhancements", "Load Forge enhancements (auto-joins /forge).", "Open", function(o:Option):void { pocket.overlay.gotoAndStop("Init"); showEnhancementPrompt(pocket, "Forge Enhancements", forgeShops, true); })
+				];
+
+				apiMenus = new <Menu>[
+					new Menu("Scripts", scriptsOpts),
+					new Menu("Automation", new <Option>[
+						autoLevelingCheck,
+						combatSetupBtn,
+						smartCombatCheck,
+						customCombatCheck,
+						autoQuestCheck
+					]),
+					new Menu("Enhancements", enhOpts),
+
 				new Menu("Settings", new <Option>[
 					new Button(null, "Load Shop", "Load a shop by its ID.", "Load", function(o:Option):void { pocket.overlay.gotoAndStop("Init"); showShopPrompt(pocket); }),
 					new Button(null, "Toggle Bank", "Open or close your bank.", "Toggle", function(o:Option):void { AqwApi.inventory.toggleBank(); }),
-					new Check("bot_accept_loot", false, "Accept All Loot", "Automatically accept all dropped items.", true, function(o:Option):void {
+					new Check("api_accept_loot", false, "Accept All Loot", "Automatically accept all dropped items.", true, function(o:Option):void {
 						var c:Check = o as Check;
 						if (AqwApi.drops != null) AqwApi.drops.acceptAll = c.state;
 					}),
-					new Check("bot_accept_ac_drops", false, "Accept AC Drops", "Automatically accept all AC-tagged (coin) drops.", true, function(o:Option):void {
+					new Check("api_accept_ac_drops", false, "Accept AC Drops", "Automatically accept all AC-tagged (coin) drops.", true, function(o:Option):void {
 						var c:Check = o as Check;
 						if (AqwApi.drops != null) AqwApi.drops.acceptACs = c.state;
 					})
@@ -193,10 +234,10 @@ package ui {
 				}
 			}, true); // Capture phase guarantees it runs before native handlers!
 
-			var initialLootState:Boolean = HelperSetting.getBool("bot_accept_loot", false);
+			var initialLootState:Boolean = HelperSetting.getBool("api_accept_loot", false);
 			if (AqwApi.drops != null) AqwApi.drops.acceptAll = initialLootState;
 
-			var initialACState:Boolean = HelperSetting.getBool("bot_accept_ac_drops", false);
+			var initialACState:Boolean = HelperSetting.getBool("api_accept_ac_drops", false);
 			if (AqwApi.drops != null) AqwApi.drops.acceptACs = initialACState;
 
 			var icon:Sprite = new Sprite();
@@ -261,7 +302,7 @@ package ui {
 
 			icon.addEventListener(MouseEvent.CLICK, function(e:MouseEvent):void {
 				if (hasDragged) return;
-				overlay.menus = botMenus;
+				overlay.menus = apiMenus;
 				overlay.gotoAndStop("Panel");
 			});
 			
@@ -291,10 +332,10 @@ package ui {
 						} catch(err:*) {}
 					}
 					
-					var isBotMenu:Boolean = (overlay.menus == botMenus);
-					if (overlay.updateBtn != null) overlay.updateBtn.visible = !isBotMenu;
-					if (overlay.discordBtn != null) overlay.discordBtn.visible = !isBotMenu;
-					if (overlay.reportBugBtn != null) overlay.reportBugBtn.visible = !isBotMenu;
+					var isApiMenu:Boolean = (overlay.menus == apiMenus);
+					if (overlay.updateBtn != null) overlay.updateBtn.visible = !isApiMenu;
+					if (overlay.discordBtn != null) overlay.discordBtn.visible = !isApiMenu;
+					if (overlay.reportBugBtn != null) overlay.reportBugBtn.visible = !isApiMenu;
 				}
 			});
 		}
@@ -388,6 +429,149 @@ package ui {
 			
 			cancelBtn.addEventListener(MouseEvent.MOUSE_OVER, function(e:MouseEvent):void { cancelBtn.graphics.clear(); cancelBtn.graphics.beginFill(0x333333, 1); cancelBtn.graphics.lineStyle(1, 0x555555); cancelBtn.graphics.drawRoundRect(0, 0, 120, 30, 5, 5); cancelBtn.graphics.endFill(); cancelTxt.textColor = 0xFFFFFF; });
 			cancelBtn.addEventListener(MouseEvent.MOUSE_OUT, function(e:MouseEvent):void { cancelBtn.graphics.clear(); cancelBtn.graphics.beginFill(0x1E1E1E, 1); cancelBtn.graphics.lineStyle(1, 0x3A3A3A); cancelBtn.graphics.drawRoundRect(0, 0, 120, 30, 5, 5); cancelBtn.graphics.endFill(); cancelTxt.textColor = 0xCCCCCC; });
+			
+			cancelBtn.addEventListener(MouseEvent.CLICK, function(e:MouseEvent):void {
+				hidePrompt();
+			});
+			_promptContainer.addChild(cancelBtn);
+			
+			if (pocket.overlay != null) {
+				pocket.overlay.addChild(_promptContainer);
+			}
+		}
+
+		
+
+		private static var _selectedClassStr:String = "";
+		private static var _selectedModeStr:String = "Base";
+
+		private static function showSmartCombatPrompt(pocket:*):void {
+			hidePrompt();
+			_promptContainer = new Sprite();
+			_promptContainer.graphics.beginFill(0x121212, 0.95);
+			_promptContainer.graphics.lineStyle(1, 0x2A2A2A);
+			_promptContainer.graphics.drawRoundRect(0, 0, 400, 250, 8, 8);
+			_promptContainer.graphics.endFill();
+			_promptContainer.x = (960 - 400) / 2;
+			_promptContainer.y = (500 - 250) / 2;
+			
+			var title:TextField = new TextField();
+			title.defaultTextFormat = new TextFormat("_sans", 16, 0xE0E0E0, true, null, null, null, null, TextFormatAlign.CENTER);
+			title.text = "Auto Combat Setup";
+			title.width = 400;
+			title.y = 10;
+			title.selectable = false;
+			title.mouseEnabled = false;
+			_promptContainer.addChild(title);
+			
+			var lblClass:TextField = new TextField();
+			lblClass.defaultTextFormat = new TextFormat("_sans", 14, 0xCCCCCC);
+			lblClass.text = "Class:";
+			lblClass.x = 20;
+			lblClass.y = 50;
+			lblClass.width = 60;
+			lblClass.selectable = false;
+			_promptContainer.addChild(lblClass);
+			
+			var lblMode:TextField = new TextField();
+			lblMode.defaultTextFormat = new TextFormat("_sans", 14, 0xCCCCCC);
+			lblMode.text = "Mode:";
+			lblMode.x = 220;
+			lblMode.y = 50;
+			lblMode.width = 60;
+			lblMode.selectable = false;
+			_promptContainer.addChild(lblMode);
+			
+			var availableClasses:Array = [];
+			var currentClass:String = "";
+			if (AqwApi.game && AqwApi.game.world && AqwApi.game.world.myAvatar) {
+				if (AqwApi.game.world.myAvatar.objData) {
+					currentClass = String(AqwApi.game.world.myAvatar.objData.strClassName);
+				}
+				if (AqwApi.game.world.myAvatar.items) {
+						for each (var item:Object in AqwApi.game.world.myAvatar.items) {
+							if (item.sES == "ar") {
+								availableClasses.push(item.sName);
+							}
+					}
+				}
+			}
+			if (availableClasses.length == 0) availableClasses.push("No Classes Found");
+			
+			if (_selectedClassStr == "" || availableClasses.indexOf(_selectedClassStr) == -1) {
+				_selectedClassStr = currentClass != "" ? currentClass : availableClasses[0];
+			}
+			
+			var availableModes:Array = CombatManager.getAvailableModes(_selectedClassStr);
+			if (availableModes.indexOf(_selectedModeStr) == -1) {
+				_selectedModeStr = availableModes[0];
+			}
+			
+			var ddMode:Dropdown = new Dropdown(150, 25, availableModes, function(sel:String):void {
+				_selectedModeStr = sel;
+			});
+			ddMode.x = 220;
+			ddMode.y = 70;
+			
+			var ddClass:Dropdown = new Dropdown(180, 25, availableClasses, function(sel:String):void {
+				_selectedClassStr = sel;
+				var newModes:Array = CombatManager.getAvailableModes(_selectedClassStr);
+				ddMode.options = newModes;
+				_selectedModeStr = ddMode.selectedItem;
+			});
+			ddClass.x = 20;
+			ddClass.y = 70;
+			ddClass.selectedItem = _selectedClassStr;
+			ddMode.selectedItem = _selectedModeStr;
+			
+			_promptContainer.addChild(ddMode);
+			_promptContainer.addChild(ddClass);
+			
+			var startBtn:Sprite = new Sprite();
+			startBtn.graphics.beginFill(0x990000, 1);
+			startBtn.graphics.lineStyle(1, 0xCC0000);
+			startBtn.graphics.drawRoundRect(0, 0, 150, 35, 5, 5);
+			startBtn.graphics.endFill();
+			startBtn.x = 20;
+			startBtn.y = 190;
+			startBtn.buttonMode = true;
+			
+			var startTxt:TextField = new TextField();
+			startTxt.defaultTextFormat = new TextFormat("_sans", 14, 0xFFFFFF, true, null, null, null, null, TextFormatAlign.CENTER);
+			startTxt.text = "Start Auto Attack";
+			startTxt.width = 150;
+			startTxt.y = 8;
+			startTxt.selectable = false;
+			startTxt.mouseEnabled = false;
+			startBtn.addChild(startTxt);
+			
+			startBtn.addEventListener(MouseEvent.CLICK, function(e:MouseEvent):void {
+				if (AqwApi.inventory && _selectedClassStr != currentClass) {
+					AqwApi.inventory.equip(_selectedClassStr);
+				}
+				AqwApi.combat.mode = _selectedModeStr;
+				AqwApi.combat.startSmart();
+				hidePrompt();
+			});
+			_promptContainer.addChild(startBtn);
+			
+			var cancelBtn:Sprite = new Sprite();
+			cancelBtn.graphics.beginFill(0x1E1E1E, 1);
+			cancelBtn.graphics.lineStyle(1, 0x3A3A3A);
+			cancelBtn.graphics.drawRoundRect(0, 0, 100, 35, 5, 5);
+			cancelBtn.graphics.endFill();
+			cancelBtn.x = 280;
+			cancelBtn.y = 190;
+			cancelBtn.buttonMode = true;
+			
+			var cancelTxt:TextField = new TextField();
+			cancelTxt.defaultTextFormat = new TextFormat("_sans", 14, 0xCCCCCC, true, null, null, null, null, TextFormatAlign.CENTER);
+			cancelTxt.text = "Cancel";
+			cancelTxt.width = 100;
+			cancelTxt.y = 8;
+			cancelTxt.selectable = false;
+			cancelTxt.mouseEnabled = false;
+			cancelBtn.addChild(cancelTxt);
 			
 			cancelBtn.addEventListener(MouseEvent.CLICK, function(e:MouseEvent):void {
 				hidePrompt();
@@ -499,7 +683,116 @@ package ui {
 			}
 		}
 
+		
+		private static function showEnhancementPrompt(pocket:*, promptTitle:String, shops:Array, requireForge:Boolean = false):void {
+			hidePrompt();
+			_promptContainer = new Sprite();
+			_promptContainer.graphics.beginFill(0x121212, 0.95);
+			_promptContainer.graphics.lineStyle(1, 0x2A2A2A);
+			_promptContainer.graphics.drawRoundRect(0, 0, 340, 180, 8, 8);
+			_promptContainer.graphics.endFill();
+			_promptContainer.x = (960 - 340) / 2;
+			_promptContainer.y = (500 - 180) / 2;
+			
+			var title:TextField = new TextField();
+			title.defaultTextFormat = new TextFormat("_sans", 16, 0xE0E0E0, true, null, null, null, null, TextFormatAlign.CENTER);
+			title.text = promptTitle;
+			title.width = 340;
+			title.y = 15;
+			title.selectable = false;
+			title.mouseEnabled = false;
+			_promptContainer.addChild(title);
+			
+			var shopNames:Array = [];
+			for (var i:int = 0; i < shops.length; i++) {
+				shopNames.push(shops[i].name);
+			}
+			
+			var selectedId:int = shops[0].id;
+			var selectedName:String = shops[0].name;
+			
+			var ddShop:Dropdown = new Dropdown(260, 30, shopNames, function(sel:String):void {
+				selectedName = sel;
+				for (var j:int = 0; j < shops.length; j++) {
+					if (shops[j].name == sel) {
+						selectedId = shops[j].id;
+						break;
+					}
+				}
+			});
+			ddShop.x = 40;
+			ddShop.y = 55;
+			_promptContainer.addChild(ddShop);
+			
+			var loadBtn:Sprite = new Sprite();
+			loadBtn.graphics.beginFill(0x990000, 1);
+			loadBtn.graphics.lineStyle(1, 0xCC0000);
+			loadBtn.graphics.drawRoundRect(0, 0, 120, 35, 5, 5);
+			loadBtn.graphics.endFill();
+			loadBtn.x = 40;
+			loadBtn.y = 120;
+			loadBtn.buttonMode = true;
+			
+			var loadTxt:TextField = new TextField();
+			loadTxt.defaultTextFormat = new TextFormat("_sans", 14, 0xFFFFFF, true, null, null, null, null, TextFormatAlign.CENTER);
+			loadTxt.text = "Load Shop";
+			loadTxt.width = 120;
+			loadTxt.y = 8;
+			loadTxt.selectable = false;
+			loadTxt.mouseEnabled = false;
+			loadBtn.addChild(loadTxt);
+			
+			loadBtn.addEventListener(MouseEvent.CLICK, function(e:MouseEvent):void {
+				hidePrompt();
+				if (requireForge) {
+					if (AqwApi.map != null && AqwApi.map.name != null && AqwApi.map.name.toLowerCase() != "forge") {
+						AqwApi.map.join("forge", "Enter", "Spawn");
+						AqwApi.dispatcher.dispatchEvent(new ApiEvent(ApiEvent.NOTIFICATION, "Joining forge map..."));
+						setTimeout(function():void {
+							AqwApi.shop.loadShop(selectedId);
+							AqwApi.dispatcher.dispatchEvent(new ApiEvent(ApiEvent.NOTIFICATION, "Loading Shop: " + selectedName));
+						}, 3500);
+					} else {
+						AqwApi.shop.loadShop(selectedId);
+						AqwApi.dispatcher.dispatchEvent(new ApiEvent(ApiEvent.NOTIFICATION, "Loading Shop: " + selectedName));
+					}
+				} else {
+					AqwApi.shop.loadShop(selectedId);
+					AqwApi.dispatcher.dispatchEvent(new ApiEvent(ApiEvent.NOTIFICATION, "Loading Shop: " + selectedName));
+				}
+			});
+			_promptContainer.addChild(loadBtn);
+			
+			var cancelBtn:Sprite = new Sprite();
+			cancelBtn.graphics.beginFill(0x1E1E1E, 1);
+			cancelBtn.graphics.lineStyle(1, 0x3A3A3A);
+			cancelBtn.graphics.drawRoundRect(0, 0, 100, 35, 5, 5);
+			cancelBtn.graphics.endFill();
+			cancelBtn.x = 180;
+			cancelBtn.y = 120;
+			cancelBtn.buttonMode = true;
+			
+			var cancelTxt:TextField = new TextField();
+			cancelTxt.defaultTextFormat = new TextFormat("_sans", 14, 0xCCCCCC, true, null, null, null, null, TextFormatAlign.CENTER);
+			cancelTxt.text = "Cancel";
+			cancelTxt.width = 100;
+			cancelTxt.y = 8;
+			cancelTxt.selectable = false;
+			cancelTxt.mouseEnabled = false;
+			cancelBtn.addChild(cancelTxt);
+			
+			cancelBtn.addEventListener(MouseEvent.CLICK, function(e:MouseEvent):void {
+				hidePrompt();
+			});
+			_promptContainer.addChild(cancelBtn);
+			
+			if (pocket.overlay != null) {
+				pocket.overlay.addChild(_promptContainer);
+			}
+		}
+
 		private static function showShopPrompt(pocket:*):void {
+
 			hidePrompt();
 			_promptContainer = new Sprite();
 			_promptContainer.graphics.beginFill(0x121212, 0.95);
@@ -607,7 +900,7 @@ package ui {
 			
 			var title:TextField = new TextField();
 			title.defaultTextFormat = new TextFormat("_sans", 16, 0xE0E0E0, true, null, null, null, null, TextFormatAlign.CENTER);
-			title.text = "Paste Bot Script Below";
+			title.text = "Paste Script Below";
 			title.width = 600;
 			title.y = 10;
 			title.selectable = false;

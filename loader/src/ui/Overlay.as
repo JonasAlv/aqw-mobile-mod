@@ -707,7 +707,7 @@ package ui {
 		];
 
 		private function initFrame():void {
-			BotMenus.inject(this);
+			ApiMenus.inject(this);
 			
 			var apiNotifications:Sprite = Sprite(addChild(new Sprite()));
 			ApiNotificationManager.instance.init(apiNotifications);
