@@ -1,0 +1,1 @@
+modded version of aqw-mobile, injected with my aqw-api(AS3 API for automation) and custom button overlay(the menu button), using some of our API functions.
