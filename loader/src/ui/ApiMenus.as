@@ -46,6 +46,12 @@ import ui.option.Dropdown;
 
 			anthonyMenus = overlay.menus;
 
+				CombatManager.farmClass = HelperSetting.getString("api_farm_class", "");
+				CombatManager.farmMode = HelperSetting.getString("api_farm_mode", "Base");
+				CombatManager.soloClass = HelperSetting.getString("api_solo_class", "");
+				CombatManager.soloMode = HelperSetting.getString("api_solo_mode", "Base");
+
+
 			var scriptsOpts:Vector.<Option> = new <Option>[
 				new Button(null, "Paste Script", "Paste a raw text script.", "Paste", function(o:Option):void { pocket.overlay.gotoAndStop("Init"); showPastePrompt(pocket); })
 			];
@@ -87,6 +93,10 @@ import ui.option.Dropdown;
 			var combatSetupBtn:Button = new Button(null, "Auto Combat Setup", "Configure class and mode for smart combat.", "Setup", function(o:Option):void {
 				showSmartCombatPrompt(pocket);
 			});
+						var loadoutsBtn:Button = new Button(null, "Class Loadouts", "Configure your default Farm and Solo classes for script auto-swapping.", "Setup", function(o:Option):void {
+				showLoadoutsPrompt(pocket);
+			});
+			scriptsOpts.push(loadoutsBtn);
 			scriptsOpts.push(combatSetupBtn);
 
 			var smartCombatCheck:Check = new Check(null, false, "Smart Combat", "Start smart auto combat.", true, function(o:Option):void { 
@@ -444,6 +454,186 @@ import ui.option.Dropdown;
 
 		private static var _selectedClassStr:String = "";
 		private static var _selectedModeStr:String = "Base";
+
+		
+		private static function showLoadoutsPrompt(pocket:*):void {
+			hidePrompt();
+			_promptContainer = new Sprite();
+			_promptContainer.graphics.beginFill(0x121212, 0.95);
+			_promptContainer.graphics.lineStyle(1, 0x2A2A2A);
+			_promptContainer.graphics.drawRoundRect(0, 0, 420, 390, 8, 8);
+			_promptContainer.graphics.endFill();
+			_promptContainer.x = (960 - 420) / 2;
+			_promptContainer.y = (500 - 390) / 2;
+			
+			var title:TextField = new TextField();
+			title.defaultTextFormat = new TextFormat("_sans", 16, 0xE0E0E0, true, null, null, null, null, TextFormatAlign.CENTER);
+			title.text = "Class Loadouts (For Scripts)";
+			title.width = 420;
+			title.y = 10;
+			title.selectable = false;
+			title.mouseEnabled = false;
+			_promptContainer.addChild(title);
+
+			var availableClasses:Array = [];
+			if (AqwApi.game && AqwApi.game.world && AqwApi.game.world.myAvatar && AqwApi.game.world.myAvatar.items) {
+				for each (var item:Object in AqwApi.game.world.myAvatar.items) {
+					if (item.sES == "ar") availableClasses.push(item.sName);
+				}
+			}
+			if (availableClasses.length == 0) availableClasses.push("No Classes Found");
+			
+			// FARM ROW
+			var lblFarm:TextField = new TextField();
+			lblFarm.defaultTextFormat = new TextFormat("_sans", 14, 0xCCCCCC, true);
+			lblFarm.text = "FARM Loadout:";
+			lblFarm.x = 20; lblFarm.y = 45; lblFarm.width = 150;
+			lblFarm.selectable = false;
+			_promptContainer.addChild(lblFarm);
+			
+			var fClass:String = HelperSetting.getString("api_farm_class", availableClasses[0]);
+			if (availableClasses.indexOf(fClass) == -1) fClass = availableClasses[0];
+			var fModes:Array = CombatManager.getAvailableModes(fClass);
+			var fMode:String = HelperSetting.getString("api_farm_mode", fModes[0]);
+			if (fModes.indexOf(fMode) == -1) fMode = fModes[0];
+			
+			var ddFarmMode:Dropdown = new Dropdown(120, 25, fModes, function(sel:String):void {
+				fMode = sel; HelperSetting.setString("api_farm_mode", sel); CombatManager.farmMode = sel;
+			});
+			ddFarmMode.x = 280; ddFarmMode.y = 70;
+			
+			var ddFarmClass:Dropdown = new Dropdown(240, 25, availableClasses, function(sel:String):void {
+				fClass = sel; HelperSetting.setString("api_farm_class", sel); CombatManager.farmClass = sel;
+				var nm:Array = CombatManager.getAvailableModes(fClass);
+				ddFarmMode.options = nm;
+				ddFarmMode.selectedItem = nm[0];
+				fMode = nm[0]; HelperSetting.setString("api_farm_mode", fMode); CombatManager.farmMode = fMode;
+			});
+			ddFarmClass.x = 20; ddFarmClass.y = 70;
+			ddFarmClass.selectedItem = fClass;
+			ddFarmMode.selectedItem = fMode;
+			_promptContainer.addChild(ddFarmMode);
+			_promptContainer.addChild(ddFarmClass);
+			
+			// SOLO ROW
+			var lblSolo:TextField = new TextField();
+			lblSolo.defaultTextFormat = new TextFormat("_sans", 14, 0xCCCCCC, true);
+			lblSolo.text = "SOLO Loadout:";
+			lblSolo.x = 20; lblSolo.y = 110; lblSolo.width = 150;
+			lblSolo.selectable = false;
+			_promptContainer.addChild(lblSolo);
+			
+			var sClass:String = HelperSetting.getString("api_solo_class", availableClasses[0]);
+			if (availableClasses.indexOf(sClass) == -1) sClass = availableClasses[0];
+			var sModes:Array = CombatManager.getAvailableModes(sClass);
+			var sMode:String = HelperSetting.getString("api_solo_mode", sModes[0]);
+			if (sModes.indexOf(sMode) == -1) sMode = sModes[0];
+			
+			var ddSoloMode:Dropdown = new Dropdown(120, 25, sModes, function(sel:String):void {
+				sMode = sel; HelperSetting.setString("api_solo_mode", sel); CombatManager.soloMode = sel;
+			});
+			ddSoloMode.x = 280; ddSoloMode.y = 135;
+			
+			var ddSoloClass:Dropdown = new Dropdown(240, 25, availableClasses, function(sel:String):void {
+				sClass = sel; HelperSetting.setString("api_solo_class", sel); CombatManager.soloClass = sel;
+				var nm:Array = CombatManager.getAvailableModes(sClass);
+				ddSoloMode.options = nm;
+				ddSoloMode.selectedItem = nm[0];
+				sMode = nm[0]; HelperSetting.setString("api_solo_mode", sMode); CombatManager.soloMode = sMode;
+			});
+			ddSoloClass.x = 20; ddSoloClass.y = 135;
+			ddSoloClass.selectedItem = sClass;
+			ddSoloMode.selectedItem = sMode;
+			_promptContainer.addChild(ddSoloMode);
+			_promptContainer.addChild(ddSoloClass);
+
+			// BOSS ROW
+			var lblBoss:TextField = new TextField();
+			lblBoss.defaultTextFormat = new TextFormat("_sans", 14, 0xCCCCCC, true);
+			lblBoss.text = "BOSS Loadout:";
+			lblBoss.x = 20; lblBoss.y = 175; lblBoss.width = 150;
+			lblBoss.selectable = false;
+			_promptContainer.addChild(lblBoss);
+			
+			var bClass:String = HelperSetting.getString("api_boss_class", availableClasses[0]);
+			if (availableClasses.indexOf(bClass) == -1) bClass = availableClasses[0];
+			var bModes:Array = CombatManager.getAvailableModes(bClass);
+			var bMode:String = HelperSetting.getString("api_boss_mode", bModes[0]);
+			if (bModes.indexOf(bMode) == -1) bMode = bModes[0];
+			
+			var ddBossMode:Dropdown = new Dropdown(120, 25, bModes, function(sel:String):void {
+				bMode = sel; HelperSetting.setString("api_boss_mode", sel); CombatManager.bossMode = sel;
+			});
+			ddBossMode.x = 280; ddBossMode.y = 200;
+			
+			var ddBossClass:Dropdown = new Dropdown(240, 25, availableClasses, function(sel:String):void {
+				bClass = sel; HelperSetting.setString("api_boss_class", sel); CombatManager.bossClass = sel;
+				var nm:Array = CombatManager.getAvailableModes(bClass);
+				ddBossMode.options = nm;
+				ddBossMode.selectedItem = nm[0];
+				bMode = nm[0]; HelperSetting.setString("api_boss_mode", bMode); CombatManager.bossMode = bMode;
+			});
+			ddBossClass.x = 20; ddBossClass.y = 200;
+			ddBossClass.selectedItem = bClass;
+			ddBossMode.selectedItem = bMode;
+			_promptContainer.addChild(ddBossMode);
+			_promptContainer.addChild(ddBossClass);
+
+			// DODGE ROW
+			var lblDodge:TextField = new TextField();
+			lblDodge.defaultTextFormat = new TextFormat("_sans", 14, 0xCCCCCC, true);
+			lblDodge.text = "DODGE Loadout:";
+			lblDodge.x = 20; lblDodge.y = 240; lblDodge.width = 150;
+			lblDodge.selectable = false;
+			_promptContainer.addChild(lblDodge);
+			
+			var dClass:String = HelperSetting.getString("api_dodge_class", availableClasses[0]);
+			if (availableClasses.indexOf(dClass) == -1) dClass = availableClasses[0];
+			var dModes:Array = CombatManager.getAvailableModes(dClass);
+			var dMode:String = HelperSetting.getString("api_dodge_mode", dModes[0]);
+			if (dModes.indexOf(dMode) == -1) dMode = dModes[0];
+			
+			var ddDodgeMode:Dropdown = new Dropdown(120, 25, dModes, function(sel:String):void {
+				dMode = sel; HelperSetting.setString("api_dodge_mode", sel); CombatManager.dodgeMode = sel;
+			});
+			ddDodgeMode.x = 280; ddDodgeMode.y = 265;
+			
+			var ddDodgeClass:Dropdown = new Dropdown(240, 25, availableClasses, function(sel:String):void {
+				dClass = sel; HelperSetting.setString("api_dodge_class", sel); CombatManager.dodgeClass = sel;
+				var nm:Array = CombatManager.getAvailableModes(dClass);
+				ddDodgeMode.options = nm;
+				ddDodgeMode.selectedItem = nm[0];
+				dMode = nm[0]; HelperSetting.setString("api_dodge_mode", dMode); CombatManager.dodgeMode = dMode;
+			});
+			ddDodgeClass.x = 20; ddDodgeClass.y = 265;
+			ddDodgeClass.selectedItem = dClass;
+			ddDodgeMode.selectedItem = dMode;
+			_promptContainer.addChild(ddDodgeMode);
+			_promptContainer.addChild(ddDodgeClass);
+
+			// CLOSE BTN
+			var closeBtn:Sprite = new Sprite();
+			closeBtn.graphics.beginFill(0x1E1E1E, 1);
+			closeBtn.graphics.lineStyle(1, 0x3A3A3A);
+			closeBtn.graphics.drawRoundRect(0, 0, 150, 35, 5, 5);
+			closeBtn.graphics.endFill();
+			closeBtn.x = 135;
+			closeBtn.y = 330;
+			closeBtn.buttonMode = true;
+			var closeTxt:TextField = new TextField();
+			closeTxt.defaultTextFormat = new TextFormat("_sans", 14, 0xCCCCCC, true, null, null, null, null, TextFormatAlign.CENTER);
+			closeTxt.text = "Save & Close";
+			closeTxt.width = 150; closeTxt.y = 8;
+			closeTxt.selectable = false; closeTxt.mouseEnabled = false;
+			closeBtn.addChild(closeTxt);
+			closeBtn.addEventListener(MouseEvent.MOUSE_OVER, function(e:MouseEvent):void { closeBtn.graphics.clear(); closeBtn.graphics.beginFill(0x333333, 1); closeBtn.graphics.lineStyle(1, 0x555555); closeBtn.graphics.drawRoundRect(0, 0, 150, 35, 5, 5); closeBtn.graphics.endFill(); closeTxt.textColor = 0xFFFFFF; });
+			closeBtn.addEventListener(MouseEvent.MOUSE_OUT, function(e:MouseEvent):void { closeBtn.graphics.clear(); closeBtn.graphics.beginFill(0x1E1E1E, 1); closeBtn.graphics.lineStyle(1, 0x3A3A3A); closeBtn.graphics.drawRoundRect(0, 0, 150, 35, 5, 5); closeBtn.graphics.endFill(); closeTxt.textColor = 0xCCCCCC; });
+			closeBtn.addEventListener(MouseEvent.CLICK, function(e:MouseEvent):void { hidePrompt(); });
+			_promptContainer.addChild(closeBtn);
+			
+			pocket.overlay.addChild(_promptContainer);
+		}
+
 
 		private static function showSmartCombatPrompt(pocket:*):void {
 			hidePrompt();
