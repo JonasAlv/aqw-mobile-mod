@@ -1,6 +1,7 @@
 package game {
-	import flash.display.DisplayObject;
+
 	import flash.display.MovieClip;
+	import flash.display.SimpleButton;
 	import flash.events.MouseEvent;
 
 	import ui.util.Pagination;
@@ -13,8 +14,10 @@ package game {
 
 		private var pocket:Pocket;
 
+		private var itemsPerPage:int = 9;
+
 		/**
-		 * Patch freezing when opening Bank, Inventory etc..
+		 * Patch freezing when opening Bank, Inventory etc.
 		 *
 		 * @param state
 		 * @param lpf
@@ -44,10 +47,23 @@ package game {
 			const listMask:MovieClip = lpf.listMask;
 			const scr:Object = lpf.scr;
 
-			const lpfElementListItemItemCls:Class = pocket.game.world.getClass("LPFElementListItemItem");
+			const layout:MovieClip = state.getLayout();
+
+			switch (this.pocket.game.ui.mcPopup.currentLabel) {
+				case "Bank":
+				case "MergeShop":
+					itemsPerPage = 7;
+					break;
+			}
+
+			const lpfElementListItemItemCls:Class = this.pocket.game.world.getClass("LPFElementListItemItem");
 
 			while (iList.numChildren > 0) {
 				MovieClip(iList.getChildAt(0)).fClose();
+			}
+
+			if (reset || iList.curPage == undefined) {
+				iList.curPage = 0;
 			}
 
 			if (reset) {
@@ -98,7 +114,9 @@ package game {
 					"reset": reset
 				});
 
-				return {listA: listA};
+				return {
+					listA: listA
+				};
 			}
 
 			for (i = 0; i < sortOrder.length; i++) {
@@ -111,7 +129,11 @@ package game {
 				}
 
 				if (sortedGroup.length > 0) {
-					sortedGroup.sortOn(["sName", "iLvl"], [undefined, Array.DESCENDING | Array.NUMERIC]);
+					sortedGroup.sortOn(
+						["sName", "iLvl"],
+						[undefined, Array.DESCENDING | Array.NUMERIC]
+					);
+
 					listA = listA.concat(sortedGroup);
 				}
 			}
@@ -129,74 +151,84 @@ package game {
 				listA = listA.concat(sortedGroup);
 			}
 
-			var itemConfig:Object = {};
+			if (layout.sMode != "bank" && this.pocket.config.option_equipped_on_top) {
+				const pinnedItems:Array = [];
+				const unpinnedItems:Array = [];
+
+				for each (itemData in listA) {
+					if (itemData.bEquip) {
+						pinnedItems.push(itemData);
+					} else {
+						unpinnedItems.push(itemData);
+					}
+				}
+
+				listA = pinnedItems.concat(unpinnedItems);
+			}
+
+			const itemConfig:Object = {};
+
 			itemConfig.eventType = itemEventType;
 			itemConfig.allowDesel = allowDesel;
 			itemConfig.multiSelect = multiSelect;
-			itemConfig.bLimited = bLimited && state.getLayout().sMode == "shopBuy";
+			itemConfig.bLimited = bLimited && layout.sMode == "shopBuy";
 
-			var needPagination:Boolean = false;
-			
 			const listLength:int = listA.length;
 
-			for (i = 0; i < listLength; i++) {
-				if (i > 100) {
-					needPagination = true;
-					break;
+			var totalPages:int = 1;
+			var curPage:int = 0;
+			var startIndex:int = 0;
+			var endIndex:int = listLength;
+
+			if (this.pocket.config.option_pagination) {
+				totalPages = Math.max(1, Math.ceil(listLength / itemsPerPage));
+
+				if (iList.curPage >= totalPages) {
+					iList.curPage = totalPages - 1;
 				}
 
-				addListItem(iList, lpf, lpfElementListItemItemCls, itemConfig, listA, iSel, i);
+				if (iList.curPage < 0) {
+					iList.curPage = 0;
+				}
+
+				curPage = iList.curPage;
+				startIndex = curPage * itemsPerPage;
+				endIndex = Math.min(startIndex + itemsPerPage, listLength);
+			} else {
+				iList.curPage = 0;
 			}
 
-			if (needPagination) {
-				const pagination:DisplayObject = DisplayObject(iList.addChild(new Pagination()));
+			for (i = startIndex; i < endIndex; i++) {
+				addListItem(iList, lpf, lpfElementListItemItemCls, itemConfig, listA, iSel, i - startIndex);
+			}
 
-				pagination.y = iList.height - 5;
+			if (this.pocket.config.option_pagination && totalPages > 1) {
+				const pagination:Pagination = Pagination(iList.addChild(new Pagination()));
 
-				pagination.addEventListener(MouseEvent.CLICK, function (e:MouseEvent):void {
-					const buttonY:int = pagination.y;
+				pagination.y = iList.height + 6.5;
 
-					iList.removeChild(pagination);
+				pagination.fOpen({
+					"page": curPage + 1,
+					"totalPages": totalPages,
+					"canPrev": curPage > 0,
+					"canNext": curPage < totalPages - 1,
+					"state": state,
+					"lpf": lpf
+				});
 
-					var ii:int = 0;
+				if (pagination.btnPrev) {
+					pagination.btnPrev.addEventListener(MouseEvent.CLICK, this.onPrevClick, false, 0, false);
+				}
 
-					for (var j:int = i; j < listLength; j++) {
-						if (ii > 100) {
-							break;
-						}
-
-						addListItem(iList, lpf, lpfElementListItemItemCls, itemConfig, listA, iSel, j);
-
-						ii++;
-					}
-
-					i += ii;
-
-					if (i < listLength) {
-						iList.addChild(pagination);
-						pagination.y = iList.height - 5;
-					}
-
-					const hRun:int = scr.b.height - scr.h.height;
-					const dRun:int = iList.height - listMask.height + 20;
-
-					const targetY:Number = Math.max(iList.oy - dRun, iList.oy - buttonY);
-
-					iList.y = targetY;
-					scr.h.y = hRun > 0 ? -(targetY - iList.oy) * hRun / dRun : 0;
-
-					scr.fOpen({
-						"subject": iList,
-						"subjectMask": listMask,
-						"reset": false
-					});
-				}, false, 0, true);
+				if (pagination.btnNext) {
+					pagination.btnNext.addEventListener(MouseEvent.CLICK, this.onNextClick, false, 0, false);
+				}
 			}
 
 			scr.fOpen({
 				"subject": iList,
 				"subjectMask": listMask,
-				"reset": reset
+				"reset": true
 			});
 
 			return {
@@ -204,8 +236,30 @@ package game {
 			};
 		}
 
+		private function onPrevClick(e:MouseEvent):void {
+			const pagination:Pagination = Pagination(SimpleButton(e.currentTarget).parent);
+			const data:Object = pagination.fData;
+			const iList:MovieClip = data.lpf.iList;
+
+			if (iList.curPage > 0) {
+				iList.curPage--;
+				fDraw(data.state, data.lpf, false);
+			}
+		}
+
+		private function onNextClick(e:MouseEvent):void {
+			const pagination:Pagination = Pagination(SimpleButton(e.currentTarget).parent);
+			const data:Object = pagination.fData;
+			const iList:MovieClip = data.lpf.iList;
+
+			if (iList.curPage < data.totalPages - 1) {
+				iList.curPage++;
+				fDraw(data.state, data.lpf, false);
+			}
+		}
+
 		private function addListItem(iList:Object, lpf:Object, cls:Class, itemConfig:Object, listA:Array, iSel:Object, key:int):void {
-			itemConfig.fData = listA[key];
+			itemConfig.fData = listA[key + iList.curPage * itemsPerPage];
 
 			const listItem:Object = iList.addChild(new cls());
 
