@@ -13,6 +13,14 @@ package ui {
 			return _instance;
 		}
 
+		public static function notify(message:String):void {
+			if (_instance != null && _instance._initialized) {
+				_instance.showNotification(null, message, false);
+			} else {
+				instance._pendingMessages.push({ id: null, message: message, sticky: false });
+			}
+		}
+
 		private var _container:Sprite;
 		private var _notifications:Vector.<ApiNotification>;
 		private var _initialized:Boolean = false;
@@ -24,6 +32,9 @@ package ui {
 			AqwApi.dispatcher.addEventListener(ApiEvent.NOTIFICATION, onApiNotification);
 			AqwApi.dispatcher.addEventListener(ApiEvent.STICKY_NOTIFICATION, onStickyNotification);
 			AqwApi.dispatcher.addEventListener(ApiEvent.REMOVE_STICKY, onRemoveSticky);
+			AqwApi.dispatcher.addEventListener(ApiEvent.COMBAT_TOGGLED, onApiNotification);
+			AqwApi.dispatcher.addEventListener(ApiEvent.SCRIPT_STARTED, onApiNotification);
+			AqwApi.dispatcher.addEventListener(ApiEvent.SCRIPT_STOPPED, onApiNotification);
 		}
 
 		public function init(container:Sprite):void {
@@ -37,6 +48,7 @@ package ui {
 		}
 
 		private function onApiNotification(e:ApiEvent):void {
+			if (e == null || e.message == null || e.message == "") return;
 			if (_initialized) {
 				showNotification(null, e.message, false);
 			} else {

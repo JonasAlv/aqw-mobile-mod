@@ -65,7 +65,7 @@ import ui.option.Dropdown;
 						var txt:String = stream.readUTFBytes(stream.bytesAvailable);
 						stream.close();
 						ScriptManager.SINGLETON.loadScript(txt);
-						AqwApi.dispatcher.dispatchEvent(new ApiEvent(ApiEvent.NOTIFICATION, "Script loaded successfully!"));
+						ApiNotificationManager.notify("Script loaded successfully!");
 					});
 					file.browseForOpen("Select Script", [new FileFilter("Text Files", "*.txt")]);
 				}));
@@ -76,10 +76,8 @@ import ui.option.Dropdown;
 				if (c.state) {
 					ScriptManager.SINGLETON.reset();
 					ScriptManager.SINGLETON.start();
-					AqwApi.dispatcher.dispatchEvent(new ApiEvent(ApiEvent.NOTIFICATION, "Script Started!"));
 				} else {
 					ScriptManager.SINGLETON.stop();
-					AqwApi.dispatcher.dispatchEvent(new ApiEvent(ApiEvent.NOTIFICATION, "Script Stopped!"));
 				}
 			});
 			startScriptCheck.addEventListener(Event.ENTER_FRAME, function(e:Event):void {
@@ -108,15 +106,13 @@ import ui.option.Dropdown;
 					}
 					AqwApi.combat.mode = confMode;
 					AqwApi.combat.startSmart(); 
-					AqwApi.dispatcher.dispatchEvent(new ApiEvent(ApiEvent.NOTIFICATION, "Smart Combat Started!")); 
 				} else {
 					AqwApi.combat.stopAuto();
-					AqwApi.dispatcher.dispatchEvent(new ApiEvent(ApiEvent.NOTIFICATION, "Combat Stopped!"));
 				}
 			});
 			smartCombatCheck.addEventListener(Event.ENTER_FRAME, function(e:Event):void {
-				if (AqwApi.combat != null && smartCombatCheck.state != AqwApi.combat.isAutoRunning) {
-					smartCombatCheck.state = AqwApi.combat.isAutoRunning;
+				if (AqwApi.combat != null && smartCombatCheck.state != AqwApi.combat.isSmartRunning) {
+					smartCombatCheck.state = AqwApi.combat.isSmartRunning;
 					smartCombatCheck.syncState();
 				}
 			});
@@ -128,12 +124,11 @@ import ui.option.Dropdown;
 					showCombatPrompt(pocket); 
 				} else {
 					AqwApi.combat.stopAuto();
-					AqwApi.dispatcher.dispatchEvent(new ApiEvent(ApiEvent.NOTIFICATION, "Combat Stopped!"));
 				}
 			});
 			customCombatCheck.addEventListener(Event.ENTER_FRAME, function(e:Event):void {
-				if (AqwApi.combat != null && customCombatCheck.state != AqwApi.combat.isAutoRunning) {
-					customCombatCheck.state = AqwApi.combat.isAutoRunning;
+				if (AqwApi.combat != null && customCombatCheck.state != AqwApi.combat.isCustomRunning) {
+					customCombatCheck.state = AqwApi.combat.isCustomRunning;
 					customCombatCheck.syncState();
 				}
 			});
@@ -145,7 +140,6 @@ import ui.option.Dropdown;
 					showQuestPrompt(pocket); 
 				} else {
 					AqwApi.quest.stopAuto();
-					AqwApi.dispatcher.dispatchEvent(new ApiEvent(ApiEvent.NOTIFICATION, "Quests Stopped!"));
 				}
 			});
 			autoQuestCheck.addEventListener(Event.ENTER_FRAME, function(e:Event):void {
@@ -162,10 +156,8 @@ import ui.option.Dropdown;
 					ScriptManager.SINGLETON.reset();
 					ScriptManager.SINGLETON.loadScript(script);
 					ScriptManager.SINGLETON.start();
-					AqwApi.dispatcher.dispatchEvent(new ApiEvent(ApiEvent.NOTIFICATION, "Auto Leveling Started!"));
 				} else {
 					ScriptManager.SINGLETON.stop();
-					AqwApi.dispatcher.dispatchEvent(new ApiEvent(ApiEvent.NOTIFICATION, "Auto Leveling Stopped!"));
 				}
 			});
 			autoLevelingCheck.addEventListener(Event.ENTER_FRAME, function(e:Event):void {
@@ -420,7 +412,6 @@ import ui.option.Dropdown;
 				}
 				if (validIds.length > 0) {
 					AqwApi.quest.startAuto(validIds.join(","));
-					AqwApi.dispatcher.dispatchEvent(new ApiEvent(ApiEvent.NOTIFICATION, "Auto Quest started: " + validIds.join(", ")));
 				}
 				hidePrompt();
 			});
@@ -747,7 +738,7 @@ import ui.option.Dropdown;
 			startBtn.addEventListener(MouseEvent.CLICK, function(e:MouseEvent):void {
 				HelperSetting.setString("api_smart_class", _selectedClassStr);
 				HelperSetting.setString("api_smart_mode", _selectedModeStr);
-				AqwApi.dispatcher.dispatchEvent(new ApiEvent(ApiEvent.NOTIFICATION, "Smart Combat Configuration Saved!"));
+				ApiNotificationManager.notify("Smart Combat Configuration Saved!");
 				hidePrompt();
 			});
 			_promptContainer.addChild(startBtn);
@@ -843,7 +834,6 @@ import ui.option.Dropdown;
 				}
 				if (validSeq.length > 0) {
 					AqwApi.combat.startCustom(validSeq.join(","));
-					AqwApi.dispatcher.dispatchEvent(new ApiEvent(ApiEvent.NOTIFICATION, "Custom Combat started: " + validSeq.join(", ")));
 				}
 				hidePrompt();
 			});
@@ -944,18 +934,18 @@ import ui.option.Dropdown;
 				if (requireForge) {
 					if (AqwApi.map != null && AqwApi.map.name != null && AqwApi.map.name.toLowerCase() != "forge") {
 						AqwApi.map.join("forge", "Enter", "Spawn");
-						AqwApi.dispatcher.dispatchEvent(new ApiEvent(ApiEvent.NOTIFICATION, "Joining forge map..."));
+						ApiNotificationManager.notify("Joining forge map...");
 						setTimeout(function():void {
 							AqwApi.shop.loadShop(selectedId);
-							AqwApi.dispatcher.dispatchEvent(new ApiEvent(ApiEvent.NOTIFICATION, "Loading Shop: " + selectedName));
+							ApiNotificationManager.notify("Loading Shop: " + selectedName);
 						}, 3500);
 					} else {
 						AqwApi.shop.loadShop(selectedId);
-						AqwApi.dispatcher.dispatchEvent(new ApiEvent(ApiEvent.NOTIFICATION, "Loading Shop: " + selectedName));
+						ApiNotificationManager.notify("Loading Shop: " + selectedName);
 					}
 				} else {
 					AqwApi.shop.loadShop(selectedId);
-					AqwApi.dispatcher.dispatchEvent(new ApiEvent(ApiEvent.NOTIFICATION, "Loading Shop: " + selectedName));
+					ApiNotificationManager.notify("Loading Shop: " + selectedName);
 				}
 			});
 			_promptContainer.addChild(loadBtn);
@@ -1046,7 +1036,7 @@ import ui.option.Dropdown;
 				var sid:int = parseInt(String(_promptInput.text).replace(/^\s+|\s+$/g, ""));
 				if (sid > 0) {
 					AqwApi.shop.loadShop(sid);
-					AqwApi.dispatcher.dispatchEvent(new ApiEvent(ApiEvent.NOTIFICATION, "Loading Shop: " + sid));
+					ApiNotificationManager.notify("Loading Shop: " + sid);
 				}
 				hidePrompt();
 			});
@@ -1144,7 +1134,7 @@ import ui.option.Dropdown;
 				var text:String = _promptInput.text;
 				hidePrompt();
 				ScriptManager.SINGLETON.loadScript(text);
-				AqwApi.dispatcher.dispatchEvent(new ApiEvent(ApiEvent.NOTIFICATION, "Script loaded successfully!"));
+				ApiNotificationManager.notify("Script loaded successfully!");
 			});
 			_promptContainer.addChild(loadBtn);
 			
