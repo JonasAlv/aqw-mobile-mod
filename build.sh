@@ -7,7 +7,11 @@ export PATH=$AIR_HOME/bin:$JAVA_HOME/bin:$PATH
 
 echo "=> [0/3] Compiling Haxe API (aqw-haxe-api)..."
 if [ -d "../aqw-haxe-api" ]; then
-    (cd ../aqw-haxe-api && npx haxe build.hxml)
+    if command -v haxe >/dev/null 2>&1; then
+        (cd ../aqw-haxe-api && haxe build.hxml)
+    else
+        (cd ../aqw-haxe-api && npx haxe build.hxml)
+    fi
     mkdir -p loader/libs
     cp ../aqw-haxe-api/bin/AqwApi.swc loader/libs/AqwApi.swc
 fi
