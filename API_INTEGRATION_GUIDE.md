@@ -1,68 +1,57 @@
-# AqwApi Integration Guide
+# AqwApi Integration Guide (Single-Hook Bootstrap)
 
-This document explains exactly how our custom API (`AqwApi`) is hooked into Anthony's upstream `aqw-mobile` base game files. If you ever update Anthony's base files again, these are the ONLY hooks you need to ensure remain intact.
+This document explains exactly how our custom API (`AqwApi`) and Bot UI are hooked into Anthony's upstream `aqw-mobile` base game files.
 
 ## 1. The Goal
-Our goal is to **minimize changes to his core logic**. We keep his base game as clean as possible, enforcing direct, explicit, and deterministic hooks so developers aren't running in circles tracking down background magic.
+Our goal is **zero-touch / minimal touchpoints to upstream files**. We do NOT modify `Overlay.as`, `GameLoad.as`, or any core UI/network files. 
 
-## 2. API Initialization Hook: `load/handlers/GameLoad.as`
-This is where we explicitly initialize `AqwApi` the exact millisecond the game object is successfully loaded and appended to the stage.
+All initialization is encapsulated into `ModBootstrap.as`.
 
-**Location:** Inside `load.handlers.GameLoad` -> `onCompleted()`
-**What to add:**
+---
+
+## 2. The ONLY Hook Required: `Pocket.as`
+
+The entire mod requires **only 1 single line** in `loader/src/Pocket.as`:
+
+**Location:** Inside `Pocket` constructor (at the bottom, right after `_SINGLETON = this;`):
 ```actionscript
-    import com.aqwapi.AqwApi;
-    // ...
-    this.pocket.gameCore.onFrameChange("Init");
+    check();
 
-    // [MOD] Initialize our custom API with the fresh game object!
-    AqwApi.init(this.pocket.game);
+    _SINGLETON = this;
 
-    this.pocket.advance();
+    // [MOD] Bootstrap all API, UI, and desktop subsystems
+    ModBootstrap.init(this);
 ```
 
-## 3. UI Hook: `ui/Overlay.as`
-This is where we intercept his UI to load our custom bot menus and notification manager.
+---
 
-**Location:** Inside `ui.Overlay` -> `initFrame()`
-**What to add:**
-```actionscript
-private function initFrame():void {
-    // [MOD] Inject our custom BotMenus so they appear in the UI
-    BotMenus.inject(this);
-    
-    // [MOD] Initialize our independent ApiNotificationManager
-    apiNotifications = Sprite(addChild(new Sprite()));
-    ApiNotificationManager.instance.init(apiNotifications);
+## 3. What `ModBootstrap` Handles Automatically
 
-    // ... (rest of Anthony's original code)
-}
-```
+Because of `ModBootstrap.as`, you **do not** need to touch:
+*   `load/handlers/GameLoad.as`: `ModBootstrap` watches `pocket.game` and invokes `AqwApi.init(pocket.game)` automatically when the game object is loaded.
+*   `ui/Overlay.as`: `ModBootstrap` injects `ApiMenus` and `ApiNotificationManager` from the outside using event listeners.
+*   `ui/option/Menu.as`: Menu tab selection and state retention (`lastSelectedMenu`) are handled purely via event delegation in `ApiMenus.as`.
+*   Gamepad controls: `DesktopInputManager` is wired automatically for Desktop builds.
+*   RAM SWF cache: `pocket.config.option_swf_cache` is initialized automatically.
 
-## 4. Configuration Overrides (Optional): `ui/Overlay.as`
-Anthony uses `Pocket.SINGLETON.config.*` to save his settings. We override some of these in `Overlay.as` to use our custom `Config` class instead, completely detaching his config system from ours.
+---
 
-**Example Change in his Checkboxes:**
-```actionscript
-function (option:Check):void {
-    // OLD: Pocket.SINGLETON.config.option_animation_monster_off = option.state;
-    // NEW: Config.IS_GRAPHIC_ANIMATION_MONSTER_OFF = option.state;
-}
-```
+## 4. Standalone Mod Components (No Upstream Modifications Required)
+Our mod files live independently in `loader/src/`:
+*   `ModBootstrap.as`: Central coordinator and lifecycle hook.
+*   `ui/ApiMenus.as`: Custom dark UI overlay with bot options, scripts, quests, combat loadouts, and drop filters.
+*   `ui/ApiNotification.as` & `ui/ApiNotificationManager.as`: HUD notifications for bot actions and events.
+*   `ui/option/Dropdown.as`: Dropdown UI control for class and skill mode selection.
+*   `controller/gamepad/DesktopInputManager.as`: Controller support for Desktop.
 
-## 5. Standalone UI Components (No Upstream Modifications Required)
-We added the following files natively to `loader/src/ui/`. These files completely replace his `Notification.as` dependency:
-*   `BotMenus.as`: Contains the UI for the bot options and completely relies on `AqwApi.dispatcher`.
-*   `ApiNotificationManager.as`: Intercepts `ApiEvent.NOTIFICATION` events globally.
-*   `ApiNotification.as`: Renders the sleek dark Material UI notification on the screen.
+---
 
-Because these are standalone, an update from Anthony will **never** overwrite them.
+## 5. Upgrading to a New Upstream Version
 
-## 6. Summary
-By keeping hooks strictly to `GameLoad.as` (initialization) and `Overlay.as` (UI injection), we maintain a fully deterministic and modular architecture. 
-
-**Updating to a new version is as simple as:**
-1. Downloading his new `src` folder.
-2. Dropping our `BotMenus.as`, `ApiNotification.as`, and `ApiNotificationManager.as` files inside.
-3. Adding the initialization hook into `GameLoad.as`.
-4. Adding the UI hook into `Overlay.as`.
+When Anthony releases a new version of `aqw-mobile`:
+1. Drop his new `loader/src/` files into your workspace.
+2. Add the single line in `loader/src/Pocket.as`:
+   ```actionscript
+   ModBootstrap.init(this);
+   ```
+3. Run `./build.sh`!

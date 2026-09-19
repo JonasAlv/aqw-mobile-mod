@@ -44,7 +44,7 @@ cd loader
 abcexport Desktop_code.swf
 cp Desktop_base.swf Desktop.swf
 abcreplace Desktop.swf 0 Desktop_code-0.abc
-rm -f Desktop_code.swf Desktop_code-0.abc
+rm -f Desktop_code.swf Desktop_code-0.abc Desktop-*.abc Desktop_base-*.abc
 cd ..
 
 echo "=> Build Complete!"

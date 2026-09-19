@@ -7,10 +7,19 @@ package ui {
 
 	public class ApiNotificationManager {
 
-		private static var _instance:ApiNotificationManager;
+		private static var _instance:ApiNotificationManager = new ApiNotificationManager();
 		public static function get instance():ApiNotificationManager {
 			if (_instance == null) { _instance = new ApiNotificationManager(); }
 			return _instance;
+		}
+
+		public static function notify(message:String):void {
+			if (message == null || message == "") return;
+			if (instance._initialized) {
+				instance.showNotification(null, message, false);
+			} else {
+				instance._pendingMessages.push({ id: null, message: message, sticky: false });
+			}
 		}
 
 		private var _container:Sprite;
@@ -24,6 +33,9 @@ package ui {
 			AqwApi.dispatcher.addEventListener(ApiEvent.NOTIFICATION, onApiNotification);
 			AqwApi.dispatcher.addEventListener(ApiEvent.STICKY_NOTIFICATION, onStickyNotification);
 			AqwApi.dispatcher.addEventListener(ApiEvent.REMOVE_STICKY, onRemoveSticky);
+			AqwApi.dispatcher.addEventListener(ApiEvent.COMBAT_TOGGLED, onApiNotification);
+			AqwApi.dispatcher.addEventListener(ApiEvent.SCRIPT_STARTED, onApiNotification);
+			AqwApi.dispatcher.addEventListener(ApiEvent.SCRIPT_STOPPED, onApiNotification);
 		}
 
 		public function init(container:Sprite):void {
@@ -37,6 +49,7 @@ package ui {
 		}
 
 		private function onApiNotification(e:ApiEvent):void {
+			if (e == null || e.message == null || e.message == "") return;
 			if (_initialized) {
 				showNotification(null, e.message, false);
 			} else {

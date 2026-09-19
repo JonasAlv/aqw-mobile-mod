@@ -11,20 +11,31 @@ export PATH=$AIR_HOME/bin:$JAVA_HOME/bin:$PATH
 KEYSTORE="aqwpocket_keystore_local.p12"
 OUTPUT="AQWPocket-Mod-armv8-gpu.apk"
 
+# ---- Step 0: Compile Haxe API ----
+echo "=> [0/5] Compiling Haxe API (aqw-haxe-api)..."
+if [ -d "../aqw-haxe-api" ]; then
+  if command -v haxe >/dev/null 2>&1; then
+    (cd ../aqw-haxe-api && haxe build.hxml)
+  else
+    (cd ../aqw-haxe-api && npx haxe build.hxml)
+  fi
+  mkdir -p loader/libs
+  cp ../aqw-haxe-api/bin/AqwApi.swc loader/libs/AqwApi.swc
+fi
+
 # ---- Step 1: Compile WorkerMain ----
 echo "=> [1/5] Compiling WorkerMain.swf..."
 cd loader
 mkdir -p gamefiles/embed
 $AIR_HOME/bin/amxmlc worker-src/WorkerMain.as \
-  -source-path+=../../aqw-api-enhanced/src \
   -source-path+=src \
   -source-path+=worker-src \
   -output gamefiles/embed/WorkerMain.swf \
   -swf-version=18
 cd ..
 
-# ---- Step 2: Compile Mobile_code.swf ----
-echo "=> [2/5] Compiling Mobile_code.swf..."
+# ---- Step 2: Compile Mobile_code.swf with Haxe AqwApi.swc ----
+echo "=> [2/5] Compiling Mobile_code.swf with Haxe AqwApi.swc..."
 $AIR_HOME/bin/amxmlc \
   +configname=air \
   -define+=POCKET::IS_DESKTOP,false \
@@ -32,7 +43,6 @@ $AIR_HOME/bin/amxmlc \
   -library-path+=loader/libs \
   -source-path+=loader/worker-src \
   -source-path+=loader/src \
-  -source-path+=../aqw-api-enhanced/src \
   -output loader/Mobile_code.swf \
   loader/src/Pocket.as
 
@@ -82,9 +92,8 @@ $AIR_HOME/bin/adt -package \
     gamefiles/character-select.swf
 
 # Cleanup temp files
-rm -f loader/Mobile-app-gpu.xml loader/Mobile_code.swf loader/Mobile_code-0.abc
+rm -f loader/Mobile-app-gpu.xml loader/Mobile_code.swf loader/Mobile_code-0.abc loader/Mobile-*.abc loader/Mobile_base-*.abc
 
 echo ""
 echo "=> Done! Output: $OUTPUT ($(du -sh $OUTPUT | cut -f1))"
 echo "   Install on device with: adb install -r $OUTPUT"
-

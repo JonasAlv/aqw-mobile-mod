@@ -36,20 +36,33 @@ import ui.option.Dropdown;
 		
 		public static var anthonyMenus:Vector.<Menu>;
 		public static var apiMenus:Vector.<Menu>;
+		public static var lastSelectedMenu:Menu = null;
 		
 		public static function inject(overlay:Overlay):void {
 			if (_injected) return;
 			_injected = true;
 			_overlay = overlay;
 			
-			var pocket:* = overlay.parent;
+			var pocket:Pocket = Pocket.SINGLETON ? Pocket.SINGLETON : (overlay.parent as Pocket);
 
 			anthonyMenus = overlay.menus;
+
+			var apiNotifications:Sprite = new Sprite();
+			overlay.addChild(apiNotifications);
+			ApiNotificationManager.instance.init(apiNotifications);
 
 				CombatManager.farmClass = HelperSetting.getString("api_farm_class", "");
 				CombatManager.farmMode = HelperSetting.getString("api_farm_mode", "Base");
 				CombatManager.soloClass = HelperSetting.getString("api_solo_class", "");
 				CombatManager.soloMode = HelperSetting.getString("api_solo_mode", "Base");
+
+				if (AqwApi.combat != null) {
+					AqwApi.combat.infiniteRange = HelperSetting.getBool("api_infinite_range", false);
+				}
+				if (AqwApi.map != null) {
+					AqwApi.map.autoDeathSpawn = HelperSetting.getBool("api_death_spawn", false);
+					AqwApi.map.usePrivateRoom = HelperSetting.getBool("api_private_rooms", true);
+				}
 
 
 			var scriptsOpts:Vector.<Option> = new <Option>[
@@ -160,7 +173,7 @@ import ui.option.Dropdown;
 			var autoLevelingCheck:Check = new Check(null, false, "Auto Leveling", "Auto grind XP in shadowbattleon.", true, function(o:Option):void {
 				var c:Check = o as Check;
 				if (c.state) {
-					var script:String = "EQUIPCLASS farm\nLOADQUEST 9421,9422,9423\nJOIN shadowbattleon,Enter,Spawn\nAUTOQUEST 9421,9422,9423\nCOMBAT custom 2,2,2,5,3,4\n";
+					var script:String = "EQUIPCLASS farm\nLOADQUEST 9421,9422,9423\nJOIN shadowbattleon,Enter,Spawn\nAUTOQUEST 9421,9422,9423\nEQUIPCLASS farm\nCOMBAT smart\n";
 					ScriptManager.SINGLETON.reset();
 					ScriptManager.SINGLETON.loadScript(script);
 					ScriptManager.SINGLETON.start();
@@ -219,13 +232,28 @@ import ui.option.Dropdown;
 				new Menu("Settings", new <Option>[
 					new Button(null, "Load Shop", "Load a shop by its ID.", "Load", function(o:Option):void { pocket.overlay.gotoAndStop("Init"); showShopPrompt(pocket); }),
 					new Button(null, "Toggle Bank", "Open or close your bank.", "Toggle", function(o:Option):void { AqwApi.inventory.toggleBank(); }),
+					new Check("api_infinite_range", false, "Infinite Range", "Attack and use skills across the entire screen without range limits.", true, function(o:Option):void {
+						var c:Check = o as Check;
+						if (AqwApi.combat != null) {
+							AqwApi.combat.infiniteRange = c.state;
+							if (c.state) AqwApi.combat.applyInfiniteRange();
+						}
+					}),
+					new Check("api_death_spawn", false, "Death Spawn (Same Room)", "Automatically sets your respawn point to your current room so you never walk back on death.", true, function(o:Option):void {
+						var c:Check = o as Check;
+						if (AqwApi.map != null) AqwApi.map.autoDeathSpawn = c.state;
+					}),
+					new Check("api_private_rooms", true, "Private Rooms", "Automatically join private rooms (e.g. map-100000). Uncheck to join public rooms.", true, function(o:Option):void {
+						var c:Check = o as Check;
+						if (AqwApi.map != null) AqwApi.map.usePrivateRoom = c.state;
+					}),
 					new Check("api_accept_loot", false, "Accept All Loot", "Automatically accept all dropped items.", true, function(o:Option):void {
 						var c:Check = o as Check;
-						if (AqwApi.drops != null) AqwApi.drops.acceptAll = c.state;
+						if (AqwApi.drop != null) AqwApi.drop.acceptAll = c.state;
 					}),
 					new Check("api_accept_ac_drops", false, "Accept AC Drops", "Automatically accept all AC-tagged (coin) drops.", true, function(o:Option):void {
 						var c:Check = o as Check;
-						if (AqwApi.drops != null) AqwApi.drops.acceptACs = c.state;
+						if (AqwApi.drop != null) AqwApi.drop.acceptACs = c.state;
 					}),
 					new Check(HelperSetting.OPTION_SWF_CACHE, false, "SWF RAM Cache", "Caches loaded maps and classes to RAM to eliminate reloading. (Requires more RAM)", true, function(o:Option):void {
 						Pocket.SINGLETON.config.option_swf_cache = Check(o).state;
@@ -247,15 +275,16 @@ import ui.option.Dropdown;
 					}
 					if (isShowPanelBtn) {
 						overlay.menus = anthonyMenus;
+						lastSelectedMenu = null;
 					}
 				}
 			}, true); // Capture phase guarantees it runs before native handlers!
 
 			var initialLootState:Boolean = HelperSetting.getBool("api_accept_loot", false);
-			if (AqwApi.drops != null) AqwApi.drops.acceptAll = initialLootState;
+			if (AqwApi.drop != null) AqwApi.drop.acceptAll = initialLootState;
 
 			var initialACState:Boolean = HelperSetting.getBool("api_accept_ac_drops", false);
-			if (AqwApi.drops != null) AqwApi.drops.acceptACs = initialACState;
+			if (AqwApi.drop != null) AqwApi.drop.acceptACs = initialACState;
 
 			var icon:Sprite = new Sprite();
 			icon.graphics.beginFill(0x990000, 0.95);
@@ -276,9 +305,16 @@ import ui.option.Dropdown;
 			icon.y = 10;
 			icon.buttonMode = true;
 			
-			var theStage:* = pocket.stage;
+			var theStage:* = (pocket != null && pocket.stage != null) ? pocket.stage : overlay.stage;
 			if (theStage != null) {
 				theStage.addChild(icon);
+			} else {
+				overlay.addEventListener(Event.ADDED_TO_STAGE, function(ev:Event):void {
+					overlay.removeEventListener(Event.ADDED_TO_STAGE, arguments.callee);
+					if (overlay.stage != null) {
+						overlay.stage.addChild(icon);
+					}
+				});
 			}
 
 			var isDragging:Boolean = false;
@@ -321,7 +357,23 @@ import ui.option.Dropdown;
 				if (hasDragged) return;
 				overlay.menus = apiMenus;
 				overlay.gotoAndStop("Panel");
+				if (lastSelectedMenu != null && apiMenus.indexOf(lastSelectedMenu) != -1) {
+					overlay.selectMenu(lastSelectedMenu);
+				}
 			});
+
+			overlay.addEventListener(MouseEvent.CLICK, function(e:MouseEvent):void {
+				if (overlay.currentFrameLabel == "Panel" && overlay.contentMenu != null) {
+					var c:* = e.target;
+					while (c != null && c != overlay.contentMenu && c != overlay) {
+						if (c is Menu) {
+							lastSelectedMenu = c as Menu;
+							break;
+						}
+						c = c.parent;
+					}
+				}
+			}, false);
 			
 			overlay.addEventListener(Event.ENTER_FRAME, function(e:Event):void {
 				if (pocket.config.option_disable_cutscenes && pocket.game != null && pocket.game.world != null) {
@@ -333,6 +385,23 @@ import ui.option.Dropdown;
 								pocket.game.world.showInterface();
 							}
 						}
+					}
+				}
+
+				var isScriptRunning:Boolean = (ScriptManager.SINGLETON.isRunning);
+				var infiniteRangeActive:Boolean = isScriptRunning || HelperSetting.getBool("api_infinite_range", false);
+				var deathSpawnActive:Boolean = isScriptRunning || HelperSetting.getBool("api_death_spawn", false);
+
+				if (AqwApi.map != null) {
+					AqwApi.map.autoDeathSpawn = deathSpawnActive;
+					if (deathSpawnActive) {
+						AqwApi.map.checkAutoDeathSpawn();
+					}
+				}
+				if (AqwApi.combat != null) {
+					AqwApi.combat.infiniteRange = infiniteRangeActive;
+					if (infiniteRangeActive) {
+						AqwApi.combat.applyInfiniteRange();
 					}
 				}
 

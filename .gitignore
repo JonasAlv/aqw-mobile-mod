@@ -1,33 +1,35 @@
 # Build output
 /target
+*.apk
+*.abc
+loader/*.abc
+*.log
+loader/*.log
+loader/bot.log
+loader/libs/AqwApi.swc
 
 # IDE
 /.idea/
 /.vscode/settings.json
+loader.iml
+
 # Assets
 *.fla
 /patches/*/build/*
+
 # Generated / runtime files
 /patches-final/
 /pocket-patches/
 /patches/*
-loader.iml
-
-#this is generated for local testing
-loader/skills_custom.json 
-
 .env
+
+# Local testing & builds
+loader/skills_custom.json
 loader/Desktop_base.swf
 loader/Desktop_code.swf
-loader/Desktop_code-0.abc
-loader/Mobile_code.swf
-loader/Mobile_code-0.abc
-loader/Mobile_base.swf
 loader/Desktop-app-local.xml
+loader/Mobile_base.swf
+loader/Mobile_code.swf
+loader/Mobile-app-gpu.xml
 loader/gamefiles/
 aqwpocket_keystore_local.p12
-loader/Mobile-app-gpu.xml
-loader/Mobile_code.swf
-loader/Mobile_code-0.abc
-*.apk
-loader/skills_custom.json

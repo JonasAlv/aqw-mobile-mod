@@ -56,7 +56,6 @@ package ui {
 
 		private var pocket:Pocket;
 		private var scrollHelper:HelperScroll;
-		public var lastSelectedMenu:Menu = null;
 
 		public var menus:Vector.<Menu> = new <Menu> [
 			new Menu("General", new <Option>[
@@ -708,11 +707,6 @@ package ui {
 		];
 
 		private function initFrame():void {
-			ApiMenus.inject(this);
-			
-			var apiNotifications:Sprite = Sprite(addChild(new Sprite()));
-			ApiNotificationManager.instance.init(apiNotifications);
-
 			this.showPanelBtn.addEventListener(MouseEvent.CLICK, onShowPanel);
 
 			for each (var menu:Menu in menus) {
@@ -753,11 +747,8 @@ package ui {
 				}
 			}
 
-				var targetMenu:Menu = menus[0];
-				if (lastSelectedMenu != null && menus.indexOf(lastSelectedMenu) != -1) {
-					targetMenu = lastSelectedMenu;
-				}
-				Pocket.SINGLETON.overlay.selectMenu(targetMenu);
+			Pocket.SINGLETON.overlay.selectMenu(menus[0]);
+
 			this.reportBugBtn.addEventListener(MouseEvent.CLICK, onReportBug);
 			this.updateBtn.addEventListener(MouseEvent.CLICK, onUpdate);
 			this.discordBtn.addEventListener(MouseEvent.CLICK, onDiscord);
@@ -768,7 +759,6 @@ package ui {
 		}
 
 		public function selectMenu(menu:Menu):void {
-			this.lastSelectedMenu = menu;
 			this.contentOptions.removeChildren();
 
 			var heightTotal:uint = 0;

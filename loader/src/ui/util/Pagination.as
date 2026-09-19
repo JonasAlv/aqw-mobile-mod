@@ -11,7 +11,6 @@ package ui.util {
 		public var btnNext:SimpleButton;
 
 		public var fData:Object = {};
-		public var sel:Object = {};
 
 		private static const DISABLED_ALPHA:Number = 0.4;
 

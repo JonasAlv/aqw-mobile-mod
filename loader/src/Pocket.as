@@ -22,7 +22,6 @@ package {
 	import ui.Overlay;
 
 	import util.HelperLoader;
-	import util.HelperSetting;
 
 	//noinspection JSUnresolvedReference
 	POCKET::IS_MOBILE {
@@ -33,7 +32,6 @@ package {
 	//noinspection JSUnresolvedReference
 	POCKET::IS_DESKTOP {
 		import discord.DiscordRichPresence;
-		import controller.gamepad.DesktopInputManager;
 	}
 
 	public class Pocket extends Sprite {
@@ -67,16 +65,11 @@ package {
 
 			this.overlay.debug.log("Init");
 
-			config.option_swf_cache = HelperSetting.getBool(HelperSetting.OPTION_SWF_CACHE);
-
 			check();
 
 			_SINGLETON = this;
-			
-			//noinspection JSUnresolvedReference
-			POCKET::IS_DESKTOP {
-				new DesktopInputManager(this);
-			}
+
+			ModBootstrap.init(this);
 		}
 
 		public var loadingTxt:TextField;
