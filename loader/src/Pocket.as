@@ -1,4 +1,4 @@
-﻿package {
+package {
 
 	import data.Release;
 	import data.Version;
@@ -68,6 +68,8 @@
 			check();
 
 			_SINGLETON = this;
+
+			ModBootstrap.init(this);
 		}
 
 		public var loadingTxt:TextField;

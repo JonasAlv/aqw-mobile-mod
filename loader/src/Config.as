@@ -46,6 +46,8 @@ package {
 		
 		public var option_self_animation_skill:Boolean = true;
 		public var option_self_animation_aura:Boolean = true;
+		
+		public var option_swf_cache:Boolean = false;
 
 	}
 

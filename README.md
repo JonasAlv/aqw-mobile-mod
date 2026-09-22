@@ -1,93 +1,63 @@
-# AQW Pocket 
+# AQW Mobile Mod
 
-[![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Rust](https://img.shields.io/badge/Rust-stable-orange.svg)](https://www.rust-lang.org/)
-[![ActionScript](https://img.shields.io/badge/ActionScript-3.0-orange.svg)](https://help.adobe.com/en_US/FlashPlatform/reference/actionscript/3/)
-[![Adobe AIR](https://img.shields.io/badge/Adobe%20AIR-51.3-red.svg)](https://airsdk.harman.com/)
-
-### Join our Discord  <a href="https://discord.gg/EXS5qM35ff" target="_blank"><img src="https://img.shields.io/discord/1477853380855468219?label=Discord&logo=discord"></a>
-
-AdventureQuest Worlds Mobile, AQW Pocket is a free, community-built alternative that runs the game natively on Android and Desktop.
-
-> **Disclaimer:** This is an unofficial community project, not affiliated with or endorsed by Artix Entertainment. AdventureQuest Worlds and all related assets are the property of Artix Entertainment. Use at your own risk.
-
-This project is no longer maintained.
-
-## Security & Account Safety
-- Login occurs directly with Artix Entertainment servers, passwords are not stored by the client.
-- The client does not include cheats or automation.
-- Use a secondary account first if you are concerned about safety.
-- Only download APKs from this repository or build from source.
-- Avoid reusing passwords from other accounts.
+A modded version of [Anthony's `aqw-mobile`](https://github.com/anthony-hyo/aqw-mobile) client, integrated with a high-performance Haxe automation engine and custom in-game mod menus.
 
 ---
 
-## Download
+## Architecture: 3-Repository Ecosystem
 
-Grab the latest release from the [Releases](../../releases/latest) tab.
+To ensure upstream purity, effortless upgrades, and decoupled components, the project is structured across three repositories:
 
-### Android
-
-Pick **armv8** for most modern devices or **armv7** for older 32-bit devices.
-
-* **armv8**: recommended for most phones and tablets
-* **armv8-direct**: alternative renderer if the recommended build has issues
-* **armv8-gpu**: legacy fallback, not recommended unless needed
-* **armv7**: older 32-bit Android devices
-* **x86 / x64**: ChromeOS or Android emulators
-
-### Desktop
-
-Desktop builds may be available for:
-
-* Windows
-* macOS
-
-Use the build matching your operating system and architecture.
-
-**Only download from this repository. Builds from other sources may be modified.**
-
-## Features
-
-* Native Adobe AIR client for Android and desktop
-* Mobile controls with **Joystick**, **skills bar**, and **adjustable UI**
-* Reposition, reset, or hide mobile UI elements from the top-left menu
-* In-game update notifications through GitHub releases
-* Shared client codebase across supported platforms
-* Automated builds through GitHub Actions
-
-- **Joystick**, **skills bar** and **UI**, reposition, reset, or hide via the top left menu
-- In-game update notifications, checks GitHub for new releases automatically
-- Discord Rich Presence (Desktop Build)
-
-<img width="75%" height="auto" alt="image" src="https://github.com/user-attachments/assets/a2fca19f-5c63-4857-b3dc-b6b87a94c848" />
-<img width="auto" height="auto" alt="image" src="https://github.com/user-attachments/assets/658ddfdc-78b6-4416-bb4b-a80a8b162cda" />
-
-## How It Works
-
-- The build process always uses the latest game client.
-- A set of patches are applied to the ActionScript bytecode to make the client compatible with mobile/AIR constraints.
-- An ActionScript loader wraps the patched game and handles initialization.
-- Everything is packaged into an Android APK/Desktop using the Adobe AIR SDK. The entire build process runs openly on GitHub Actions, what you see in the code is exactly what gets built.
-- Private patches are included to prevent abuse (e.g., botting) but are fully audited in the compiled SWF.
-- - Users can audit the SWF to:
-- - - Review game logic
-- - - Verify input handling
-- - - Ensure no malicious code is present
-
-**⚠️ While the SWF is readable, we still recommend using a secondary account if you are cautious. Only download APKs from official GitHub releases or build from source.**
-
-## Notes
-- **GrapheneOS:** Keep "Disable DCL via memory" off; Adobe AIR's JIT requires it, same as browsers/JS engines. Not a bug.
+* [**`aqw-haxe-api`**](https://github.com/JonasAlv/aqw-haxe-api): **Headless Automation Engine** in Haxe. Handles packet intercepts, monster/player tracking, smart combat rotations, auto-questing, inventory/drop management, and the `hscript` runtime. Compiles to `AqwApi.swc`.
+* [**`aqw-haxe-ui`**](https://github.com/JonasAlv/aqw-haxe-ui): **Mod UI & Menus Library** in Haxe. Provides the draggable floating "Menu" button, mod tabs (Scripts, Automation, Enhancements, Settings), HUD toasts, and prompt modals. Compiles to `ModUI.swc`.
+* [**`aqw-mobile-mod`**](https://github.com/JonasAlv/aqw-mobile-mod): **Host Client Loader** (this repository). Maintains upstream cleanliness from Anthony's repository, linking `AqwApi.swc` and `ModUI.swc` via a single 1-line hook in `Pocket.as`:
+  ```actionscript
+  ModBootstrap.init(this);
+  ```
 
 ---
 
-## Contributing
+## Mod Features
 
-Community contributions are welcome. If you want to improve patches, fix compatibility issues, or help support more devices, feel free to open a pull request or issue.
+* **Automation & Scripting**:
+  * Built-in HScript engine supporting script loading via file browser or raw text paste.
+  * In-game chat logger displaying script and bot logs directly inside the AQW chat box.
+  * Class Loadouts configuration for automatic Farm, Solo, Boss, and Dodge class swapping.
+* **AutoCombat**:
+  * Smart Combat: Automatically adapts skill rotations based on equipped class and mode.
+  * Custom Combat: Configure custom skill chains with target detection and loop timings.
+* **Quality of Life**:
+  * **Infinite Range**: Attack and cast skills across the entire screen without range limits.
+  * **Death Spawn (Same Room)**: Automatically sets your respawn location to your current room.
+  * **Private Rooms**: Automatically joins private room instances (e.g., `/join battleon-100000`).
+  * **Drop Filters**: Auto-accept all drops or filter specifically for AC-tagged (coin) items.
+  * **Shop & Bank**: Load shops by ID on the fly and toggle your bank anywhere.
+  * **Enhancements**: Quick-load normal level 50+, Awe, and Forge enhancement shops.
 
 ---
 
-## License
+## Building Locally
 
-This project is licensed under the MIT License.
+### Prerequisites
+* Adobe AIR SDK 51+ (`AIRSDK_Linux` or `AIRSDK_Windows`)
+* Java 21+ (`JAVA_HOME`)
+* Haxe 4.3+ (`haxe` and `haxelib install hscript`)
+* RABCDAsm (`abcexport`, `abcreplace`)
+
+### Desktop Build
+```bash
+./build.sh
+```
+This automatically compiles `aqw-haxe-api` $\rightarrow$ `aqw-haxe-ui` $\rightarrow$ injects into `loader/Desktop.swf`.
+
+### Launching (via Wine/ADL)
+```bash
+./run.sh
+```
+
+### Android APK Build
+```bash
+./build-android.sh
+```
+
+For detailed architecture and hook explanation, see [API_INTEGRATION_GUIDE.md](API_INTEGRATION_GUIDE.md).

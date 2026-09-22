@@ -49,6 +49,8 @@ package util {
 		public static const OPTION_ANIMATION_WEAPON:String = "option_animation_weapon";
 		public static const OPTION_ANIMATION_MAP:String = "option_animation_map";
 
+		public static const OPTION_SWF_CACHE:String = "option_swf_cache";
+
 		public static const OPTION_FILTER:String = "option_filter";
 
 		public static const LAYOUT_JOYSTICK_MOUSE:String = "layout_joystick";
