@@ -62,6 +62,29 @@ abcreplace Desktop.swf 0 Desktop_code-0.abc
 rm -f Desktop_code.swf Desktop_code-0.abc Desktop-*.abc Desktop_base-*.abc
 cd ..
 
+echo "=> [2b/3] Compiling Mobile_code.swf with Haxe SWCs (AqwApi.swc & ModUI.swc)..."
+$AIR_HOME/bin/amxmlc \
+  +configname=air \
+  -debug=true \
+  -define+=POCKET::IS_DESKTOP,false \
+  -define+=POCKET::IS_MOBILE,true \
+  -library-path+=loader/libs \
+  -source-path+=loader/worker-src \
+  -source-path+=loader/src \
+  -output loader/Mobile_code.swf \
+  loader/src/Pocket.as
+
+echo "=> [3b/3] Injecting into Mobile.swf..."
+cd loader
+if [ ! -f Mobile_base.swf ]; then
+    cp Mobile.swf Mobile_base.swf
+fi
+abcexport Mobile_code.swf
+cp Mobile_base.swf Mobile.swf
+abcreplace Mobile.swf 0 Mobile_code-0.abc
+rm -f Mobile_code.swf Mobile_code-0.abc Mobile-*.abc Mobile_base-*.abc
+cd ..
+
 echo "=> Build Complete!"
 
 # Prevent patched SWFs from showing up as modified in git
