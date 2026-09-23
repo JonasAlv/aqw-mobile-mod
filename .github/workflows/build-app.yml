@@ -84,7 +84,6 @@ jobs:
       - name: Setup AIR SDK
         uses: joshtynjala/setup-adobe-air-action@v2
         with:
-          air-version: "51.3.1"
           air-version: "51.3.4"
           accept-license: yes
 
@@ -181,7 +180,6 @@ jobs:
       - name: Setup AIR SDK
         uses: joshtynjala/setup-adobe-air-action@v2
         with:
-          air-version: "51.3.1"
           air-version: "51.3.4"
           accept-license: yes
 
@@ -249,7 +247,6 @@ jobs:
       - name: Setup AIR SDK
         uses: joshtynjala/setup-adobe-air-action@v2
         with:
-          air-version: "51.3.1"
           air-version: "51.3.4"
           accept-license: yes
 
@@ -309,7 +306,6 @@ jobs:
       - name: Setup AIR SDK
         uses: joshtynjala/setup-adobe-air-action@v2
         with:
-          air-version: "51.3.1"
           air-version: "51.3.4"
           accept-license: yes
 
