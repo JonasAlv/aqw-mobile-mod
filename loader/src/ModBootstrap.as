@@ -8,6 +8,7 @@ package {
 	import com.aqwapi.AqwApi;
 	import ui.ApiMenus;
 	import util.HelperSetting;
+	import haxe;
 
 	POCKET::IS_DESKTOP {
 		import controller.gamepad.DesktopInputManager;
@@ -20,6 +21,11 @@ package {
 
 		public static function init(pocket:Pocket):void {
 			_pocket = pocket;
+
+			// Initialize Haxe SWC runtime (static initializers and runtime shims)
+			try {
+				haxe.initSwc(null);
+			} catch (e:Error) {}
 
 			try {
 				Security.allowDomain("*");
