@@ -19,8 +19,17 @@ fi
 export JAVA_HOME="${JAVA_HOME:-$HOME/.sdkman/candidates/java/current}"
 export PATH=$AIR_HOME/bin:$JAVA_HOME/bin:$PATH
 
+# Parse render modes: defaults to auto, gpu, and direct if none specified
+# Example usage:
+#   ./build-android.sh           # Builds auto, gpu, and direct
+#   ./build-android.sh auto gpu  # Builds only auto and gpu
+#   ./build-android.sh direct    # Builds only direct
+TARGET_MODES=("$@")
+if [ ${#TARGET_MODES[@]} -eq 0 ]; then
+  TARGET_MODES=("auto" "gpu" "direct")
+fi
+
 KEYSTORE="aqwpocket_keystore_local.p12"
-OUTPUT="AQWPocket-Mod-armv8-direct.apk"
 
 # ---- Step 0: Compile Haxe API & Mod UI ----
 if [ "$SKIP_HAXE_API" != "1" ]; then
@@ -79,36 +88,59 @@ if [ ! -f "$KEYSTORE" ]; then
   $AIR_HOME/bin/adt -certificate -cn "AQWPocketLocal" 2048-RSA "$KEYSTORE" password
 fi
 
-# ---- Step 5: Set Direct render mode in app descriptor ----
-echo "=> [5/5] Packaging APK (armv8, direct)..."
-cp loader/Mobile-app.xml loader/Mobile-app-direct.xml
-sed -i "s|<renderMode>.*</renderMode>|<renderMode>direct</renderMode>|" loader/Mobile-app-direct.xml
+# ---- Step 5: Packaging APK for requested render modes ----
+echo "=> [5/5] Packaging APKs (${TARGET_MODES[*]})..."
 
-$AIR_HOME/bin/adt -package \
-  -target apk-captive-runtime \
-  -arch armv8 \
-  -storetype PKCS12 \
-  -keystore "$KEYSTORE" \
-  -storepass password \
-  "$OUTPUT" \
-  loader/Mobile-app-direct.xml \
-  -C loader \
-    Mobile.swf \
-    assets \
-    icons/icon-36x36.png \
-    icons/icon-48x48.png \
-    icons/icon-72x72.png \
-    icons/icon-96x96.png \
-    icons/icon-144x144.png \
-    icons/icon-192x192.png \
-    gamefiles/game.swf \
-    gamefiles/world-map.swf \
-    gamefiles/book-of-lore.swf \
-    gamefiles/character-select.swf
+BUILT_APKS=()
+for MODE in "${TARGET_MODES[@]}"; do
+  OUTPUT="AQWPocket-Mod-armv8-${MODE}.apk"
+  TMP_APP_XML="loader/Mobile-app-${MODE}.xml"
+
+  echo "   -> Packaging $OUTPUT (renderMode: $MODE)..."
+  cp loader/Mobile-app.xml "$TMP_APP_XML"
+  sed -i "s|<renderMode>.*</renderMode>|<renderMode>${MODE}</renderMode>|" "$TMP_APP_XML"
+
+  $AIR_HOME/bin/adt -package \
+    -target apk-captive-runtime \
+    -arch armv8 \
+    -storetype PKCS12 \
+    -keystore "$KEYSTORE" \
+    -storepass password \
+    "$OUTPUT" \
+    "$TMP_APP_XML" \
+    -C loader \
+      Mobile.swf \
+      assets \
+      icons/icon-36x36.png \
+      icons/icon-48x48.png \
+      icons/icon-72x72.png \
+      icons/icon-96x96.png \
+      icons/icon-144x144.png \
+      icons/icon-192x192.png \
+      gamefiles/game.swf \
+      gamefiles/world-map.swf \
+      gamefiles/book-of-lore.swf \
+      gamefiles/character-select.swf
+
+  rm -f "$TMP_APP_XML"
+
+  if [ "$MODE" = "auto" ]; then
+    cp -f "$OUTPUT" "AQWPocket-Mod-armv8.apk"
+  fi
+
+  BUILT_APKS+=("$OUTPUT ($(du -sh "$OUTPUT" | cut -f1))")
+done
 
 # Cleanup temp files
-rm -f loader/Mobile-app-direct.xml loader/Mobile_code.swf loader/Mobile_code-0.abc loader/Mobile-*.abc loader/Mobile_base-*.abc
+rm -f loader/Mobile-app-*.xml loader/Mobile_code.swf loader/Mobile_code-0.abc loader/Mobile-*.abc loader/Mobile_base-*.abc
 
 echo ""
-echo "=> Done! Output: $OUTPUT ($(du -sh $OUTPUT | cut -f1))"
-echo "   Install on device with: adb install -r $OUTPUT"
+echo "=> Done! Built Android APKs:"
+for APK_INFO in "${BUILT_APKS[@]}"; do
+  echo "   • $APK_INFO"
+done
+if [ -f "AQWPocket-Mod-armv8.apk" ]; then
+  echo "   • AQWPocket-Mod-armv8.apk ($(du -sh AQWPocket-Mod-armv8.apk | cut -f1)) [alias for auto]"
+fi
+echo ""
+echo "   Install on device with: adb install -r <apk-file>"

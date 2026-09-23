@@ -365,27 +365,6 @@ jobs:
         with:
           tag_name: "${{ inputs.upstream_version }}-mod"
           name: "AQW Mobile Mod ${{ inputs.upstream_version }}"
-          body: |
-            ## Modded AQW Mobile Build ${{ inputs.upstream_version }}
-
-            ### 📱 Android Downloads:
-            * **armv8-direct (Recommended)**: `AQWMod-*-armv8-direct.apk`
-              → Direct Stage3D render mode. Recommended for highest stability, smooth 60 FPS performance, AutoCombat, and UI.
-            * **armv8 (Default Auto)**: `AQWMod-*-armv8.apk`
-              → Standard auto mode.
-            * **armv8-gpu (Legacy/Alternative)**: `AQWMod-*-armv8-gpu.apk`
-              → GPU render mode fallback.
-            * **armv7 (32-bit legacy)**: `AQWMod-*-armv7-direct.apk` / `armv7` / `armv7-gpu`
-
-            ### 💻 Desktop Downloads:
-            * **Windows (x64)**: `AQWMod-*-windows-x64-direct.zip` (Recommended) / `.zip` / `-gpu`
-            * **macOS (Apple Silicon & Intel)**: `AQWMod-*-macos-armv8-direct.zip` (Recommended) / `macos-x64`
-
-            ### 🚀 Features Included:
-            * **Smart AutoCombat & Class Rotations**: Built-in rotations for all classes via `AdvancedSkills.json`.
-            * **Auto Leveling (1-100)**: Automated XP and medal farming in Shadowbattleon.
-            * **Offline Quest Database**: Complete `QuestData.json` offline quest metadata.
-            * **Custom Scripting Engine**: HScript + command automation.
           files: |
             *.apk
             *.zip
