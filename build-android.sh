@@ -55,7 +55,7 @@ $AIR_HOME/bin/amxmlc worker-src/WorkerMain.as \
   -source-path+=src \
   -source-path+=worker-src \
   -output gamefiles/embed/WorkerMain.swf \
-  -swf-version=18
+  -swf-version=51
 cd ..
 
 # ---- Step 2: Compile Mobile_code.swf with Haxe SWCs ----

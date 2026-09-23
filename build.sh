@@ -34,7 +34,7 @@ fi
 echo "=> [1/3] Compiling WorkerMain.swf..."
 cd loader
 mkdir -p gamefiles/embed
-$AIR_HOME/bin/amxmlc worker-src/WorkerMain.as -source-path+=src -source-path+=worker-src -output gamefiles/embed/WorkerMain.swf -swf-version=18
+$AIR_HOME/bin/amxmlc worker-src/WorkerMain.as -source-path+=src -source-path+=worker-src -output gamefiles/embed/WorkerMain.swf -swf-version=51
 
 if [ ! -f Desktop_base.swf ]; then
     cp Desktop.swf Desktop_base.swf

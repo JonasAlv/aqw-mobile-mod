@@ -84,6 +84,7 @@ jobs:
       - name: Setup AIR SDK
         uses: joshtynjala/setup-adobe-air-action@v2
         with:
+          air-version: "51.3.1"
           air-version: "51.3.4"
           accept-license: yes
 
@@ -110,7 +111,7 @@ jobs:
           
           echo "Compiling WorkerMain.swf"
           mkdir -p gamefiles/embed
-          amxmlc worker-src/WorkerMain.as -source-path+=src -source-path+=worker-src -output gamefiles/embed/WorkerMain.swf -swf-version=18
+          amxmlc worker-src/WorkerMain.as -source-path+=src -source-path+=worker-src -output gamefiles/embed/WorkerMain.swf -swf-version=51
           
           echo "Compiling Mobile_code.swf"
           amxmlc +configname=air -define+=POCKET::IS_DESKTOP,false -define+=POCKET::IS_MOBILE,true -library-path+=libs -source-path+=worker-src -source-path+=src -output Mobile_code.swf src/Pocket.as
@@ -180,6 +181,7 @@ jobs:
       - name: Setup AIR SDK
         uses: joshtynjala/setup-adobe-air-action@v2
         with:
+          air-version: "51.3.1"
           air-version: "51.3.4"
           accept-license: yes
 
@@ -247,6 +249,7 @@ jobs:
       - name: Setup AIR SDK
         uses: joshtynjala/setup-adobe-air-action@v2
         with:
+          air-version: "51.3.1"
           air-version: "51.3.4"
           accept-license: yes
 
@@ -306,6 +309,7 @@ jobs:
       - name: Setup AIR SDK
         uses: joshtynjala/setup-adobe-air-action@v2
         with:
+          air-version: "51.3.1"
           air-version: "51.3.4"
           accept-license: yes
 
