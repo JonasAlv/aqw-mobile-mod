@@ -4,9 +4,9 @@ on:
   workflow_dispatch:
     inputs:
       upstream_version:
-        description: 'Upstream release version to pull gamefiles from (e.g., v3.5.0)'
+        description: 'Upstream release version to pull gamefiles from (e.g., v3.5.3)'
         required: true
-        default: 'v3.5.0'
+        default: 'v3.5.3'
 
 jobs:
   prepare:
@@ -87,6 +87,23 @@ jobs:
           air-version: "51.3.1"
           accept-license: yes
 
+      - name: Download Anthony's Precompiled gamefiles
+        run: |
+          cd aqw-mobile
+          
+          # Update app descriptor versions to match upstream version (strip leading v)
+          RAW_VERSION="${{ inputs.upstream_version }}"
+          CLEAN_VERSION="${RAW_VERSION#v}"
+          sed -i "s|<versionNumber>.*</versionNumber>|<versionNumber>${CLEAN_VERSION}</versionNumber>|" loader/Mobile-app.xml
+          sed -i "s|<versionNumber>.*</versionNumber>|<versionNumber>${CLEAN_VERSION}</versionNumber>|" loader/Desktop-app.xml
+          
+          cd loader
+          mkdir -p gamefiles
+          wget https://github.com/anthony-hyo/aqw-mobile/releases/download/${{ inputs.upstream_version }}/AQWPocket-${{ inputs.upstream_version }}-armv8.apk -O anthony.apk
+          unzip -q anthony.apk "assets/gamefiles/*" -d extracted
+          cp -r extracted/assets/gamefiles/* gamefiles/
+          rm -rf anthony.apk extracted
+
       - name: Compile and Inject SWFs
         run: |
           cd aqw-mobile/loader
@@ -105,22 +122,13 @@ jobs:
           abcexport Desktop_code.swf
           abcreplace Desktop.swf 0 Desktop_code-0.abc
 
-      - name: Download Anthony's Precompiled gamefiles
+      - name: Verify Assets and Workspace
         run: |
-          cd aqw-mobile
-          
-          # Update app descriptor versions to match upstream version (strip leading v)
-          RAW_VERSION="${{ inputs.upstream_version }}"
-          CLEAN_VERSION="${RAW_VERSION#v}"
-          sed -i "s|<versionNumber>.*</versionNumber>|<versionNumber>${CLEAN_VERSION}</versionNumber>|" loader/Mobile-app.xml
-          sed -i "s|<versionNumber>.*</versionNumber>|<versionNumber>${CLEAN_VERSION}</versionNumber>|" loader/Desktop-app.xml
-          
-          cd loader
-          mkdir -p gamefiles
-          wget https://github.com/anthony-hyo/aqw-mobile/releases/download/${{ inputs.upstream_version }}/AQWPocket-${{ inputs.upstream_version }}-armv8.apk -O anthony.apk
-          unzip -q anthony.apk "assets/gamefiles/*" -d extracted
-          cp -r extracted/assets/gamefiles/* gamefiles/
-          rm -rf anthony.apk extracted
+          echo "=> Verifying bundled assets..."
+          ls -lh aqw-mobile/loader/assets/
+          test -f aqw-mobile/loader/assets/AdvancedSkills.json || (echo "ERROR: AdvancedSkills.json is missing!" && exit 1)
+          test -f aqw-mobile/loader/assets/QuestData.json || (echo "ERROR: QuestData.json is missing!" && exit 1)
+          echo "=> Assets verified successfully."
 
 
 
@@ -357,7 +365,27 @@ jobs:
         with:
           tag_name: "${{ inputs.upstream_version }}-mod"
           name: "AQW Mobile Mod ${{ inputs.upstream_version }}"
-          body: "Modded AQW Mobile Build ${{ inputs.upstream_version }}."
+          body: |
+            ## Modded AQW Mobile Build ${{ inputs.upstream_version }}
+
+            ### 📱 Android Downloads:
+            * **armv8-gpu (Recommended)**: `AQWMod-*-armv8-gpu.apk`
+              → Full 60 FPS hardware acceleration. Best performance for AutoCombat, Auto Leveling, and UI.
+            * **armv8-direct (Alternative)**: `AQWMod-*-armv8-direct.apk`
+              → Direct Stage3D render mode. Use if GPU mode has graphical artifacts on your device.
+            * **armv8 (Default Auto)**: `AQWMod-*-armv8.apk`
+              → Standard auto mode.
+            * **armv7 (32-bit legacy)**: `AQWMod-*-armv7-gpu.apk` / `armv7-direct` / `armv7`
+
+            ### 💻 Desktop Downloads:
+            * **Windows (x64)**: `AQWMod-*-windows-x64-gpu.zip` / `-direct` / `.zip`
+            * **macOS (Apple Silicon & Intel)**: `AQWMod-*-macos-armv8-gpu.zip` / `macos-x64`
+
+            ### 🚀 Features Included:
+            * **Smart AutoCombat & Class Rotations**: Built-in rotations for all classes via `AdvancedSkills.json`.
+            * **Auto Leveling (1-100)**: Automated XP and medal farming in Shadowbattleon.
+            * **Offline Quest Database**: Complete `QuestData.json` offline quest metadata.
+            * **Custom Scripting Engine**: HScript + command automation.
           files: |
             *.apk
             *.zip
