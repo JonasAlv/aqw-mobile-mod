@@ -183,6 +183,35 @@ jobs:
           air-version: "51.3.4"
           accept-license: yes
 
+      - name: Fix AIR SDK aapt on Linux
+        run: |
+          echo "=> Installing system aapt and modern libc++..."
+          sudo apt-get update
+          sudo apt-get install -y aapt libc++1 libc++-dev
+
+          # Locate AIR SDK android/bin
+          ADT_PATH=$(which adt)
+          AIR_BIN_DIR="$(dirname "$ADT_PATH")/../lib/android/bin"
+          echo "AIR Android bin directory: $AIR_BIN_DIR"
+
+          # 1. Update libc++.so in AIR SDK lib64 if present
+          SYS_LIBCPP=$(find /usr/lib/x86_64-linux-gnu /usr/lib -name "libc++.so" 2>/dev/null | head -n 1)
+          if [ -n "$SYS_LIBCPP" ] && [ -d "$AIR_BIN_DIR/lib64" ]; then
+            echo "Copying system $SYS_LIBCPP to $AIR_BIN_DIR/lib64/libc++.so"
+            sudo cp -f "$SYS_LIBCPP" "$AIR_BIN_DIR/lib64/libc++.so"
+          fi
+
+          # 2. Replace broken aapt / aapt_linux64 with system /usr/bin/aapt
+          if [ -f "/usr/bin/aapt" ]; then
+            echo "Replacing AIR SDK aapt with /usr/bin/aapt"
+            sudo cp -f /usr/bin/aapt "$AIR_BIN_DIR/aapt_linux64"
+            sudo cp -f /usr/bin/aapt "$AIR_BIN_DIR/aapt"
+            sudo chmod +x "$AIR_BIN_DIR/aapt_linux64" "$AIR_BIN_DIR/aapt"
+          fi
+
+          echo "=> Verifying aapt..."
+          "$AIR_BIN_DIR/aapt" version
+
       - name: Build Android APK
         run: |
           adt -certificate -cn "AQWPocket" 2048-RSA aqwpocket_keystore.p12 password
