@@ -144,3 +144,6 @@ if [ -f "AQWPocket-Mod-armv8.apk" ]; then
 fi
 echo ""
 echo "   Install on device with: adb install -r <apk-file>"
+
+# Prevent patched SWFs from showing up as modified in git
+git -C "$DIR" update-index --skip-worktree loader/Mobile.swf loader/Desktop.swf 2>/dev/null || true

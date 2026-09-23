@@ -63,3 +63,6 @@ rm -f Desktop_code.swf Desktop_code-0.abc Desktop-*.abc Desktop_base-*.abc
 cd ..
 
 echo "=> Build Complete!"
+
+# Prevent patched SWFs from showing up as modified in git
+git -C "$DIR" update-index --skip-worktree loader/Desktop.swf loader/Mobile.swf 2>/dev/null || true
