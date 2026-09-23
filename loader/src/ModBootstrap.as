@@ -8,7 +8,7 @@ package {
 	import com.aqwapi.AqwApi;
 	import ui.ApiMenus;
 	import util.HelperSetting;
-	import haxe;
+	import flash.utils.getDefinitionByName;
 
 	POCKET::IS_DESKTOP {
 		import controller.gamepad.DesktopInputManager;
@@ -24,7 +24,14 @@ package {
 
 			// Initialize Haxe SWC runtime (static initializers and runtime shims)
 			try {
-				haxe.initSwc(null);
+				var haxeBoot:* = getDefinitionByName("haxe");
+				if (haxeBoot != null && haxeBoot.initSwc != null) {
+					haxeBoot.initSwc(null);
+				}
+			} catch (e:Error) {}
+
+			try {
+				AqwApi.ensureMathShims();
 			} catch (e:Error) {}
 
 			try {
