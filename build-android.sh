@@ -1,6 +1,6 @@
 #!/bin/bash
 # build-android.sh - Build Android APK locally for testing
-# Produces: AQWPocket-Mod-armv8-gpu.apk (GPU render mode, armv8)
+# Produces: AQWPocket-Mod-armv8-direct.apk (Direct render mode, armv8)
 
 set -e
 
@@ -20,7 +20,7 @@ export JAVA_HOME="${JAVA_HOME:-$HOME/.sdkman/candidates/java/current}"
 export PATH=$AIR_HOME/bin:$JAVA_HOME/bin:$PATH
 
 KEYSTORE="aqwpocket_keystore_local.p12"
-OUTPUT="AQWPocket-Mod-armv8-gpu.apk"
+OUTPUT="AQWPocket-Mod-armv8-direct.apk"
 
 # ---- Step 0: Compile Haxe API & Mod UI ----
 if [ "$SKIP_HAXE_API" != "1" ]; then
@@ -79,10 +79,10 @@ if [ ! -f "$KEYSTORE" ]; then
   $AIR_HOME/bin/adt -certificate -cn "AQWPocketLocal" 2048-RSA "$KEYSTORE" password
 fi
 
-# ---- Step 5: Set GPU render mode in app descriptor ----
-echo "=> [5/5] Packaging APK (armv8, gpu)..."
-cp loader/Mobile-app.xml loader/Mobile-app-gpu.xml
-sed -i "s|<renderMode>.*</renderMode>|<renderMode>gpu</renderMode>|" loader/Mobile-app-gpu.xml
+# ---- Step 5: Set Direct render mode in app descriptor ----
+echo "=> [5/5] Packaging APK (armv8, direct)..."
+cp loader/Mobile-app.xml loader/Mobile-app-direct.xml
+sed -i "s|<renderMode>.*</renderMode>|<renderMode>direct</renderMode>|" loader/Mobile-app-direct.xml
 
 $AIR_HOME/bin/adt -package \
   -target apk-captive-runtime \
@@ -91,7 +91,7 @@ $AIR_HOME/bin/adt -package \
   -keystore "$KEYSTORE" \
   -storepass password \
   "$OUTPUT" \
-  loader/Mobile-app-gpu.xml \
+  loader/Mobile-app-direct.xml \
   -C loader \
     Mobile.swf \
     assets \
@@ -107,7 +107,7 @@ $AIR_HOME/bin/adt -package \
     gamefiles/character-select.swf
 
 # Cleanup temp files
-rm -f loader/Mobile-app-gpu.xml loader/Mobile_code.swf loader/Mobile_code-0.abc loader/Mobile-*.abc loader/Mobile_base-*.abc
+rm -f loader/Mobile-app-direct.xml loader/Mobile_code.swf loader/Mobile_code-0.abc loader/Mobile-*.abc loader/Mobile_base-*.abc
 
 echo ""
 echo "=> Done! Output: $OUTPUT ($(du -sh $OUTPUT | cut -f1))"
