@@ -4788,7 +4788,7 @@
   "King's Echo": {
     "Base": {
       "skillUseMode": "WaitForCooldown",
-      "skillTimeout": 100,
+      "skillTimeout": 0,
       "skills": [
         {
           "skillId": 3,
