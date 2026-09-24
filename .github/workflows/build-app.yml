@@ -24,6 +24,9 @@ jobs:
         with:
           path: aqw-mobile
           
+      - name: Create Repo Alias Symlink
+        run: ln -s aqw-mobile aqw-mobile-mod
+
       - name: Setup Haxe
         uses: krdlab/setup-haxe@v1
         with:
