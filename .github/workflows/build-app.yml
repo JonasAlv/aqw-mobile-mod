@@ -127,7 +127,7 @@ jobs:
           echo "=> Verifying bundled assets..."
           ls -lh aqw-mobile/loader/assets/
           test -f aqw-mobile/loader/assets/skills.txt || (echo "ERROR: skills.txt is missing!" && exit 1)
-          test -f aqw-mobile/loader/assets/QuestData.json || (echo "ERROR: QuestData.json is missing!" && exit 1)
+          test -f aqw-mobile/loader/assets/quests.txt || (echo "ERROR: quests.txt is missing!" && exit 1)
           echo "=> Assets verified successfully."
 
 
