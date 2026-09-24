@@ -1,0 +1,12 @@
+# ==============================================================
+# User Custom Skills & Rotations (userSkills.txt)
+# ==============================================================
+# Any modes created or customized in the Combat Mode Editor
+# will be automatically saved here.
+#
+# Format:
+#   [ClassName : ModeName]
+#   mode = WaitForCooldown | UseIfAvailable
+#   timeout = 0 | 100 | ... (timeout in ms for stuck skills)
+#   combo = 1 > 2[hp < 50%] > 3[!aura(self:Buff)] > 4[mp < 10%]
+# ==============================================================
