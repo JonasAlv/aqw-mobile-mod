@@ -4787,7 +4787,7 @@
   },
   "King's Echo": {
     "Base": {
-      "skillUseMode": "UseIfAvailable",
+      "skillUseMode": "WaitForCooldown",
       "skillTimeout": 100,
       "skills": [
         {
@@ -4801,6 +4801,18 @@
               "auraTarget": "self"
             }
           ]
+        },
+        {
+          "skillId": 1
+        },
+        {
+          "skillId": 2
+        },
+        {
+          "skillId": 1
+        },
+        {
+          "skillId": 2
         },
         {
           "skillId": 1
