@@ -831,7 +831,7 @@ combo = 4 > 2 > 1 > 1 > 1 > 2 > 1 > 1 > 1 > 2 > 4 > 3
 [King's Echo : Base]
 mode = WaitForCooldown
 timeout = 0
-combo = 3[!aura(self:Royal Resolve)] > 1 > 2 > 1 > 2 > 1 > 2 > 4[mp < 10%]
+combo = 3[!aura(self:Royal Resolve)] > 1 > 2 > 1 > 2 > 1 > 2 > 4[mp < 20]
 
 [Legendary Elemental Warrior : Atk]
 mode = WaitForCooldown
