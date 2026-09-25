@@ -1,0 +1,264 @@
+name: Fast Test Build (Windows & Android)
+
+on:
+  workflow_dispatch:
+    inputs:
+      upstream_version:
+        description: 'Upstream release version to pull gamefiles from (e.g., v3.5.3)'
+        required: true
+        default: 'v3.5.3'
+      render_mode:
+        description: 'Render mode'
+        required: true
+        default: 'auto'
+        type: choice
+        options:
+          - auto
+          - direct
+          - gpu
+
+jobs:
+  prepare:
+    name: Prepare Workspace & Assets
+    runs-on: ubuntu-latest
+    outputs:
+      build_date: ${{ steps.date.outputs.BUILD_DATE }}
+      render_mode: ${{ steps.render.outputs.MODE }}
+      android_suffix: ${{ steps.render.outputs.ANDROID_SUFFIX }}
+      windows_suffix: ${{ steps.render.outputs.WINDOWS_SUFFIX }}
+    permissions:
+      contents: write
+    steps:
+      - name: Set Date
+        id: date
+        run: echo "BUILD_DATE=$(date +'%Y%m%d')" >> "$GITHUB_OUTPUT"
+
+      - name: Configure Render Mode Suffix
+        id: render
+        run: |
+          MODE="${{ inputs.render_mode || 'auto' }}"
+          echo "MODE=${MODE}" >> "$GITHUB_OUTPUT"
+          if [ "$MODE" = "direct" ]; then
+            echo "ANDROID_SUFFIX=-direct" >> "$GITHUB_OUTPUT"
+            echo "WINDOWS_SUFFIX=-windows-x64-direct" >> "$GITHUB_OUTPUT"
+          elif [ "$MODE" = "gpu" ]; then
+            echo "ANDROID_SUFFIX=-gpu" >> "$GITHUB_OUTPUT"
+            echo "WINDOWS_SUFFIX=-windows-x64-gpu" >> "$GITHUB_OUTPUT"
+          else
+            echo "ANDROID_SUFFIX=" >> "$GITHUB_OUTPUT"
+            echo "WINDOWS_SUFFIX=-windows-x64" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Checkout aqw-mobile-mod
+        uses: actions/checkout@v4
+        with:
+          path: aqw-mobile
+
+      - name: Create Repo Alias Symlink
+        run: ln -s aqw-mobile aqw-mobile-mod
+
+      - name: Setup Haxe
+        uses: krdlab/setup-haxe@v1
+        with:
+          haxe-version: "4.3.7"
+
+      - name: Install Haxe Dependencies
+        run: haxelib install hscript
+
+      - name: Checkout Haxe API
+        uses: actions/checkout@v4
+        with:
+          repository: JonasAlv/aqw-haxe-api
+          ref: main
+          path: aqw-haxe-api
+
+      - name: Checkout Haxe UI
+        uses: actions/checkout@v4
+        with:
+          repository: JonasAlv/aqw-haxe-ui
+          ref: main
+          path: aqw-haxe-ui
+
+      - name: Build Haxe Libraries (AqwApi.swc & ModUI.swc)
+        run: |
+          mkdir -p aqw-mobile/loader/libs
+          
+          echo "=> Building aqw-haxe-api..."
+          cd aqw-haxe-api
+          haxe build.hxml
+          cp bin/AqwApi.swc ../aqw-mobile/loader/libs/AqwApi.swc
+          cd ..
+          
+          echo "=> Building aqw-haxe-ui..."
+          cd aqw-haxe-ui
+          haxe build.hxml
+          cp bin/ModUI.swc ../aqw-mobile/loader/libs/ModUI.swc
+          cd ..
+
+      - name: Setup Java 21
+        uses: actions/setup-java@v5
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      - name: Setup Dlang
+        uses: dlang-community/setup-dlang@v2
+
+      - name: Install RABCDAsm & Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y wget unzip git curl liblzma-dev
+          git clone --depth 1 https://github.com/CyberShadow/RABCDAsm.git
+          cd RABCDAsm
+          dmd -run build_rabcdasm.d
+          sudo cp abcexport rabcdasm rabcasm abcreplace /usr/local/bin/
+
+      - name: Setup AIR SDK
+        uses: joshtynjala/setup-adobe-air-action@v2
+        with:
+          air-version: "51.3.4"
+          accept-license: yes
+
+      - name: Download Anthony's Precompiled gamefiles
+        run: |
+          cd aqw-mobile
+          RAW_VERSION="${{ inputs.upstream_version || 'v3.5.3' }}"
+          CLEAN_VERSION="${RAW_VERSION#v}"
+          sed -i "s|<versionNumber>.*</versionNumber>|<versionNumber>${CLEAN_VERSION}</versionNumber>|" loader/Mobile-app.xml
+          sed -i "s|<versionNumber>.*</versionNumber>|<versionNumber>${CLEAN_VERSION}</versionNumber>|" loader/Desktop-app.xml
+          
+          cd loader
+          mkdir -p gamefiles
+          wget https://github.com/anthony-hyo/aqw-mobile/releases/download/${RAW_VERSION}/AQWPocket-${RAW_VERSION}-armv8.apk -O anthony.apk
+          unzip -q anthony.apk "assets/gamefiles/*" -d extracted
+          cp -r extracted/assets/gamefiles/* gamefiles/
+          rm -rf anthony.apk extracted
+
+      - name: Compile and Inject SWFs
+        run: |
+          cd aqw-mobile/loader
+          
+          echo "Compiling WorkerMain.swf"
+          mkdir -p gamefiles/embed
+          amxmlc worker-src/WorkerMain.as -source-path+=src -source-path+=worker-src -output gamefiles/embed/WorkerMain.swf -swf-version=51
+          
+          echo "Compiling Mobile_code.swf"
+          amxmlc +configname=air -define+=POCKET::IS_DESKTOP,false -define+=POCKET::IS_MOBILE,true -library-path+=libs -source-path+=worker-src -source-path+=src -output Mobile_code.swf src/Pocket.as
+          abcexport Mobile_code.swf
+          abcreplace Mobile.swf 0 Mobile_code-0.abc
+          
+          echo "Compiling Desktop_code.swf"
+          amxmlc +configname=air -define+=POCKET::IS_DESKTOP,true -define+=POCKET::IS_MOBILE,false -library-path+=libs -source-path+=worker-src -source-path+=src -output Desktop_code.swf src/Pocket.as
+          abcexport Desktop_code.swf
+          abcreplace Desktop.swf 0 Desktop_code-0.abc
+
+      - name: Verify Assets and Workspace
+        run: |
+          echo "=> Verifying bundled assets..."
+          ls -lh aqw-mobile/loader/assets/
+          test -f aqw-mobile/loader/assets/skills.txt || (echo "ERROR: skills.txt is missing!" && exit 1)
+          test -f aqw-mobile/loader/assets/userSkills.txt || (echo "ERROR: userSkills.txt is missing!" && exit 1)
+          test -f aqw-mobile/loader/assets/quests.json || (echo "ERROR: quests.json is missing!" && exit 1)
+          echo "=> Assets verified successfully."
+
+      - name: Upload patched workspace
+        uses: actions/upload-artifact@v4
+        with:
+          name: workspace-patched
+          path: aqw-mobile/
+          retention-days: 1
+
+  build-android:
+    name: Build Android (armv8)
+    needs: prepare
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download workspace
+        uses: actions/download-artifact@v4
+        with:
+          name: workspace-patched
+          path: .
+
+      - name: Setup Java 21
+        uses: actions/setup-java@v5
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      - name: Setup AIR SDK
+        uses: joshtynjala/setup-adobe-air-action@v2
+        with:
+          air-version: "51.3.4"
+          accept-license: yes
+
+      - name: Build Android APK
+        run: |
+          adt -certificate -cn "AQWPocket" 2048-RSA aqwpocket_keystore.p12 password
+          sed -i "s|<renderMode>.*</renderMode>|<renderMode>${{ needs.prepare.outputs.render_mode }}</renderMode>|" loader/Mobile-app.xml
+          adt -package \
+            -target apk-captive-runtime \
+            -arch armv8 \
+            -storetype PKCS12 \
+            -keystore aqwpocket_keystore.p12 \
+            -storepass password \
+            AQWMod-${{ needs.prepare.outputs.build_date }}-armv8${{ needs.prepare.outputs.android_suffix }}.apk \
+            loader/Mobile-app.xml \
+            -C loader \
+              Mobile.swf \
+              assets \
+              icons/icon-36x36.png \
+              icons/icon-48x48.png \
+              icons/icon-72x72.png \
+              icons/icon-96x96.png \
+              icons/icon-144x144.png \
+              icons/icon-192x192.png \
+              gamefiles/game.swf \
+              gamefiles/world-map.swf \
+              gamefiles/book-of-lore.swf \
+              gamefiles/character-select.swf
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-armv8
+          path: "*.apk"
+          retention-days: 14
+
+  build-windows:
+    name: Build Windows (x64)
+    needs: prepare
+    runs-on: windows-latest
+    steps:
+      - name: Download workspace
+        uses: actions/download-artifact@v4
+        with:
+          name: workspace-patched
+          path: .
+
+      - name: Setup Java 21
+        uses: actions/setup-java@v5
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      - name: Setup AIR SDK
+        uses: joshtynjala/setup-adobe-air-action@v2
+        with:
+          air-version: "51.3.4"
+          accept-license: yes
+
+      - name: Build Windows
+        run: |
+          adt -certificate -cn "AQWPocket" 2048-RSA aqwpocket_keystore.p12 password
+          (Get-Content loader/Desktop-app.xml) -replace '<renderMode>.*</renderMode>', '<renderMode>${{ needs.prepare.outputs.render_mode }}</renderMode>' | Set-Content loader/Desktop-app.xml
+          adt -package -storetype PKCS12 -keystore aqwpocket_keystore.p12 -storepass password -target bundle -arch x64 AQWMod-${{ needs.prepare.outputs.build_date }}${{ needs.prepare.outputs.windows_suffix }} loader/Desktop-app.xml -extdir loader/libs -C loader Desktop.swf assets icons/icon-16x16.png icons/icon-32x32.png icons/icon-36x36.png icons/icon-48x48.png icons/icon-72x72.png icons/icon-96x96.png icons/icon-128x128.png icons/icon-144x144.png icons/icon-192x192.png gamefiles/game.swf gamefiles/world-map.swf gamefiles/book-of-lore.swf gamefiles/character-select.swf
+
+      - name: Zip
+        run: Compress-Archive -Path "AQWMod-${{ needs.prepare.outputs.build_date }}${{ needs.prepare.outputs.windows_suffix }}" -DestinationPath "AQWMod-${{ needs.prepare.outputs.build_date }}${{ needs.prepare.outputs.windows_suffix }}.zip"
+
+      - name: Upload Zip
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-x64
+          path: "AQWMod-*-windows-x64*.zip"
+          retention-days: 14
