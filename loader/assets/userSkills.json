@@ -1,0 +1,47 @@
+{
+  "Legion Revenant": {
+    "UltraBoss": {
+      "mode": "WaitForCooldown",
+      "timeout": 100,
+      "combo": "3[!aura(self:Depravity)] > 4[party:hp < 60% | hp < 40%] > 2 > 1"
+    },
+    "SpeedSolo": {
+      "mode": "UseIfAvailable",
+      "timeout": 0,
+      "combo": "3 > 2 > 1 > 4[mp < 30%]"
+    }
+  },
+  "Void Highlord": {
+    "BurstSolo": {
+      "mode": "WaitForCooldown",
+      "timeout": 100,
+      "combo": "3[hp > 60%] > 4 > 2 > 1[hp < 50%] > 3[hp > 70%] > 2"
+    }
+  },
+  "ArchMage": {
+    "PureDamage": {
+      "mode": "UseIfAvailable",
+      "timeout": 100,
+      "combo": "3[!aura(self:Arcane Flow)] > 1 > 2 > 4[mp < 25%]"
+    }
+  },
+  "Dragon of Time": {
+    "Sustain": {
+      "mode": "WaitForCooldown",
+      "timeout": 100,
+      "combo": "2[!aura(self:Concordance)] > 3 > 4 > 1[hp < 50%]"
+    }
+  },
+  "Yami no Ronin": {
+    "SutemiBurst": {
+      "mode": "WaitForCooldown",
+      "timeout": 100,
+      "combo": "3[hp > 50%] > 2[mp > 50%] > 1 > 1 > 4 > 3"
+    },
+    "Aggressive": {
+      "mode": "UseIfAvailable",
+      "timeout": 100,
+      "combo": "3[hp > 60%] > 2 > 1 > 4[mp < 30%]"
+    }
+  }
+}
