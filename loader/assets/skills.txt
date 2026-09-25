@@ -1577,8 +1577,3 @@ combo = 2[mp > 60%] > 1 > 1 > 4 > 1 > 1 > 4
 mode = UseIfAvailable
 timeout = 100
 combo = 1 > 2 > 4
-
-[ : Base]
-mode = UseIfAvailable
-timeout = 100
-combo = 
