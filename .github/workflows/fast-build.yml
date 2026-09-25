@@ -7,15 +7,6 @@ on:
         description: 'Upstream release version to pull gamefiles from (e.g., v3.5.3)'
         required: true
         default: 'v3.5.3'
-      render_mode:
-        description: 'Render mode'
-        required: true
-        default: 'auto'
-        type: choice
-        options:
-          - auto
-          - direct
-          - gpu
 
 jobs:
   prepare:
@@ -23,31 +14,12 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       build_date: ${{ steps.date.outputs.BUILD_DATE }}
-      render_mode: ${{ steps.render.outputs.MODE }}
-      android_suffix: ${{ steps.render.outputs.ANDROID_SUFFIX }}
-      windows_suffix: ${{ steps.render.outputs.WINDOWS_SUFFIX }}
     permissions:
       contents: write
     steps:
       - name: Set Date
         id: date
         run: echo "BUILD_DATE=$(date +'%Y%m%d')" >> "$GITHUB_OUTPUT"
-
-      - name: Configure Render Mode Suffix
-        id: render
-        run: |
-          MODE="${{ inputs.render_mode || 'auto' }}"
-          echo "MODE=${MODE}" >> "$GITHUB_OUTPUT"
-          if [ "$MODE" = "direct" ]; then
-            echo "ANDROID_SUFFIX=-direct" >> "$GITHUB_OUTPUT"
-            echo "WINDOWS_SUFFIX=-windows-x64-direct" >> "$GITHUB_OUTPUT"
-          elif [ "$MODE" = "gpu" ]; then
-            echo "ANDROID_SUFFIX=-gpu" >> "$GITHUB_OUTPUT"
-            echo "WINDOWS_SUFFIX=-windows-x64-gpu" >> "$GITHUB_OUTPUT"
-          else
-            echo "ANDROID_SUFFIX=" >> "$GITHUB_OUTPUT"
-            echo "WINDOWS_SUFFIX=-windows-x64" >> "$GITHUB_OUTPUT"
-          fi
 
       - name: Checkout aqw-mobile-mod
         uses: actions/checkout@v4
@@ -194,14 +166,14 @@ jobs:
       - name: Build Android APK
         run: |
           adt -certificate -cn "AQWPocket" 2048-RSA aqwpocket_keystore.p12 password
-          sed -i "s|<renderMode>.*</renderMode>|<renderMode>${{ needs.prepare.outputs.render_mode }}</renderMode>|" loader/Mobile-app.xml
+          sed -i "s|<renderMode>.*</renderMode>|<renderMode>auto</renderMode>|" loader/Mobile-app.xml
           adt -package \
             -target apk-captive-runtime \
             -arch armv8 \
             -storetype PKCS12 \
             -keystore aqwpocket_keystore.p12 \
             -storepass password \
-            AQWMod-${{ needs.prepare.outputs.build_date }}-armv8${{ needs.prepare.outputs.android_suffix }}.apk \
+            AQWMod-${{ needs.prepare.outputs.build_date }}-armv8.apk \
             loader/Mobile-app.xml \
             -C loader \
               Mobile.swf \
@@ -250,15 +222,15 @@ jobs:
       - name: Build Windows
         run: |
           adt -certificate -cn "AQWPocket" 2048-RSA aqwpocket_keystore.p12 password
-          (Get-Content loader/Desktop-app.xml) -replace '<renderMode>.*</renderMode>', '<renderMode>${{ needs.prepare.outputs.render_mode }}</renderMode>' | Set-Content loader/Desktop-app.xml
-          adt -package -storetype PKCS12 -keystore aqwpocket_keystore.p12 -storepass password -target bundle -arch x64 AQWMod-${{ needs.prepare.outputs.build_date }}${{ needs.prepare.outputs.windows_suffix }} loader/Desktop-app.xml -extdir loader/libs -C loader Desktop.swf assets icons/icon-16x16.png icons/icon-32x32.png icons/icon-36x36.png icons/icon-48x48.png icons/icon-72x72.png icons/icon-96x96.png icons/icon-128x128.png icons/icon-144x144.png icons/icon-192x192.png gamefiles/game.swf gamefiles/world-map.swf gamefiles/book-of-lore.swf gamefiles/character-select.swf
+          (Get-Content loader/Desktop-app.xml) -replace '<renderMode>.*</renderMode>', '<renderMode>auto</renderMode>' | Set-Content loader/Desktop-app.xml
+          adt -package -storetype PKCS12 -keystore aqwpocket_keystore.p12 -storepass password -target bundle -arch x64 AQWMod-${{ needs.prepare.outputs.build_date }}-windows-x64 loader/Desktop-app.xml -extdir loader/libs -C loader Desktop.swf assets icons/icon-16x16.png icons/icon-32x32.png icons/icon-36x36.png icons/icon-48x48.png icons/icon-72x72.png icons/icon-96x96.png icons/icon-128x128.png icons/icon-144x144.png icons/icon-192x192.png gamefiles/game.swf gamefiles/world-map.swf gamefiles/book-of-lore.swf gamefiles/character-select.swf
 
       - name: Zip
-        run: Compress-Archive -Path "AQWMod-${{ needs.prepare.outputs.build_date }}${{ needs.prepare.outputs.windows_suffix }}" -DestinationPath "AQWMod-${{ needs.prepare.outputs.build_date }}${{ needs.prepare.outputs.windows_suffix }}.zip"
+        run: Compress-Archive -Path "AQWMod-${{ needs.prepare.outputs.build_date }}-windows-x64" -DestinationPath "AQWMod-${{ needs.prepare.outputs.build_date }}-windows-x64.zip"
 
       - name: Upload Zip
         uses: actions/upload-artifact@v4
         with:
           name: windows-x64
-          path: "AQWMod-*-windows-x64*.zip"
+          path: "AQWMod-*-windows-x64.zip"
           retention-days: 14
