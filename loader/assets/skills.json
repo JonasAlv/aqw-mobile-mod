@@ -1,11 +1,4 @@
 {
-  "Current": {
-    "Base": {
-      "mode": "WaitForCooldown",
-      "timeout": 100,
-      "combo": "1 > 2 > 3 > 4"
-    }
-  },
   "ArchMage": {
     "Base": {
       "mode": "WaitForCooldown",
