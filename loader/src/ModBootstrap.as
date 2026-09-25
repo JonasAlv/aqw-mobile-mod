@@ -35,6 +35,10 @@ package {
 			} catch (e:Error) {}
 
 			try {
+				AqwApi.ensureStorage();
+			} catch (e:Error) {}
+
+			try {
 				Security.allowDomain("*");
 				Security.allowInsecureDomain("*");
 			} catch (e:Error) {}
