@@ -143,7 +143,7 @@ jobs:
   build-android:
     name: Build Android (armv8)
     needs: prepare
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     steps:
       - name: Download workspace
         uses: actions/download-artifact@v4
@@ -164,6 +164,7 @@ jobs:
           accept-license: yes
 
       - name: Build Android APK
+        shell: bash
         run: |
           adt -certificate -cn "AQWPocket" 2048-RSA aqwpocket_keystore.p12 password
           sed -i "s|<renderMode>.*</renderMode>|<renderMode>auto</renderMode>|" loader/Mobile-app.xml
