@@ -1,47 +1,301 @@
 {
-  "Legion Revenant": {
-    "UltraBoss": {
-      "mode": "WaitForCooldown",
+  "Yami no Ronin": {
+    "Aggressive": {
+      "mode": "UseIfAvailable",
+      "combo": "3[hp > 60%] > 2 > 1 > 4[mp < 30%]",
+      "skillTimeout": 100,
       "timeout": 100,
-      "combo": "3[!aura(self:Depravity)] > 4[party:hp < 60% | hp < 40%] > 2 > 1"
+      "skillUseMode": "UseIfAvailable",
+      "skills": [
+        {
+          "skillId": 3,
+          "rules": [
+            {
+              "value": 60,
+              "isPercentage": true,
+              "type": "Health",
+              "comparison": "greater"
+            }
+          ]
+        },
+        {
+          "skillId": 2
+        },
+        {
+          "skillId": 1
+        },
+        {
+          "skillId": 4,
+          "rules": [
+            {
+              "value": 30,
+              "isPercentage": true,
+              "type": "Mana",
+              "comparison": "less"
+            }
+          ]
+        }
+      ]
     },
-    "SpeedSolo": {
-      "mode": "UseIfAvailable",
-      "timeout": 0,
-      "combo": "3 > 2 > 1 > 4[mp < 30%]"
-    }
-  },
-  "Void Highlord": {
-    "BurstSolo": {
+    "SutemiBurst": {
       "mode": "WaitForCooldown",
+      "combo": "3[hp > 50%] > 2[mp > 50%] > 1 > 1 > 4 > 3",
+      "skillTimeout": 100,
       "timeout": 100,
-      "combo": "3[hp > 60%] > 4 > 2 > 1[hp < 50%] > 3[hp > 70%] > 2"
+      "skillUseMode": "WaitForCooldown",
+      "skills": [
+        {
+          "skillId": 3,
+          "rules": [
+            {
+              "value": 50,
+              "isPercentage": true,
+              "type": "Health",
+              "comparison": "greater"
+            }
+          ]
+        },
+        {
+          "skillId": 2,
+          "rules": [
+            {
+              "value": 50,
+              "isPercentage": true,
+              "type": "Mana",
+              "comparison": "greater"
+            }
+          ]
+        },
+        {
+          "skillId": 1
+        },
+        {
+          "skillId": 1
+        },
+        {
+          "skillId": 4
+        },
+        {
+          "skillId": 3
+        }
+      ]
     }
   },
-  "ArchMage": {
-    "PureDamage": {
+  "King's Echo": {
+    "CustomMode": {
       "mode": "UseIfAvailable",
-      "timeout": 100,
-      "combo": "3[!aura(self:Arcane Flow)] > 1 > 2 > 4[mp < 25%]"
+      "combo": "1 > 2 > 4[mp < 20]",
+      "timeout": 100
     }
   },
   "Dragon of Time": {
     "Sustain": {
       "mode": "WaitForCooldown",
+      "combo": "2[!aura(self:Concordance)] > 3 > 4 > 1[hp < 50%]",
+      "skillTimeout": 100,
       "timeout": 100,
-      "combo": "2[!aura(self:Concordance)] > 3 > 4 > 1[hp < 50%]"
+      "skillUseMode": "WaitForCooldown",
+      "skills": [
+        {
+          "skillId": 2,
+          "rules": [
+            {
+              "value": 0,
+              "auraTarget": "self",
+              "type": "Aura",
+              "auraName": "Concordance",
+              "comparison": "less"
+            }
+          ]
+        },
+        {
+          "skillId": 3
+        },
+        {
+          "skillId": 4
+        },
+        {
+          "skillId": 1,
+          "rules": [
+            {
+              "value": 50,
+              "isPercentage": true,
+              "type": "Health",
+              "comparison": "less"
+            }
+          ]
+        }
+      ]
     }
   },
-  "Yami no Ronin": {
-    "SutemiBurst": {
-      "mode": "WaitForCooldown",
-      "timeout": 100,
-      "combo": "3[hp > 50%] > 2[mp > 50%] > 1 > 1 > 4 > 3"
-    },
-    "Aggressive": {
+  "ArchMage": {
+    "PureDamage": {
       "mode": "UseIfAvailable",
+      "combo": "3[!aura(self:Arcane Flow)] > 1 > 2 > 4[mp < 25%]",
+      "skillTimeout": 100,
       "timeout": 100,
-      "combo": "3[hp > 60%] > 2 > 1 > 4[mp < 30%]"
+      "skillUseMode": "UseIfAvailable",
+      "skills": [
+        {
+          "skillId": 3,
+          "rules": [
+            {
+              "value": 0,
+              "auraTarget": "self",
+              "type": "Aura",
+              "auraName": "Arcane Flow",
+              "comparison": "less"
+            }
+          ]
+        },
+        {
+          "skillId": 1
+        },
+        {
+          "skillId": 2
+        },
+        {
+          "skillId": 4,
+          "rules": [
+            {
+              "value": 25,
+              "isPercentage": true,
+              "type": "Mana",
+              "comparison": "less"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "Legion Revenant": {
+    "UltraBoss": {
+      "mode": "WaitForCooldown",
+      "combo": "3[!aura(self:Depravity)] > 4[party:hp < 60% | hp < 40%] > 2 > 1",
+      "skillTimeout": 100,
+      "timeout": 100,
+      "skillUseMode": "WaitForCooldown",
+      "skills": [
+        {
+          "skillId": 3,
+          "rules": [
+            {
+              "value": 0,
+              "auraTarget": "self",
+              "type": "Aura",
+              "auraName": "Depravity",
+              "comparison": "less"
+            }
+          ]
+        },
+        {
+          "multiAuraOperator": "OR",
+          "skillId": 4,
+          "isMultiAura": true,
+          "rules": [
+            {
+              "value": 60,
+              "isPercentage": true,
+              "type": "PartyHealth",
+              "comparison": "less"
+            },
+            {
+              "value": 40,
+              "isPercentage": true,
+              "type": "Health",
+              "comparison": "less"
+            }
+          ]
+        },
+        {
+          "skillId": 2
+        },
+        {
+          "skillId": 1
+        }
+      ]
+    },
+    "SpeedSolo": {
+      "mode": "UseIfAvailable",
+      "combo": "3 > 2 > 1 > 4[mp < 30%]",
+      "skillTimeout": 0,
+      "timeout": 0,
+      "skillUseMode": "UseIfAvailable",
+      "skills": [
+        {
+          "skillId": 3
+        },
+        {
+          "skillId": 2
+        },
+        {
+          "skillId": 1
+        },
+        {
+          "skillId": 4,
+          "rules": [
+            {
+              "value": 30,
+              "isPercentage": true,
+              "type": "Mana",
+              "comparison": "less"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "Void Highlord": {
+    "BurstSolo": {
+      "mode": "WaitForCooldown",
+      "combo": "3[hp > 60%] > 4 > 2 > 1[hp < 50%] > 3[hp > 70%] > 2",
+      "skillTimeout": 100,
+      "timeout": 100,
+      "skillUseMode": "WaitForCooldown",
+      "skills": [
+        {
+          "skillId": 3,
+          "rules": [
+            {
+              "value": 60,
+              "isPercentage": true,
+              "type": "Health",
+              "comparison": "greater"
+            }
+          ]
+        },
+        {
+          "skillId": 4
+        },
+        {
+          "skillId": 2
+        },
+        {
+          "skillId": 1,
+          "rules": [
+            {
+              "value": 50,
+              "isPercentage": true,
+              "type": "Health",
+              "comparison": "less"
+            }
+          ]
+        },
+        {
+          "skillId": 3,
+          "rules": [
+            {
+              "value": 70,
+              "isPercentage": true,
+              "type": "Health",
+              "comparison": "greater"
+            }
+          ]
+        },
+        {
+          "skillId": 2
+        }
+      ]
     }
   }
 }
