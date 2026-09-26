@@ -35,7 +35,7 @@ package {
 			} catch (e:Error) {}
 
 			try {
-				AqwApi.ensureStorage();
+				AqwApi.preloadAssets();
 			} catch (e:Error) {}
 
 			try {
