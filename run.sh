@@ -24,7 +24,7 @@ echo "   (Using Desktop-app-local.xml - Discord RPC disabled for local testing)"
 cd "$DIR/loader"
 
 if [ -z "$AIRSDK_WINDOWS" ]; then
-    for candidate in "$DIR/../../AIRSDK_Windows" "$DIR/../AIRSDK_Windows" "$HOME/AIRSDK_Windows" "/home/me/Music/AIRSDK_Windows"; do
+    for candidate in "$DIR/../../AIRSDK_Windows" "$DIR/../AIRSDK_Windows" "$HOME/AIRSDK_Windows" "$HOME/Music/AIRSDK_Windows"; do
         if [ -d "$candidate" ]; then
             AIRSDK_WINDOWS="$candidate"
             break

@@ -6,7 +6,7 @@ cd "$DIR"
 
 # Discover AIR_HOME dynamically if not already set
 if [ -z "$AIR_HOME" ]; then
-    for candidate in "$DIR/../../AIRSDK_Linux" "$DIR/../AIRSDK_Linux" "$HOME/AIRSDK_Linux" "/home/me/Music/AIRSDK_Linux"; do
+    for candidate in "$DIR/../../AIRSDK_Linux" "$DIR/../AIRSDK_Linux" "$HOME/AIRSDK_Linux" "$HOME/Music/AIRSDK_Linux"; do
         if [ -d "$candidate" ]; then
             export AIR_HOME="$candidate"
             break
