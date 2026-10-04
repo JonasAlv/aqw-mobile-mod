@@ -1,0 +1,39 @@
+# Build output (all build artifacts isolated here)
+build/
+/target
+loader/*.abc
+*.log
+loader/*.log
+loader/bot.log
+
+# IDE
+/.idea/
+/.vscode/settings.json
+loader.iml
+
+# Assets
+*.fla
+/patches/*/build/*
+
+# Generated / runtime files
+/patches-final/
+/pocket-patches/
+/patches/*
+.env
+
+# Local-only scripts & overrides
+*.sh
+loader/Desktop-app-local.xml
+loader/gamefiles/
+aqwpocket_keystore_local.p12
+
+
+# Local SWC builds
+loader/libs/AqwApi.swc
+loader/libs/ModUI.swc
+
+# Stray editor/merge backups
+*.bak
+*.bak*
+*.orig
+*.rej

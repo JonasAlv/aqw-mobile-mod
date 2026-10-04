@@ -1,0 +1,61 @@
+package game {
+
+	import flash.display.Sprite;
+
+	import util.HelperSetting;
+
+	public class Network {
+
+		public function Network(pocket:Pocket) {
+			this.pocket = pocket;
+			this.pocket.game.sfc.addEventListener("onExtensionResponse", onExtensionResponseHandler, false, 0, true);
+		}
+
+		private var pocket:Pocket;
+
+		private function onExtensionResponseHandler(event:*):void {
+			switch (event.params.type) {
+				/*case "str":
+					switch (event.params.dataObj[0]) {
+						case "whisper":
+							break;
+					}
+					break;*/
+				case "json":
+					switch (event.params.dataObj.cmd) {
+						case "sAct":
+							sAct();
+							break;
+					}
+					break;
+			}
+		}
+
+		private function sAct():void {
+			const actBar:Sprite = this.pocket.game.ui.mcInterface.actBar;
+
+			var icon:Sprite;
+			var id:String;
+
+			for (var i:int = 0; i < 6; i++) {
+				id = HelperSetting.LAYOUT_SKILL_BAR + "_i" + (i + 1);
+
+				this.pocket.gameUI.layoutController.unregister(id);
+
+				icon = Sprite(actBar.getChildByName("i" + (i + 1)));
+
+				if (icon == null) {
+					continue;
+				}
+
+				this.pocket.gameUI.layoutController.register(id, icon, icon.x, icon.y, icon.scaleX, icon.scaleY);
+			}
+
+			this.pocket.gameUI.layoutController.load();
+
+			this.pocket.gameUI.applySkillBarStyle();
+		}
+
+	}
+
+}
