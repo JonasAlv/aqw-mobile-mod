@@ -384,13 +384,37 @@
       "combo": "1[aura(self:Rounds Empty) >= 1] > 3"
     }
   },
-"Chrono ShadowHunter": {
-  "Gunslinger": {
-    "mode": "WaitForCooldown",
-    "timeout": 100,
-    "combo": "3 > 3 > 3 > 3 > 3 > 1 > 0 > 1 > 3 > 3 > 3 > 3 > 3 > 4"
-  }
-},
+  "Chrono ShadowHunter": {
+    "dodge[ether]": {
+      "autoattack": false,
+      "mode": "WaitForCooldown",
+      "combo": "1 > 2 > 3[counter] > 2 > 3[counter] > 2 > 3[counter] > 4",
+      "resetComboOnTargetChange": true,
+      "timeout": 0
+    },
+    "farm[base]": {
+      "autoattack": false,
+      "mode": "WaitForCooldown",
+      "combo": "1 > 2 > 3 > 3 > 3 > 3 > 4",
+      "resetComboOnTargetChange": true,
+      "timeout": 0
+    },
+    "farm[ether]": {
+      "autoattack": false,
+      "mode": "WaitForCooldown",
+      "combo": "1 > 2 > 3 > 3 > 3 > 3 > 3 > 4",
+      "resetComboOnTargetChange": true,
+      "timeout": 0
+    },
+    "dodge[base]": {
+      "autoattack": false,
+      "mode": "WaitForCooldown",
+      "combo": "1 > 2 > 3[counter] > 2 > 3[counter] > 2 > 4",
+      "resetComboOnTargetChange": true,
+      "timeout": 0
+    },
+    "autoattack": false
+  },
   "Chronomancer": {
     "Base": {
       "mode": "WaitForCooldown",
