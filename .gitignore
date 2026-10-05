@@ -21,9 +21,13 @@ loader.iml
 /patches/*
 .env
 
-# Local-only scripts & overrides
-*.sh
+# Local-only overrides
+# NOTE: build.sh, run.sh, build-android.sh, sync-gamefiles.sh and lib.sh are deliberately NOT ignored.
+# `*.sh` used to be ignored here, which left the entire build tooling unversioned - unrecoverable on a
+# re-clone and invisible to anyone else working on the project.
 loader/Desktop-app-local.xml
+# Kept ignored as a safety net: gamefiles now sync to build/gamefiles-upstream/. This directory is
+# only a legacy fallback for checkouts predating that move and should not exist.
 loader/gamefiles/
 aqwpocket_keystore_local.p12
 
