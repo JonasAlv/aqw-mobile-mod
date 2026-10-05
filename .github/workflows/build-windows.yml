@@ -1,0 +1,470 @@
+name: Build Windows App
+
+on:
+  workflow_dispatch:
+    inputs:
+      include_gpu:
+        description: 'Include GPU render mode build'
+        required: true
+        default: true
+        type: boolean
+      build_android:
+        description: 'Also package Android ARMv8 APK'
+        required: true
+        default: false
+        type: boolean
+      prerelease:
+        description: 'Mark release as pre-release'
+        required: true
+        default: false
+        type: boolean
+
+permissions:
+  contents: write
+
+concurrency:
+  group: windows-build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build & Package
+    runs-on: windows-latest
+    timeout-minutes: 60
+
+    steps:
+      - name: Check out aqw-mobile-mod
+        uses: actions/checkout@v4
+        with:
+          path: aqw-mobile-mod
+
+      - name: Check out aqw-haxe-api
+        uses: actions/checkout@v4
+        with:
+          repository: JonasAlv/aqw-haxe-api
+          ref: main
+          path: aqw-haxe-api
+
+      - name: Check out aqw-haxe-ui
+        uses: actions/checkout@v4
+        with:
+          repository: JonasAlv/aqw-haxe-ui
+          ref: main
+          path: aqw-haxe-ui
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Haxe
+        uses: HaxeFoundation/setup-haxe@v2
+        with:
+          haxe-version: "4.3.6"
+
+      - name: Install Haxe libraries
+        shell: pwsh
+        run: |
+          & haxelib install hscript --always
+          if ($LASTEXITCODE -ne 0) { throw "Failed to install hscript." }
+
+      - name: Set up AIR SDK
+        uses: joshtynjala/setup-adobe-air-action@v2
+        with:
+          air-version: "51.3.1"
+          accept-license: yes
+
+      - name: Set up RABCDAsm tools (abcexport, abcreplace)
+        shell: pwsh
+        run: |
+          $toolsDir = Join-Path $env:RUNNER_TEMP "rabcdasm"
+          New-Item -ItemType Directory -Path $toolsDir -Force | Out-Null
+          $archive = Join-Path $env:RUNNER_TEMP "rabcdasm.7z"
+          Invoke-WebRequest -Uri "https://github.com/CyberShadow/RABCDAsm/releases/download/1.18/RABCDAsm_v1.18.7z" -OutFile $archive
+          & 7z x $archive "-o$toolsDir" -y
+          "$toolsDir" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+
+      - name: Sync latest stable upstream gamefiles
+        id: sync-gamefiles
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $tempDir = Join-Path $env:RUNNER_TEMP "aqw-gamefiles"
+          New-Item -ItemType Directory -Path $tempDir -Force | Out-Null
+
+          $headers = @{
+            Accept = "application/vnd.github+json"
+            "User-Agent" = "aqw-mobile-mod-ci"
+          }
+          if ($env:GH_TOKEN) {
+            $headers["Authorization"] = "Bearer $env:GH_TOKEN"
+          }
+
+          $release = Invoke-RestMethod `
+            -Uri "https://api.github.com/repos/anthony-hyo/aqw-mobile/releases/latest" `
+            -Headers $headers
+
+          if ($release.draft -or $release.prerelease) {
+            throw "The latest upstream release is not a stable release."
+          }
+
+          $upstreamVersion = $release.tag_name
+          Write-Host "Detected upstream version: $upstreamVersion"
+
+          $apk = $release.assets | Where-Object { $_.name -match '-armv8\.apk$' } | Select-Object -First 1
+          if ($null -eq $apk) {
+            $apk = $release.assets | Where-Object { $_.name -match '-armv7\.apk$' } | Select-Object -First 1
+          }
+          if ($null -eq $apk) {
+            throw "The upstream release has no supported ARM APK asset."
+          }
+
+          $apkPath = Join-Path $tempDir "upstream.apk"
+          Invoke-WebRequest -Uri $apk.browser_download_url -Headers $headers -OutFile $apkPath
+
+          $digest = [string]$apk.digest
+          if ($digest -and $digest -match '^sha256:[0-9a-fA-F]{64}$') {
+            $expected = $digest.Substring(7).ToUpperInvariant()
+            $actual = (Get-FileHash -Path $apkPath -Algorithm SHA256).Hash
+            if ($actual -ne $expected) { throw "The upstream APK SHA-256 digest did not match." }
+          }
+
+          $gamefilesDest = Join-Path $env:GITHUB_WORKSPACE "aqw-mobile-mod\build\gamefiles-upstream"
+          New-Item -ItemType Directory -Path $gamefilesDest -Force | Out-Null
+
+          Add-Type -AssemblyName System.IO.Compression.FileSystem
+          $zip = [System.IO.Compression.ZipFile]::OpenRead($apkPath)
+          try {
+            $required = @(
+              "gamefiles/game.swf",
+              "gamefiles/book-of-lore.swf",
+              "gamefiles/character-select.swf"
+            )
+            $optional = @("gamefiles/world-map.swf")
+            foreach ($assetPath in ($required + $optional)) {
+              $entry = $zip.Entries | Where-Object { $_.FullName -ceq $assetPath } | Select-Object -First 1
+              if ($null -eq $entry) {
+                $entry = $zip.Entries | Where-Object { $_.FullName -ceq "assets/$assetPath" } | Select-Object -First 1
+              }
+              if ($null -eq $entry) {
+                if ($optional -contains $assetPath) {
+                  Write-Host "Upstream APK omits optional '$assetPath'; continuing without it."
+                  continue
+                }
+                throw "The upstream APK is missing required asset '$assetPath'."
+              }
+
+              $fileName = [System.IO.Path]::GetFileName($assetPath)
+              $target = Join-Path $gamefilesDest $fileName
+              $inputStream = $entry.Open()
+              $outputStream = [System.IO.File]::Create($target)
+              try { $inputStream.CopyTo($outputStream) }
+              finally {
+                $inputStream.Dispose()
+                $outputStream.Dispose()
+              }
+            }
+          }
+          finally {
+            $zip.Dispose()
+          }
+
+          "upstream_version=$upstreamVersion" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+
+      - name: Build API, UI, Worker, and Inject Mod Code
+        shell: pwsh
+        run: |
+          $workspace = $env:GITHUB_WORKSPACE
+          $modDir = Join-Path $workspace "aqw-mobile-mod"
+          $apiDir = Join-Path $workspace "aqw-haxe-api"
+          $uiDir = Join-Path $workspace "aqw-haxe-ui"
+          $loaderDir = Join-Path $modDir "loader"
+          $buildDir = Join-Path $modDir "build"
+          $staging = Join-Path $buildDir "staging"
+          $airBin = Join-Path $env:AIR_HOME "bin"
+          $amxmlc = Join-Path $airBin "amxmlc.bat"
+
+          function Invoke-Checked([string]$Executable, [string[]]$Arguments, [string]$Description) {
+            & $Executable @Arguments
+            if ($LASTEXITCODE -ne 0) { throw "$Description failed with exit code $LASTEXITCODE." }
+          }
+
+          # 1. Compile AqwApi.swc
+          Write-Host "=> [1/5] Compiling AqwApi (aqw-haxe-api)..."
+          Push-Location $apiDir
+          try { Invoke-Checked "haxe" @("build.hxml") "API compilation" }
+          finally { Pop-Location }
+
+          # 2. Compile ModUI.swc
+          Write-Host "=> [2/5] Compiling ModUI (aqw-haxe-ui)..."
+          Push-Location $uiDir
+          try { Invoke-Checked "haxe" @("build.hxml") "UI compilation" }
+          finally { Pop-Location }
+
+          # 3. Setup sandbox staging
+          Write-Host "=> [3/5] Setting up staging sandbox..."
+          if (Test-Path $staging) { Remove-Item -Path $staging -Recurse -Force }
+          New-Item -ItemType Directory -Path `
+            (Join-Path $staging "libs"), `
+            (Join-Path $staging "gamefiles\embed") -Force | Out-Null
+
+          Copy-Item -Path (Join-Path $loaderDir "src") -Destination (Join-Path $staging "src") -Recurse -Force
+          Copy-Item -Path (Join-Path $loaderDir "worker-src") -Destination (Join-Path $staging "worker-src") -Recurse -Force
+          Copy-Item -Path (Join-Path $loaderDir "assets") -Destination (Join-Path $staging "assets") -Recurse -Force
+          Copy-Item -Path (Join-Path $loaderDir "icons") -Destination (Join-Path $staging "icons") -Recurse -Force
+          Copy-Item -Path (Join-Path $loaderDir "Desktop-app.xml") -Destination (Join-Path $staging "Desktop-app.xml") -Force
+          Copy-Item -Path (Join-Path $loaderDir "Mobile-app.xml") -Destination (Join-Path $staging "Mobile-app.xml") -Force
+          Copy-Item -Path (Join-Path $loaderDir "Desktop.swf") -Destination (Join-Path $staging "Desktop.swf") -Force
+          Copy-Item -Path (Join-Path $loaderDir "Mobile.swf") -Destination (Join-Path $staging "Mobile.swf") -Force
+
+          # Copy upstream synced gamefiles
+          $gamefilesUpstream = Join-Path $buildDir "gamefiles-upstream"
+          if (Test-Path $gamefilesUpstream) {
+            Copy-Item -Path (Join-Path $gamefilesUpstream "*") -Destination (Join-Path $staging "gamefiles") -Recurse -Force
+          }
+
+          # Copy SWCs and ANEs to staging libs
+          if (Test-Path (Join-Path $loaderDir "libs")) {
+            Copy-Item -Path (Join-Path $loaderDir "libs\*") -Destination (Join-Path $staging "libs") -Recurse -Force
+          }
+          Copy-Item -Path (Join-Path $apiDir "bin\AqwApi.swc") -Destination (Join-Path $staging "libs\AqwApi.swc") -Force
+          Copy-Item -Path (Join-Path $uiDir "bin\ModUI.swc") -Destination (Join-Path $staging "libs\ModUI.swc") -Force
+
+          # 4. Compile WorkerMain.swf
+          Write-Host "=> [4/5] Compiling WorkerMain.swf..."
+          Invoke-Checked $amxmlc @(
+            "-strict=false",
+            (Join-Path $staging "worker-src\WorkerMain.as"),
+            "-source-path+=$(Join-Path $staging 'src')",
+            "-source-path+=$(Join-Path $staging 'worker-src')",
+            "-output", (Join-Path $staging "gamefiles\embed\WorkerMain.swf"),
+            "-swf-version=51"
+          ) "WorkerMain.swf compilation"
+
+          # 5. Compile Desktop_code.swf and inject into Desktop.swf
+          Write-Host "=> [5/5] Compiling Desktop_code.swf and injecting into Desktop.swf..."
+          Invoke-Checked $amxmlc @(
+            "+configname=air",
+            "-strict=false",
+            "-debug=true",
+            "-default-size", "960", "550",
+            "-default-frame-rate", "120",
+            "-default-background-color", "0x000000",
+            "-define+=POCKET::IS_DESKTOP,true",
+            "-define+=POCKET::IS_MOBILE,false",
+            "-library-path+=$(Join-Path $staging 'libs')",
+            "-source-path+=$(Join-Path $staging 'src')",
+            "-source-path+=$(Join-Path $staging 'worker-src')",
+            "-output", (Join-Path $staging "Desktop_code.swf"),
+            (Join-Path $staging "src\Pocket.as")
+          ) "Desktop_code.swf compilation"
+
+          Push-Location $staging
+          try {
+            Invoke-Checked "abcexport" @("Desktop_code.swf") "abcexport"
+            Invoke-Checked "abcreplace" @("Desktop.swf", "0", "Desktop_code-0.abc") "abcreplace"
+            Remove-Item -Path "Desktop_code.swf", "Desktop_code-0.abc" -Force
+            Get-ChildItem -Path "Desktop-*.abc" -ErrorAction SilentlyContinue | Remove-Item -Force
+          }
+          finally { Pop-Location }
+
+          Copy-Item -Path (Join-Path $staging "Desktop.swf") -Destination (Join-Path $buildDir "Desktop.swf") -Force
+
+          # Optional Android Mobile.swf compilation
+          if ("${{ github.event.inputs.build_android }}" -eq "true") {
+            Write-Host "=> Compiling Mobile_code.swf and injecting into Mobile.swf..."
+            Invoke-Checked $amxmlc @(
+              "+configname=air",
+              "-strict=false",
+              "-define+=POCKET::IS_DESKTOP,false",
+              "-define+=POCKET::IS_MOBILE,true",
+              "-library-path+=$(Join-Path $staging 'libs')",
+              "-source-path+=$(Join-Path $staging 'worker-src')",
+              "-source-path+=$(Join-Path $staging 'src')",
+              "-output", (Join-Path $staging "Mobile_code.swf"),
+              (Join-Path $staging "src\Pocket.as")
+            ) "Mobile_code.swf compilation"
+
+            Push-Location $staging
+            try {
+              Invoke-Checked "abcexport" @("Mobile_code.swf") "abcexport"
+              Invoke-Checked "abcreplace" @("Mobile.swf", "0", "Mobile_code-0.abc") "abcreplace"
+              Remove-Item -Path "Mobile_code.swf", "Mobile_code-0.abc" -Force
+              Get-ChildItem -Path "Mobile-*.abc" -ErrorAction SilentlyContinue | Remove-Item -Force
+            }
+            finally { Pop-Location }
+
+            Copy-Item -Path (Join-Path $staging "Mobile.swf") -Destination (Join-Path $buildDir "Mobile.swf") -Force
+          }
+
+      - name: Package Windows Bundles (and optional APK)
+        id: package-bundles
+        shell: pwsh
+        run: |
+          $workspace = $env:GITHUB_WORKSPACE
+          $modDir = Join-Path $workspace "aqw-mobile-mod"
+          $buildDir = Join-Path $modDir "build"
+          $staging = Join-Path $buildDir "staging"
+          $loaderDir = Join-Path $modDir "loader"
+          $artifactsDir = Join-Path $modDir "artifacts"
+          New-Item -ItemType Directory -Path $artifactsDir -Force | Out-Null
+
+          $airBin = Join-Path $env:AIR_HOME "bin"
+          $adt = Join-Path $airBin "adt.bat"
+
+          # 1. Create temporary self-signed certificate
+          $certificate = Join-Path $env:RUNNER_TEMP "aqw-pocket-ci.p12"
+          & $adt -certificate -cn "AQW Pocket CI" 2048-RSA $certificate "temporary-ci-password"
+          if ($LASTEXITCODE -ne 0) { throw "Failed to generate temporary signing certificate." }
+
+          # 2. Prepare descriptor
+          $upstreamVer = "${{ steps.sync-gamefiles.outputs.upstream_version }}"
+          if (-not $upstreamVer) { $upstreamVer = "latest" }
+          $cleanVersion = ($upstreamVer -replace '^v','').Trim()
+          if (-not ($cleanVersion -match '^\d+(\.\d+)*$')) { $cleanVersion = "3.6.0" }
+          $date = Get-Date -Format "dd-MM-yy"
+
+          $rawDescriptor = Get-Content (Join-Path $loaderDir "Desktop-app.xml") -Raw
+          # Strip extensions element to avoid missing extension descriptor error at packaging
+          $cleanDescriptor = [System.Text.RegularExpressions.Regex]::Replace(
+            $rawDescriptor,
+            "(?s)[ \t]*<extensions>.*?</extensions>\s*",
+            ""
+          )
+          # Update version numbers
+          $cleanDescriptor = [System.Text.RegularExpressions.Regex]::Replace(
+            $cleanDescriptor,
+            "<versionNumber>.*?</versionNumber>",
+            "<versionNumber>$cleanVersion</versionNumber>"
+          )
+          $cleanDescriptor = [System.Text.RegularExpressions.Regex]::Replace(
+            $cleanDescriptor,
+            "<versionLabel>.*?</versionLabel>",
+            "<versionLabel>$cleanVersion</versionLabel>"
+          )
+
+          # Modes to build: direct (recommended) and optional gpu
+          $modes = @("direct")
+          if ("${{ github.event.inputs.include_gpu }}" -ne "false") {
+            $modes += "gpu"
+          }
+
+          foreach ($mode in $modes) {
+            Write-Host "=> Packaging Windows x64 bundle ($mode render)..."
+            $modeDescriptor = [System.Text.RegularExpressions.Regex]::Replace(
+              $cleanDescriptor,
+              "<renderMode>.*?</renderMode>",
+              "<renderMode>$mode</renderMode>"
+            )
+            $descriptorFile = Join-Path $buildDir "Desktop-app-$mode.xml"
+            Set-Content -Path $descriptorFile -Value $modeDescriptor -Encoding utf8
+
+            $bundleDir = Join-Path $buildDir "AQW-Pocket-Windows-x64-$mode"
+            if (Test-Path $bundleDir) { Remove-Item -Path $bundleDir -Recurse -Force }
+
+            & $adt -package -storetype pkcs12 `
+              -keystore $certificate -storepass "temporary-ci-password" `
+              -target bundle -arch x64 `
+              $bundleDir $descriptorFile `
+              -C $buildDir Desktop.swf `
+              -C $staging gamefiles assets icons
+
+            if ($LASTEXITCODE -ne 0) { throw "AIR bundle packaging failed for mode $mode." }
+
+            # Target artifact name matching user style: aqw-<upstreamversion>-<dd-mm-yy>-<arch>.zip
+            $zipName = "aqw-$upstreamVer-$date-x64-$mode.zip"
+            $zipPath = Join-Path $artifactsDir $zipName
+            if (Test-Path $zipPath) { Remove-Item -Path $zipPath -Force }
+
+            Write-Host "   Compressing into $zipName..."
+            Compress-Archive -Path $bundleDir -DestinationPath $zipPath -CompressionLevel Optimal
+          }
+
+          # Optional Android package
+          if ("${{ github.event.inputs.build_android }}" -eq "true") {
+            Write-Host "=> Packaging Android ARMv8 APK..."
+            $apkName = "aqw-$upstreamVer-$date-armv8.apk"
+            $apkPath = Join-Path $artifactsDir $apkName
+
+            $rawMobileXml = Get-Content (Join-Path $loaderDir "Mobile-app.xml") -Raw
+            $mobileXml = [System.Text.RegularExpressions.Regex]::Replace(
+              $rawMobileXml,
+              "<versionNumber>.*?</versionNumber>",
+              "<versionNumber>$cleanVersion</versionNumber>"
+            )
+            $mobileXml = [System.Text.RegularExpressions.Regex]::Replace(
+              $mobileXml,
+              "<versionLabel>.*?</versionLabel>",
+              "<versionLabel>$cleanVersion</versionLabel>"
+            )
+            $mobileXml = [System.Text.RegularExpressions.Regex]::Replace(
+              $mobileXml,
+              "<renderMode>.*?</renderMode>",
+              "<renderMode>direct</renderMode>"
+            )
+            $mobileXmlPath = Join-Path $buildDir "Mobile-app-armv8-direct.xml"
+            Set-Content -Path $mobileXmlPath -Value $mobileXml -Encoding utf8
+
+            & $adt -package `
+              -target apk-captive-runtime `
+              -arch armv8 `
+              -storetype PKCS12 `
+              -keystore $certificate -storepass "temporary-ci-password" `
+              $apkPath $mobileXmlPath `
+              -C $buildDir Mobile.swf `
+              -C $staging assets icons gamefiles
+
+            if ($LASTEXITCODE -ne 0) { throw "Android APK packaging failed." }
+          }
+
+      - name: Upload Build Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: AQW-Artifacts-${{ steps.sync-gamefiles.outputs.upstream_version }}-${{ github.run_number }}
+          path: aqw-mobile-mod/artifacts/*
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Publish GitHub Release
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $date = Get-Date -Format "dd-MM-yy"
+          $tagDate = Get-Date -Format "yyyyMMdd"
+          $upstreamVer = "${{ steps.sync-gamefiles.outputs.upstream_version }}"
+          $artifactsDir = Join-Path $env:GITHUB_WORKSPACE "aqw-mobile-mod\artifacts"
+          $files = Get-ChildItem -Path $artifactsDir -File | ForEach-Object { $_.FullName }
+
+          if ($files.Count -eq 0) { throw "No artifacts found in $artifactsDir to publish." }
+
+          $tag = "v$upstreamVer-$tagDate-run${{ github.run_number }}"
+          $title = "AQW Mod $upstreamVer ($date)"
+          $notes = @"
+          ## AQW Mobile Mod Release
+          - **Upstream Version**: $upstreamVer
+          - **Build Date**: $date
+          - **Commit**: $env:GITHUB_SHA
+
+          ### Included Artifacts:
+          $(Get-ChildItem -Path $artifactsDir -File | ForEach-Object { "- **`$($_.Name)`** ($([math]::Round($_.Length / 1MB, 2)) MB)" } | Out-String)
+          "@
+
+          $cmdArgs = @(
+            "release", "create", $tag
+          ) + $files + @(
+            "--repo", $env:GITHUB_REPOSITORY,
+            "--target", $env:GITHUB_SHA,
+            "--title", $title,
+            "--notes", $notes
+          )
+
+          if ("${{ github.event.inputs.prerelease }}" -eq "true") {
+            $cmdArgs += "--prerelease"
+          }
+
+          Write-Host "Creating GitHub Release $tag..."
+          & gh @cmdArgs
+          if ($LASTEXITCODE -ne 0) { throw "GitHub release creation failed with exit code $LASTEXITCODE." }
