@@ -104,11 +104,15 @@ function onTick() {
 
 ---
 
-## The Deterministic Step-by-Step Quest Pattern
+## The Deterministic Step-by-Step Quest Pattern (Best Method to Prevent Bugs)
+
+> [!IMPORTANT]
+> **Step-by-step scripting is the gold standard and best method to use across all `.hxs` scripts.**
+> In asynchronous game botting, monolithic macros or fire-and-forget loops cause monster lock-ins, cell jump cancellations, desynced turn-in packets, and endless loops. The **Deterministic Step-by-Step Pattern** completely eliminates these bugs by transforming each quest objective into an atomic, verified gate.
 
 In earlier botting paradigms, macro functions like `storyKillQuest()` tried to automatically guess which monster dropped which requirement using fuzzy name heuristics. On hybrid quests (requiring **both** map items and monster drops), this caused infinite loops and turn-in errors.
 
-The **Deterministic Step-by-Step Pattern** is 100% reliable, zero-guesswork, and handles single-mob, multi-mob, and hybrid quests seamlessly:
+With the **Deterministic Step-by-Step Pattern**, your script executes as a clean state machine where every line is a guarded condition:
 
 ```javascript
 // Quest 2379: Bolster the Elements (Hybrid: 2 Map Items + 2 Monster Drops)
@@ -122,18 +126,22 @@ if (quest(2379, "aqlesson")) {
 }
 ```
 
-### Why this pattern never breaks:
-1. `quest(questId, mapName)`:
-   - If the quest was already completed in the past (`isCompletedBefore(questId)`), it returns `false` immediately (skipping the entire block in under 1 millisecond).
-   - If not completed, it automatically joins `mapName`, accepts the quest, and returns `true` to enter the step block.
-2. `mapItem(itemId, item, qty)` / `ensureMapItem(...)`:
-   - Checks your inventory directly for `item` $\ge$ `qty`.
-   - If not satisfied, gathers the map item respecting safety server cooldowns (1500ms delay). Returns `true` once acquired.
-   - Already-requested counts are tracked per **(item, map)** pair, so the same item on two maps is tracked separately.
-3. `hunt(monster, item, qty)`:
-   - Automatically navigates to the monster, engages combat, and checks inventory for `item` $\ge$ `qty`. Returns `true` once acquired.
-4. `complete(questId)`:
-   - Safely stops combat, turns in the quest, clears that quest's cached monster guesses, and verifies server completion.
+### Why this pattern guarantees bug-free execution:
+1. **Atomic Progression with `return`:**
+   - While an objective is in flight (walking to a cell, clicking a map item, or fighting a monster), the function returns `false`.
+   - The trailing `return;` immediately exits `onTick()`, cleanly yielding control back to the game engine for that tick (~100ms).
+   - This prevents race conditions where the script tries to jump cells or talk to NPCs while still in combat or mid-transfer.
+2. **Zero Target-Lock Contamination:**
+   - Because only one step runs at a time, `hunt()` locks onto exactly one target monster and releases the lock as soon as the target quantity is met. When the script advances to the next step, there are no lingering monster locks or target filters.
+3. **`quest(questId, mapName)` acts as an automatic skip gate:**
+   - If the quest was already completed (`isCompletedBefore(questId)`), it returns `false` immediately, skipping the entire block in under 1 millisecond.
+   - If not yet completed, it automatically joins `mapName`, accepts the quest, and returns `true` to enter the step sequence.
+4. **`mapItem(itemId, item, qty)` tracks exact inventory:**
+   - Checks inventory directly for `item` $\ge$ `qty`. Gathers items respecting server rate limits (1500ms delay) and returns `true` once acquired.
+5. **`hunt(monster, item, qty)` guarantees clean combat:**
+   - Navigates to the monster's cell, activates your equipped rotation, and checks inventory for `item` $\ge$ `qty`. Returns `true` once the items are in your bag.
+6. **`complete(questId)` safely finalizes the quest:**
+   - Safely stops combat, sends the turn-in request, verifies server completion, and clears cached story state.
 
 ---
 
@@ -148,14 +156,32 @@ These functions are available everywhere in `.hxs` files without any object pref
 - `joinHouse(username?)`: Direct house transfer.
 - `ensureCell(cell, pad?)` *(Bool)*: Ensures avatar is in the specified cell on current map.
 - `jump(cell, pad?)`: Jumps to specified cell and pad.
-- `cell()` *(String)* / `pad()` *(String)*: Current avatar cell and pad.
-- `mapName()` *(String)*: Current map name.
+- `cell()` / `getCell()` *(String)*: Current avatar cell.
+- `pad()` / `getPad()` *(String)*: Current avatar pad.
+- `mapName()` / `getMapName()` *(String)*: Current map name.
 - `isHouse()` *(Bool)*: Returns `true` if currently in your personal house.
 - `isMap(name)` *(Bool)*: Returns `true` if on the specified map.
 - `isCell(name)` *(Bool)*: Returns `true` if in the specified cell.
 - `isLoaded()` *(Bool)*: Returns `true` if map is fully loaded.
 - `setSkipCutscenes(enabled? = true)`: Enables/disables auto-skipping cutscenes on map joins.
 - `isSkipCutscenes()` *(Bool)*: Returns `true` if auto-skipping is currently enabled.
+
+### Player Status & Character Queries
+All character properties are exposed as live, dynamic functions. Use these functions directly in conditionals rather than caching stale variables:
+- `hp()` / `getHp()` *(Int)*: Current HP.
+- `maxHp()` / `getMaxHp()` *(Int)*: Maximum HP.
+- `mp()` / `getMp()` *(Int)*: Current MP / Mana.
+- `maxMp()` / `getMaxMp()` *(Int)*: Maximum MP / Mana.
+- `gold()` / `getGold()` *(Int)*: Current gold.
+- `level()` / `getLevel()` *(Int)*: Current character level.
+- `username()` / `getUsername()` *(String)*: Current player username.
+- `isAlive()` *(Bool)*: Returns `true` if avatar is alive (`hp > 0` and `state > 0`).
+- `isInCombat()` *(Bool)*: Returns `true` if avatar is currently engaged in combat.
+- `isMember()` *(Bool)*: Returns `true` if account has an active membership.
+- `factionRank(name)` / `getFactionRank(name)` *(Int)*: Current rank in the specified faction.
+- `hasAura(name)` *(Bool)*: Returns `true` if the specified aura buff/debuff is active on your character.
+- `getAuraStacks(name)` *(Float)*: Stack count of the specified aura.
+- `getAuraRemaining(name)` *(Float)*: Remaining duration in seconds of the specified aura.
 
 ### Map Items (`mapItem` & `getMapItem`)
 Two distinct functions — they are **not** aliases:
