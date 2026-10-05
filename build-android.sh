@@ -1,8 +1,7 @@
 #!/bin/bash
 # build-android.sh - Build Android APKs locally using isolated build sandbox
 # Supports ARMv8, ARMv7, or both (default)
-# Produces exactly 3 render files per arch: auto, gpu, direct
-# Output: android_builds/AQWPocket-Mod-${ARCH}-${MODE}.apk
+# Output: android_builds/aqwmod-${UPSTREAM_VERSION}-${BUILD_DATE}-${ARCH}.apk
 
 set -euo pipefail
 
@@ -152,12 +151,35 @@ if [ ! -f "$KEYSTORE" ]; then
     "$ADT" -certificate -cn "AQWPocketLocal" 2048-RSA "$KEYSTORE" password
 fi
 
-echo "=> Packaging APKs (${TARGET_MODES[*]}) for architectures: ${ARCHS[*]}..."
+# Resolve upstream version (e.g. v3.6.0)
+if [ -z "${UPSTREAM_VERSION:-}" ]; then
+    if [ -f "$BUILD/upstream-apk-cache/latest.tag" ]; then
+        UPSTREAM_VERSION="$(cat "$BUILD/upstream-apk-cache/latest.tag" | tr -d '[:space:]')"
+    elif [ -f "$DIR/build/upstream-apk-cache/latest.tag" ]; then
+        UPSTREAM_VERSION="$(cat "$DIR/build/upstream-apk-cache/latest.tag" | tr -d '[:space:]')"
+    fi
+fi
+if [ -z "${UPSTREAM_VERSION:-}" ]; then
+    UPSTREAM_VERSION="$(grep -oPm1 "(?<=<versionNumber>)[^<]+" "$DIR/loader/Mobile-app.xml" 2>/dev/null || echo "3.6.0")"
+fi
+
+# Date in dd-mm-yy format (e.g. 05-10-26)
+BUILD_DATE="${BUILD_DATE:-$(date +'%d-%m-%y')}"
+
+echo "=> Packaging APKs (${TARGET_MODES[*]}) for architectures: ${ARCHS[*]} (version: $UPSTREAM_VERSION, date: $BUILD_DATE)..."
 
 BUILT_APKS=()
 for CURRENT_ARCH in "${ARCHS[@]}"; do
     for MODE in "${TARGET_MODES[@]}"; do
-        OUTPUT_FILE="AQWPocket-Mod-${CURRENT_ARCH}-${MODE}.apk"
+        if [ "${#TARGET_MODES[@]}" -eq 1 ]; then
+            OUTPUT_FILE="aqwmod-${UPSTREAM_VERSION}-${BUILD_DATE}-${CURRENT_ARCH}.apk"
+        else
+            if [ "$MODE" = "auto" ]; then
+                OUTPUT_FILE="aqwmod-${UPSTREAM_VERSION}-${BUILD_DATE}-${CURRENT_ARCH}.apk"
+            else
+                OUTPUT_FILE="aqwmod-${UPSTREAM_VERSION}-${BUILD_DATE}-${CURRENT_ARCH}-${MODE}.apk"
+            fi
+        fi
         OUTPUT_PATH="$OUTPUT_DIR/$OUTPUT_FILE"
         TMP_APP_XML="$BUILD/Mobile-app-${CURRENT_ARCH}-${MODE}.xml"
 

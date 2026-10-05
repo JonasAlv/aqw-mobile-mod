@@ -385,7 +385,7 @@ jobs:
           # Optional Android package
           if ("${{ github.event.inputs.build_android }}" -eq "true") {
             Write-Host "=> Packaging Android ARMv8 APK..."
-            $apkName = "aqw-$upstreamVer-$date-armv8.apk"
+            $apkName = "aqwmod-$upstreamVer-$date-armv8.apk"
             $apkPath = Join-Path $artifactsDir $apkName
 
             $rawMobileXml = Get-Content (Join-Path $loaderDir "Mobile-app.xml") -Raw
