@@ -43,8 +43,11 @@ function onStop() {
 5. [Subsystem Namespaces (`player`, `aura`, `shop`, etc.)](#subsystem-namespaces)
 6. [Combat & Hunting](#combat--hunting)
 7. [Drops, Inventory & Banking](#drops-inventory--banking)
-8. [Scripting Architectural Patterns](#scripting-architectural-patterns)
-9. [AI Script Generation Guide](#ai-script-generation-guide)
+8. [Bulk Purchasing](#bulk-purchasing)
+9. [Auto Attack (`autoattack`)](#auto-attack-autoattack)
+10. [Rate Limits](#rate-limits)
+11. [Scripting Architectural Patterns](#scripting-architectural-patterns)
+12. [AI Script Generation Guide](#ai-script-generation-guide)
 
 ---
 
@@ -238,6 +241,126 @@ The `hunt()` function automatically resolves which cell the monster spawns in, t
 - `getQuestQuantity(itemName)` *(Int)*: Returns count checking backpack, temp inventory, and quest tree.
 - `getInventory()` *(Array)*: Returns all inventory items.
 - `getBankItems()` *(Array)*: Returns all bank items.
+- `getBankQuantity(itemName)` *(Int)*: Stack size for one item in the bank, `0` if not banked.
+- `getInventoryQuantity(itemName)` *(Int)*: Stack size in the backpack only, `0` if absent.
+- `isQuestAccepted(questId)` *(Bool)*: Whether a quest is in progress or queued for accept.
+
+#### Temporary (Quest) Items
+
+Quest items live in a **third** container, `avatar.tempitems`, which is neither the backpack nor the bank. The game splits them with `bTemp`: an `addItems` packet entry with `bTemp != 0` goes to `addTempItem` rather than `addItem`. Because they are a separate array, `getInventory()` and `getBankItems()` never report them.
+
+- `getTempItems()` *(Array)*: All temp items.
+- `getTempQuantity(itemName)` *(Int)*: Stack size in the temp container.
+- `hasTempItem(itemName, qty? = 1)` *(Bool)*: Whether the temp container holds enough.
+
+#### Locating an Item
+
+- `getItemLocation(itemName)` *(String)*: `"temp"`, `"inventory"`, `"house"`, `"bank"`, or `""` when absent.
+- `findItem(itemName)` *(Object)*: `{item, id, name, quantity, location}` or `null`.
+
+`quantity` from `findItem` is the count **in that one container**, not a total across all of them — a caller acting on it needs to know what the specific container holds. `getItemLocation` checks `temp` first, so a quest temp item and a banked copy of the same ItemID resolve to `"temp"` rather than `"bank"`.
+
+#### Never sum the container readers
+
+`getQuestQuantity` is the only **de-duplicated** reading. It inspects the backpack, the temp container *and* `world.invTree`, and guards every match with a `countedNames` set keyed by ItemID, so an item visible in more than one place is still counted once.
+
+The container readers are **not** additive:
+
+```haxe
+getTempQuantity("Shadow Hunt Medal") + getInventoryQuantity("Shadow Hunt Medal")   // WRONG - can double count
+getQuestQuantity("Shadow Hunt Medal")                                               // RIGHT - counted once
+```
+
+Use `getQuestQuantity` for any "do I have enough" decision, and the container readers plus `getItemLocation`/`findItem` only when you specifically need to know *where* the item is. `scripts/ShadowBattleon_TempItem_Tracking.hxs` is a runnable diagnostic that reports all four readings side by side and flags the sum-vs-dedup mismatch.
+
+#### Reset on Target Change
+
+The **Reset** toggle in the Combat Mode Editor decides what happens to the rotation when you switch targets.
+
+- **ON** — acquiring a new target restarts the combo from slot 0.
+- **OFF** — the rotation keeps its position, so you resume mid-combo on the next mob.
+
+This is per-mode and persists in `userSkills.json` as `resetComboOnTargetChange`. It can also be set in the mode text itself:
+
+```
+[MyClass : myMode]
+mode = WaitForCooldown
+timeout = 0
+combo = 1 > 2 > 3 > 4
+resetComboOnTargetChange = true
+```
+
+`getResetOnTargetChange([class], [mode])` returns the flag as stored, defaulting to the current class and active mode.
+
+Two behaviours worth knowing:
+
+- A target that **dies while still referenced** counts as a target change even though its `MonMapID` is unchanged, so ON does restart the rotation on death — and the engine stops trying to fight the corpse. Previously the identity check missed this case entirely.
+- The global **custom rotation** (not a mode) always restarts on a new target; it has no mode config, so there is no flag to read. The toggle only affects mode-based rotations.
+
+When the reset fires, the engine logs `Reset on target change: restarting combo from slot 0` so you can confirm it rather than inferring it from which skill came out.
+
+#### Auto Attack (`autoattack`)
+
+Whether a rotation lets the API fire Auto Attack. Three states per mode:
+
+| Spelling | Meaning |
+|---|---|
+| omitted / `null` | **Inherit** — fall back to the class default, then to on |
+| `true` | Mode turns Auto Attack on |
+| `false` | Mode turns Auto Attack off |
+
+**Precedence: the mode wins; the class object is only a default.** The mode is the more specific setting, so `autoattack` on a mode always outranks a class-level `autoattack`. A mode can therefore re-enable Auto Attack on a class whose own flag says off — the earlier order was inverted (class outranked mode) and left a class that turned it off unable to recover through any of its modes.
+
+Resolution order, applied by both `modeHasAutoAttack` and `classHasAutoAttack`:
+1. mode's own `autoattack`
+2. class object's `autoattack`
+3. `true` (Auto Attack on)
+
+When it resolves on, the API owns Auto Attack through `SkillCaster.fireAutoAttack`. When it resolves off, nothing is sent and `world.cancelAutoAttack()` is not called — the game keeps whatever state it had.
+
+#### Rate Limits
+
+**Every timing value in the API lives in one file: `aqw-haxe-api/src/com/aqwapi/utils/ApiTimings.hx`.** Change a value there and it applies everywhere — the managers, the combat engine, and `rateLimit()` all read the same constant, so a too-short or too-long timer has exactly one place to fix.
+
+AQW enforces server-side cooldowns on these actions. The managers already gate them and queue internally, so calling the `ensure*` forms is always safe. These are **not tuning knobs** — do not bypass them, or the server silently drops the action:
+
+| Action | Interval | Constant |
+|---|---|---|
+| Quest accept / complete / turn-in | 1100ms | `ApiTimings.QUEST_ACTION_MS` (1000 server + 100 lag margin) |
+| Bank / unbank transfer | 1100ms | `ApiTimings.BANK_ACTION_MS` |
+| Shop load | 1500ms | `ApiTimings.SHOP_LOAD_MS` |
+| Buy / Sell | 1000ms | `ApiTimings.SHOP_BUY_MS` / `SHOP_SELL_MS` |
+| Map join | 2000ms | `ApiTimings.MAP_JOIN_MS` |
+| Map item pickup | 2000ms | `ApiTimings.MAP_ITEM_MS` |
+| Cell jump | 500ms | `ApiTimings.CELL_JUMP_MS` |
+
+Combat-side values live in the same file: `COMBAT_TICK_MS` (100ms engine tick), `MIN_CAST_GAP_MS` (200ms shared by Auto Attack and the rotation), `COUNTER_WINDOW_MS` (default `[counter]` window), `TEMP_IGNORE_MS`, `CC_CHECK_CACHE_MS`, plus poll/settle delays (`SETTLE_MS`, `HOUSE_POLL_MS`, `BANK_LOAD_POLL_MS`, `QUEST_REFRESH_MS`, `ENHANCE_POLL_MS`, `EQUIP_TIMEOUT_MS`).
+
+`rateLimit()` returns every value as an object, `rateLimitDump()` renders them as one log line, and `questActionCooldownMs()` returns just the quest one. All three read `ApiTimings` directly, so a script cannot read a stale copy.
+
+Prefer `ensureAccept` / `ensureQuest` / `ensureComplete` over the raw `acceptQuest` / `complete`. The `ensure*` forms return `true` when the quest is already accepted, completed or still loading, so a polling loop terminates instead of re-requesting every tick and walking into the throttle.
+
+#### Bulk Purchasing
+
+`buyItem` throttles itself to one purchase per second and **silently discards** calls made inside that window. Looping over `buyItem` to buy several different things therefore buys the first and throws the rest away:
+
+```haxe
+for (name in ["50k", "25k", "10k"]) buyItem(shopId, name);   // buys ONE item
+```
+
+`buyItems` queues them instead and drains one per `gapMs`, so every entry is actually sent:
+
+```haxe
+buyItems([
+  {item: "50k Gold Voucher", quantity: 5},
+  ["25k Gold Voucher", 2],
+  {name: "Stealth"}                  // quantity defaults to 1
+], 800);                             // returns how many were accepted
+```
+
+Each entry is `{item, quantity}`, `[name, qty]`, or `{name}` / `{name, qty}`. Names are trimmed, `quantity`/`qty` below 1 becomes 1, numeric strings like `"7"` are accepted, and an entry with no usable name is rejected rather than queued as a broken purchase. Use `getPendingBuyCount()` to check progress and `clearBuyQueue()` to abandon the rest.
+
+Note `shop.buyItem(itemName, qty)` takes a **name or ItemID** directly, whereas the top-level `buyItem(shopId, itemName, qty)` also loads the shop first.
 - `equip(itemName)`: Equips weapon, armor, helm, cape, class, or pet.
 - `isEquipped(itemName)` *(Bool)*: Returns `true` if the item is currently equipped.
 - `ensureEquipped(itemName)` *(Bool)*: Equips the item if it is not already equipped; returns `false` on the tick it initiates the swap.
@@ -246,6 +369,9 @@ The `hunt()` function automatically resolves which cell the monster spawns in, t
 - `getDrop(itemName)`: Picks up a specific drop.
 - `getDrops(target?)`: Accepts pending drops. Defaults to all; accepts `"any"`/`"*"` or an array of item names.
 - `buyItem(shopId, itemName, qty? = 1)`: Loads shop and buys item.
+- `buyItems(list, gapMs? = 1000)` *(Int)*: Queues several purchases, returning how many were accepted. See [Bulk Purchasing](#bulk-purchasing).
+- `getPendingBuyCount()` *(Int)*: Purchases still queued.
+- `clearBuyQueue()`: Drops everything still queued.
 - `bankAll(exclude?)`: Deposits all unequipped, non-temporary items into Bank.
 - `bankAllAcItems(exclude?)`: Deposits all unequipped AC items into free bank storage.
 - `unbankPreset(name)`: Unbanks all items from a hardfarm preset (e.g. `"vhl"`, `"lr"`, `"nulgath"`).
@@ -288,6 +414,52 @@ Scripts have **two output channels**, and picking the right one is what keeps th
 - `resetHunt()`: Clears the current hunt target and counters without stopping the script.
 - `sendPacket(packet)`: Sends raw game packet to server.
 
+### The `[counter]` Rule
+
+`[counter]` holds a combo slot until the **target has actually attacked us**. Built for riposte loops where a skill must only be spent in answer to an attack — most notably the Chrono ShadowHunter dodge rotation, where skill `3` consumes the dodge buff and therefore has to land *after* the mob swings, not before.
+
+Detection reads the **server's own hit packet** (`sar` / `sars`, or `sara` / `sarsa` carried on the periodic `ct` tick) rather than our HP or the mob's animation. So a dodged or missed swing still counts, and the timing is the exact moment the server resolved the attack. An HP-delta trigger would only fire on swings that actually connected, which is the opposite of what a riposte needs.
+
+#### Hard lock vs timed gate
+
+This is the important distinction, and it is decided entirely by whether a time value is present:
+
+| Spelling | Behaviour |
+|---|---|
+| `[counter x2]` | **HARD LOCK**, opens only after **2** attacks have landed. `x3`, `x4`, ... work the same way. |
+| `[counter x2=miss]` | Hard lock, opens after 2 **missed** swings specifically |
+| `[counter]` | **HARD LOCK.** Waits indefinitely for the target's first attack and never expires. The rotation **holds the slot** and retries every tick — it will not skip past it, and the mode-level `timeout` cannot skip it either. |
+| `[counter <= 1.5s]` | Ordinary **timed gate**. Passes only while an attack landed within the last 1500ms. A false result advances the rotation like any other unmet condition, and `timeout` applies. |
+| `[counter <= 1500]` | Same, in milliseconds |
+| `[counter=miss]` | Hard lock, but only a **miss** opens it |
+| `[counter=miss <= 2s]` | Timed gate, misses only |
+| `[hit]`, `[attacked]`, `[mobattack]` | Aliases for `[counter]` (hard lock) |
+
+Filter types: `hit`, `crit`, `miss`, `dodge`, `parry`, `block`, `none` — all from the server's own resolution enum.
+
+**Why `xN` and not `=N` for the count:** `=` followed by digits has always meant a millisecond window, so `[counter=1500]` is a 1500ms gate. Letting `=` also carry a count would silently reinterpret every existing window as "wait for 1500 hits" with no error. `x` cannot collide — no resolution type or alias begins with it. If both a count and a window are given, the count governs, since "wait for N" is the stricter condition.
+
+A hard lock is **edge-triggered**: one mob attack opens exactly one `[counter]` slot. When the locked skill fires, that attack is marked spent, so the next `[counter]` slot in the rotation waits for the mob's *next* swing rather than replaying the same one. A level-triggered check ("has it ever happened") latches true after the first hit and would make `3[counter]` chain back-to-back with no mob attack in between.
+
+**Arming delay.** A hard lock also ignores attacks that land within `ApiTimings.COUNTER_ARM_DELAY_MS` (300ms) of your last cast. Mobs frequently swing in the same instant you cast the arm skill — a dodge buff, say — and reacting to that instant spends the riposte before the buff can resolve, so the hit the dodge *actually* answered is the one you never reply to. The cutoff is recomputed only when you cast, so an ignored early hit stays ignored rather than being picked up once the arm window passes. Change the delay in one place: `ApiTimings.COUNTER_ARM_DELAY_MS`.
+
+Use a bare `[counter]` when the skill must **never** be wasted; use a window when missing the window should simply move on. A hard lock waits forever, so it only releases on an actual attack or on losing the target — if you put one in a long rotation, everything after it waits behind it by design.
+
+When a hard lock is holding, the engine logs it (throttled) so a stalled rotation is visible rather than looking like a skill that never fires.
+
+**Timing and GCD.** A `[counter]` slot can go true while a global cooldown is still running. The engine then waits out the GCD and casts on the first free moment — it does *not* cancel, and it does *not* discard the reaction. Two consequences worth knowing:
+
+- There is no desync. Boss and mob attack timing is server-driven and is unaffected by when you cast, so a late riposte cannot shift a boss's next attack. What you get is **variable latency**: the riposte lands between roughly 100ms and 900ms after the attack resolves, depending on where you were in GCD when it landed. That is jitter, not drift, and no cumulative offset builds up.
+- Detecting the attack during GCD is still the correct behaviour. Discarding the reaction because GCD was active would turn a slightly-late riposte into no riposte at all.
+
+The combo for the CSH dodge loop becomes exactly the shape you described:
+
+```haxe
+1 > 2 > 3[counter] > 2 > 3[counter] > 4
+```
+
+`2` arms dodge, `3` waits for the mob to swing before riposting, `4` drops the enemy hit rating once you are out of mana. The rule reports `false` when there is no target, so a riposte can never fire after the mob dies or drops.
+
 > [!NOTE]
 > **Repeated identical log lines are collapsed automatically.** Consecutive identical messages within 2 seconds are written once, then summarised as `... (repeated N times)` once the burst goes quiet — so a `log()` inside a tight loop will not flood `api.log` or game chat. Only the count changes, never the wording, so nothing is silently lost.
 >
@@ -321,7 +493,10 @@ Specialized queries, deep player metrics, and manager controls are accessible vi
 - `shop.loadShop(shopId)`: Loads shop from server.
 - `shop.isShopLoaded` *(Bool)*: Shop loaded status.
 - `shop.loadedShopId` *(Int)*: Currently active shop ID.
-- `shop.buyItem(itemName, qty? = 1)`: Purchases item.
+- `shop.buyItem(itemName, qty? = 1)`: Purchases item. Throttled to 1/sec; extra calls inside that window are dropped.
+- `shop.buyItems(list, gapMs? = 1000)` *(Int)*: Queues several purchases, one per `gapMs`. Returns the accepted count.
+- `shop.getPendingBuyCount()` *(Int)*: Purchases still queued.
+- `shop.clearBuyQueue()`: Drops everything still queued.
 - `shop.sellItem(itemName, qty? = 1)`: Sells item.
 
 ### `monster.*`
