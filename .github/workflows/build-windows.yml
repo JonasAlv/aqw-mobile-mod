@@ -69,15 +69,49 @@ jobs:
           & haxelib install hscript --always
           if ($LASTEXITCODE -ne 0) { throw "Failed to install hscript." }
 
-      - name: Set up AIR SDK
-        uses: joshtynjala/setup-adobe-air-action@v2
+      - name: Cache AIR SDK
+        id: cache-airsdk
+        uses: actions/cache@v4
         with:
-          air-version: "51.3.1"
-          accept-license: yes
+          path: C:\AIR_SDK
+          key: airsdk-windows-51.4.1.1
+
+      - name: Set up AIR SDK
+        shell: pwsh
+        run: |
+          $airDir = "C:\AIR_SDK"
+          $ProgressPreference = 'SilentlyContinue'
+
+          if (-not (Test-Path "$airDir\bin\amxmlc.bat")) {
+            New-Item -ItemType Directory -Path $airDir -Force | Out-Null
+            $zipPath = Join-Path $env:RUNNER_TEMP "AIRSDK_Windows.zip"
+
+            try {
+              $urls = Invoke-RestMethod -Uri "https://api.airsdk.harman.com/releases/latest/urls"
+              $downloadUrl = "https://airsdk.harman.com" + $urls.AIR_Win + "?license=accepted"
+            } catch {
+              Write-Warning "Failed to query Harman latest URL API: $_"
+              $downloadUrl = "https://airsdk.harman.com/api/versions/51.4.1.1/sdks/AIRSDK_Windows.zip?license=accepted"
+            }
+
+            Write-Host "Downloading AIR SDK from $downloadUrl..."
+            Invoke-WebRequest -Uri $downloadUrl -OutFile $zipPath
+
+            Write-Host "Extracting AIR SDK to $airDir..."
+            & 7z x $zipPath "-o$airDir" -y | Out-Null
+            if ($LASTEXITCODE -ne 0) { throw "Failed to extract AIR SDK." }
+            Remove-Item -Path $zipPath -Force
+          } else {
+            Write-Host "AIR SDK restored from cache at $airDir."
+          }
+
+          "AIR_HOME=$airDir" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          "$airDir\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
 
       - name: Set up RABCDAsm tools (abcexport, abcreplace)
         shell: pwsh
         run: |
+          $ProgressPreference = 'SilentlyContinue'
           $toolsDir = Join-Path $env:RUNNER_TEMP "rabcdasm"
           New-Item -ItemType Directory -Path $toolsDir -Force | Out-Null
           $archive = Join-Path $env:RUNNER_TEMP "rabcdasm.7z"
@@ -91,6 +125,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          $ProgressPreference = 'SilentlyContinue'
           $tempDir = Join-Path $env:RUNNER_TEMP "aqw-gamefiles"
           New-Item -ItemType Directory -Path $tempDir -Force | Out-Null
 
