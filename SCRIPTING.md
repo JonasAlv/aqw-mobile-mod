@@ -155,7 +155,12 @@ These functions are available everywhere in `.hxs` files without any object pref
 - `join(mapName, cell?, pad?)`: Direct map transfer.
 - `joinHouse(username?)`: Direct house transfer.
 - `ensureCell(cell, pad?)` *(Bool)*: Ensures avatar is in the specified cell on current map.
-- `jump(cell, pad?)`: Jumps to specified cell and pad.
+- `jump(cell, pad?, autoCorrect? = true)`: Jumps to specified cell and pad. Automatically verifies active room pads on the Flash timeline and auto-corrects missing or invalid pads (`requested` -> `"Left"` -> `"Spawn"` -> `first valid pad`) to prevent getting stuck at `(0, 0)`.
+- `jumpCorrect(cell, pad?)`: Forces an immediate cell jump with guaranteed live pad auto-correction.
+- `autoCorrectJump(enabled?)` *(Bool)*: Gets or toggles live jump auto-correction globally (defaults to `true`).
+- `getValidCellPads()` *(Array<String>)*: Returns active `Pad_\d+` symbols verified on the current cell timeline.
+- `getCellPads()` *(Array<String>)*: Returns valid pads for the current cell (with fallback to naming heuristics).
+- `getMapCells()` *(Array<String>)*: Returns all cell frame labels defined on the map timeline.
 - `cell()` / `getCell()` *(String)*: Current avatar cell.
 - `pad()` / `getPad()` *(String)*: Current avatar pad.
 - `mapName()` / `getMapName()` *(String)*: Current map name.
@@ -541,6 +546,15 @@ Specialized queries, deep player metrics, and manager controls are accessible vi
 - `enhancement.smartEnhance(pattern, level?)`: Enhances gear automatically.
 - `enhancement.isForgeUnlocked(enhancementName)` *(Bool)*: Checks Forge quest unlocks.
 - `enhancement.isAweUnlocked()` *(Bool)*: Checks Blade of Awe unlocks.
+
+### `map.*`
+- `map.jump(cell, pad?, force?, autoCorrect?)`: Moves to cell and pad with live timeline pad verification.
+- `map.autoCorrectJump` *(Bool)*: Property to get/set live jump auto-correction.
+- `map.getValidCellPads()` *(Array<String>)*: Array of active `Pad_\d+` timeline symbols.
+- `map.getCellPads()` *(Array<String>)*: Room pads with heuristic fallback.
+- `map.getMapCells()` *(Array<String>)*: Frame cell labels on the current map.
+- `map.reload(pad?)`: Resets and reloads the current room cell.
+- `map.getMapItem(itemId)` *(Bool)*: Low-level map item pickup.
 
 ### `api.*` / `bot.*`
 Direct root reference to the full underlying AQW engine:
