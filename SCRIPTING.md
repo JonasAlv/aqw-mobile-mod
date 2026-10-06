@@ -263,24 +263,24 @@ All functions listed below are globally available in `.hxs` scripts without any 
 ---
 
 ### Quest Automation & Progression
-- `quest(nameOrId, mapName?)` *(Bool)*: Skips block if quest is already completed; otherwise ensures map, accepts quest, and returns `true`. Accepts quest ID or quest name.
-- `complete(nameOrId, choice?)` *(Bool)*: Drops combat, turns in quest (with optional choice reward ID/name), and verifies server completion. Accepts quest ID or quest name.
-- `ensureQuest(nameOrId)` / `ensureAccept(nameOrId)` *(Bool)*: Ensures quest is loaded and accepted. Returns `true` if already completed.
-- `canComplete(nameOrId)` / `isQuestComplete(nameOrId)` *(Bool)*: Returns `true` if all turn-in requirements are met.
-- `hasBeenCompleted(nameOrId)` / `isCompletedBefore(nameOrId)` *(Bool)*: Returns `true` if quest was completed previously.
-- `isQuestUnlocked(nameOrId)` / `isUnlocked(nameOrId)` *(Bool)*: Returns `true` if quest is unlocked.
-- `isQuestAccepted(nameOrId)` *(Bool)*: Returns `true` if quest is currently in progress.
-- `ensureQuestsLoaded(namesOrIds)` *(Bool)*: Pre-loads an array or single ID/name of quest definitions from server.
-- `areQuestsLoaded(namesOrIds)` *(Bool)*: Returns `true` once all specified quest definitions are loaded.
-- `loadQuest(nameOrId)` / `loadQuests(namesOrIds)`: Requests quest definitions from server by ID or name.
-- `acceptQuest(nameOrId)`: Sends raw accept packet for loaded quest.
-- `completeQuest(nameOrId, choice?)`: Sends raw turn-in packet without waiting.
-- `getMissingRequirements(nameOrId)` *(Array)*: Returns array of outstanding requirement objects.
+- `quest(questId, mapName?)` *(Bool)*: Skips block if quest is already completed; otherwise ensures map, accepts quest, and returns `true`.
+- `complete(questId, choice?)` *(Bool)*: Drops combat, turns in quest (with optional choice reward ID/name), and verifies server completion.
+- `ensureQuest(questId)` / `ensureAccept(questId)` *(Bool)*: Ensures quest is loaded and accepted. Returns `true` if already completed.
+- `canComplete(questId)` / `isQuestComplete(questId)` *(Bool)*: Returns `true` if all turn-in requirements are met.
+- `hasBeenCompleted(questId)` / `isCompletedBefore(questId)` *(Bool)*: Returns `true` if quest was completed previously.
+- `isQuestUnlocked(questId)` / `isUnlocked(questId)` *(Bool)*: Returns `true` if quest is unlocked.
+- `isQuestAccepted(questId)` *(Bool)*: Returns `true` if quest is currently in progress.
+- `ensureQuestsLoaded(questIds)` *(Bool)*: Pre-loads an array or single ID of quest definitions from server.
+- `areQuestsLoaded(questIds)` *(Bool)*: Returns `true` once all specified quest definitions are loaded.
+- `loadQuest(questId)` / `loadQuests(questIds)`: Requests quest definitions from server by ID.
+- `acceptQuest(questId)`: Sends raw accept packet for loaded quest.
+- `completeQuest(questId, choice?)`: Sends raw turn-in packet without waiting.
+- `getMissingRequirements(questId)` *(Array)*: Returns array of outstanding requirement objects.
 - `mapItem(itemId, item, qty = 1, map?)` *(Bool)*: Gathers map item until inventory holds `qty` of `item` (name or ID).
 - `mapItem(itemId, qty = 1)` *(Bool)*: Collects map item `qty` times (for quest requirements with no inventory item).
 - `getMapItem(itemId)` *(Bool)*: Single-click map item pickup (rate-limited to 1500ms).
 - `resetMapItems()`: Clears gathered map-item count history.
-- `autoQuest([namesOrIds])`: Starts automated background questing (accepts, monitors requirements, turns in).
+- `autoQuest([questIds])`: Starts automated background questing (accepts, monitors requirements, turns in).
 - `stopAutoQuest()`: Stops background auto-questing.
 - `isAutoQuestRunning()` *(Bool)*: Returns `true` if auto-questing is active.
 
