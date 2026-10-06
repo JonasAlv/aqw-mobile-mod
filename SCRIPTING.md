@@ -266,20 +266,34 @@ All functions listed below are globally available in `.hxs` scripts without any 
 ### Combat & Hunting
 - `hunt(monster, item, qty = 1, callback?)` *(Bool)*: Hunts `monster` (name or ID) until backpack or temp inventory holds `qty` of `item` (name or ID). Returns `true` when satisfied.
 - `hunt(monster, count, callback?)` *(Bool)*: Hunts `monster` (name or ID) until `count` total kills are reached. Returns `true` when satisfied.
+- `hunt(["Minion", "Boss"], item, qty = 1)` *(Bool)*: **Priority Targeting**: Hunts in specified priority order. Kills the minion first; switches to boss when minion is dead; immediately switches back to minion if it respawns (e.g. `hunt(["Staff of Inversion", "Escherion"], "Relic of Chaos", 1)`).
+- `hunt(monster, item, qty, { priority: [...], huntPriority: "...", counterHandler: true })` *(Bool)*: Hunts with combat options:
+  - `priority`: Array of minion/add targets to kill before primary boss.
+  - `huntPriority`: Targeting strategy (`"lowest_hp"`, `"highest_hp"`, or `"closest"`).
+  - `counterHandler`: `true` to auto-pause DPS during reflect/counter auras.
+  - `pauseOnAuras`: Custom aura names to pause on.
 - `hunt(monster, itemsArray, callback?)` *(Bool)*: Hunts `monster` for multiple items (e.g. `["Item A:10", "Item B:5"]`).
 - `hunt(monster, item, qty, mmid, callback?)` *(Bool)*: Strictly locks onto a specific Map Monster ID (MMID) spawn.
 - `hunt("*", count)` / `hunt("*", item, qty)`: Wildcard target; attacks any monster in the cell until count/items are met.
 - `kill(...)` *(Bool)*: Direct alias for `hunt(...)`.
 - `huntItem(monster, item, qty = 1, map?)` *(Bool)*: Navigates to `map`, checks inventory, and hunts for `item` (name or ID).
 - `huntMonster(monster, kills = 1, map?)` *(Bool)*: Navigates to `map` and hunts by kill count.
-- `attack(monster)`: Targets and attacks monster (name or ID). Prioritizes lowest-HP candidate.
-- `getBestTarget(nameOrId? = "*")` *(Object)*: Finds the optimal living monster in current cell, prioritizing lowest current HP.
-- `getBestMonsterTarget(cell?, nameOrId? = "*")` *(Object)*: Finds optimal living monster in cell, prioritizing lowest HP.
+- `attack(monster)`: Targets and attacks monster (name or ID).
+- `setTargetPriority(["Minion", "Boss"])`: Sets priority target order for combat engine.
+- `setHuntPriority("lowest_hp" | "highest_hp" | "closest")`: Sets target selection strategy when multiple candidates are alive.
+- `counterHandler(enabled? = true)` / `enableCounterHandler(enabled? = true)`: Enables the **Auto Counter & Reflect Aura Handler**. Automatically halts auto-attacks and skill casts when target has a reflect or counter aura (`"Counter Attack"`, `"Fox"`, `"Retaliate"`, `"Reflect"`, `"Damage Reflect"`, `"Reflective Shield"`, `"Talon Twisting"`). Keeps target locked and resumes the exact millisecond the aura expires.
+- `pauseOnAuras(auras)`: Registers custom aura names to pause on (e.g. `["Counter Attack", "Fox"]` or `"Fox, Reflect"`).
+- `clearPauseAuras()`: Clears custom pause auras.
+- `isPausedByAura()` *(Bool)*: Returns `true` if combat is actively paused waiting for a reflect/counter aura to expire.
+- `getBestTarget(nameOrId? = "*")` *(Object)*: Finds the optimal living monster in current cell.
+- `getBestMonsterTarget(cell?, nameOrId? = "*")` *(Object)*: Finds optimal living monster in cell.
 - `sortByLowestHp(monsters)` *(Array)*: Sorts an array of monster objects by lowest current HP ascending.
+- `sortByHighestHp(monsters)` *(Array)*: Sorts an array of monster objects by highest current HP descending.
+- `sortByClosest(monsters)` *(Array)*: Sorts an array of monster objects by distance to player avatar.
 - `stopCombat()`: Drops target, halts auto-attack, and stealthily drops aggro in-place.
 - `ensureCombat(smart? = true)`: Ensures combat engine is active.
 - `equipLoadout("farm" | "solo" | "support")` *(Bool)*: Equips configured class, equipment, and combat rotation mode.
-- `resetHunt()`: Clears active hunt target and counters.
+- `resetHunt()`: Clears active hunt target, priority targets, and counters.
 
 ---
 
