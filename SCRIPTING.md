@@ -240,9 +240,13 @@ All functions listed below are globally available in `.hxs` scripts without any 
 > - **Monsters, Items & Drops $\rightarrow$ Clean Human-Readable Names (`hunt("Dark Makai", "Dark Makai Defeated", 50)`)**: Monster and item names are permanently present in map and inventory memory and match in-game quest logs directly. Numeric IDs remain supported for disambiguation.
 
 ### Navigation & Map Movement
-- `ensureMap(mapName, cell?, pad?)` *(Bool)*: Ensures you are in `mapName` and cell. Drops combat stealthily before transferring. Automatically routes `"house"` to your personal house.
+- `ensureMap(mapName, cell?, pad?)` *(Bool)*: Ensures you are in `mapName` and cell. Drops combat stealthily before transferring. Automatically routes `"house"` to your personal house and `"tercess"` / `"tercessuinotlim"` through the Citadel portal corridor.
+- `ensureTercess(destination = "nulgath", pad?)` *(Bool)*: **Tercessuinotlim Navigator**: Automatically routes through `/citadel` `m22, Left`, validates the one-time prerequisite quest ("Beyond the Portal"), joins `tercessuinotlim`, and navigates directly to the target room (`"nulgath"`, `"taro"` / `"vhl"`, `"swindle"`, `"polish"`, `"twins"`, `"makai"`, `"shadow"`, `"carnage"`, `"overfiend"`, or any raw cell). Returns `true` once confirmed standing in the destination room.
+- `joinTercess(destination = "nulgath", pad?)`: Initiates transfer to specified Tercessuinotlim destination.
+- `isTercess()` *(Bool)*: Returns `true` if currently inside `tercessuinotlim`.
+- `fastTravel(destination)` *(Bool)*: Universal navigator to popular hubs and rooms (`"nulgath"`, `"taro"`, `"swindle"`, `"polish"`, `"twins"`, `"makai"`, `"icestormarena"`, `"shadowbattleon"`, `"citadel"`, `"revenant"`, `"underworld"`, or `"map:cell:pad"`).
 - `ensureHouse()` *(Bool)*: Drops combat and teleports to your private house. Returns `true` once loaded.
-- `join(mapName, cell?, pad?)`: Initiates map transfer.
+- `join(mapName, cell?, pad?)`: Initiates map transfer. Automatically routes `"tercessuinotlim"` through the Citadel corridor.
 - `joinHouse(username?)`: Joins your house or the house of `username`.
 - `isHouse()` *(Bool)*: Returns `true` if currently in your house.
 - `isMap(name)` *(Bool)*: Returns `true` if currently on `name`.
