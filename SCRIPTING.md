@@ -312,11 +312,14 @@ All functions listed below are globally available in `.hxs` scripts without any 
 ---
 
 ### Quest Automation & Progression
-- `quest(questId, mapName?)` *(Bool)*: Skips block if quest is already completed; otherwise ensures map, accepts quest, and returns `true`.
-- `complete(questId, choice?)` *(Bool)*: Drops combat, turns in quest (with optional choice reward ID/name), and verifies server completion.
+- `quest(questId, mapName?)` *(Bool)*: Skips block if quest is already completed (including daily reset check); otherwise ensures map, accepts quest, and returns `true`.
+- `complete(questId, choice?)` *(Bool)*: Drops combat, turns in quest (with optional choice reward ID/name or array of prioritized items), and verifies server completion.
+- `completeChoose(questId, preferred?)` *(Bool)*: Turns in quest and automatically selects the first unowned reward or the highest priority match from `preferred`.
 - `ensureQuest(questId)` / `ensureAccept(questId)` *(Bool)*: Ensures quest is loaded and accepted. Returns `true` if already completed.
 - `canComplete(questId)` / `isQuestComplete(questId)` *(Bool)*: Returns `true` if all turn-in requirements are met.
-- `hasBeenCompleted(questId)` / `isCompletedBefore(questId)` *(Bool)*: Returns `true` if quest was completed previously.
+- `hasBeenCompleted(questId)` / `isCompletedBefore(questId)` *(Bool)*: Returns `true` if quest was completed previously (or completed today for dailies).
+- `isDaily(questId)` *(Bool)*: Returns `true` if quest is flagged as a daily quest in game data.
+- `isDailyComplete(questId)` *(Bool)*: Returns `true` if the daily quest has already been completed today.
 - `isQuestUnlocked(questId)` / `isUnlocked(questId)` *(Bool)*: Returns `true` if quest is unlocked.
 - `isQuestAccepted(questId)` *(Bool)*: Returns `true` if quest is currently in progress.
 - `ensureQuestsLoaded(questIds)` *(Bool)*: Pre-loads an array or single ID of quest definitions from server.
