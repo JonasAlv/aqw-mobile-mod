@@ -351,6 +351,14 @@ All functions listed below are globally available in `.hxs` scripts without any 
 - `equip(nameOrId)`: Equips item by name or ItemID.
 - `ensureEquipped(nameOrId)` *(Bool)*: Equips item if not already equipped.
 - `isEquipped(nameOrId)` *(Bool)*: Returns `true` if item is equipped.
+- `storeGear(items?)` *(Array)*: Captures an in-memory snapshot of currently equipped gear (Armor/Class, Weapon, Helm, Cape, Pet, Ground). Pass an optional array or comma-separated list to store specific items.
+- `restoreGear(onComplete?)`: Sequentially restores all items from the active gear snapshot with server-safe packet delays.
+- `ensureRestored()` / `ensureRestoreGear()` *(Bool)*: Loop-friendly restore helper. Returns `true` when all snapshot gear is equipped; otherwise triggers restoration and returns `false`.
+- `isGearRestored()` *(Bool)*: Returns `true` if all items in the captured gear snapshot are equipped.
+- `hasGearSnapshot()` *(Bool)*: Returns `true` if a gear snapshot is currently saved.
+- `getGearSnapshot()` *(Array)*: Returns the active gear snapshot array (`[{ id, name, sES, sType }]`).
+- `clearGearSnapshot()`: Clears the active gear snapshot and cancels any active restoration.
+- `cancelRestoreGear()`: Cancels an in-progress gear restoration queue.
 - `bankAll(exclude?)`: Deposits all unequipped, non-temporary items into bank.
 - `bankAllAcItems(exclude?)`: Deposits unequipped AC-tagged items into bank (free storage).
 - `unbankPreset(name)`: Withdraws all items from a hardfarm preset (e.g. `"vhl"`, `"lr"`).
