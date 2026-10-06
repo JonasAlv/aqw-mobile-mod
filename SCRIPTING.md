@@ -267,11 +267,13 @@ All functions listed below are globally available in `.hxs` scripts without any 
 - `hunt(monster, item, qty = 1, callback?)` *(Bool)*: Hunts `monster` (name or ID) until backpack or temp inventory holds `qty` of `item` (name or ID). Returns `true` when satisfied.
 - `hunt(monster, count, callback?)` *(Bool)*: Hunts `monster` (name or ID) until `count` total kills are reached. Returns `true` when satisfied.
 - `hunt(["Minion", "Boss"], item, qty = 1)` *(Bool)*: **Priority Targeting**: Hunts in specified priority order. Kills the minion first; switches to boss when minion is dead; immediately switches back to minion if it respawns (e.g. `hunt(["Staff of Inversion", "Escherion"], "Relic of Chaos", 1)`).
-- `hunt(monster, item, qty, { priority: [...], huntPriority: "...", counterHandler: true })` *(Bool)*: Hunts with combat options:
+- `hunt(monster, item, qty, { priority: [...], huntPriority: "...", counterHandler: true, aggro: true, pull: true })` *(Bool)*: Hunts with combat options:
   - `priority`: Array of minion/add targets to kill before primary boss.
   - `huntPriority`: Targeting strategy (`"lowest_hp"`, `"highest_hp"`, or `"closest"`).
   - `counterHandler`: `true` to auto-pause DPS during reflect/counter auras.
   - `pauseOnAuras`: Custom aura names to pause on.
+  - `aggro` / `aggroAll`: `true` to auto-aggro all monsters in the cell via server packets.
+  - `pull` / `pullAll`: `true` to continuously stack all monsters directly on player coordinates for maximum AoE cleave.
 - `hunt(monster, itemsArray, callback?)` *(Bool)*: Hunts `monster` for multiple items (e.g. `["Item A:10", "Item B:5"]`).
 - `hunt(monster, item, qty, mmid, callback?)` *(Bool)*: Strictly locks onto a specific Map Monster ID (MMID) spawn.
 - `hunt("*", count)` / `hunt("*", item, qty)`: Wildcard target; attacks any monster in the cell until count/items are met.
@@ -281,6 +283,14 @@ All functions listed below are globally available in `.hxs` scripts without any 
 - `attack(monster)`: Targets and attacks monster (name or ID).
 - `setTargetPriority(["Minion", "Boss"])`: Sets priority target order for combat engine.
 - `setHuntPriority("lowest_hp" | "highest_hp" | "closest")`: Sets target selection strategy when multiple candidates are alive.
+- `aggro(monster?)`: Aggros a specific monster or any living monster in the current cell.
+- `aggroMonsters(targets?)`: Sends server `%xt%zm%aggroMon%` packet to engage all (or specified) living monsters in the current cell.
+- `aggroAll(enabled? = true)`: Enables continuous server-side aggro pulling for all monsters in the cell during combat.
+- `pullMonsters(targets?)`: Aggros and stacks all (or specified) living monsters in the cell directly onto player coordinates.
+- `pull(targets?)`: Direct alias for `pullMonsters(targets?)`.
+- `pullAll(enabled? = true)`: Continuously pulls and stacks all living monsters in the cell onto player coordinates throughout combat.
+- `magnetize()`: Stacks the currently targeted monster directly onto player coordinates.
+- `magnetizeAll(targets?)`: Stacks all (or specified) living monsters in the cell directly onto player coordinates.
 - `counterHandler(enabled? = true)` / `enableCounterHandler(enabled? = true)`: Enables the **Auto Counter & Reflect Aura Handler**. Automatically halts auto-attacks and skill casts when target has a reflect or counter aura (`"Counter Attack"`, `"Fox"`, `"Retaliate"`, `"Reflect"`, `"Damage Reflect"`, `"Reflective Shield"`, `"Talon Twisting"`). Keeps target locked and resumes the exact millisecond the aura expires.
 - `pauseOnAuras(auras)`: Registers custom aura names to pause on (e.g. `["Counter Attack", "Fox"]` or `"Fox, Reflect"`).
 - `clearPauseAuras()`: Clears custom pause auras.
@@ -293,7 +303,7 @@ All functions listed below are globally available in `.hxs` scripts without any 
 - `stopCombat()`: Drops target, halts auto-attack, and stealthily drops aggro in-place.
 - `ensureCombat(smart? = true)`: Ensures combat engine is active.
 - `equipLoadout("farm" | "solo" | "support")` *(Bool)*: Equips configured class, equipment, and combat rotation mode.
-- `resetHunt()`: Clears active hunt target, priority targets, and counters.
+- `resetHunt()`: Clears active hunt target, priority targets, counters, and hunt aggro/pull states.
 
 ---
 
