@@ -37,6 +37,26 @@ Because of this, the most reliable and error-proof way to script is the **Idempo
 - **Self-Healing on Disconnect or Death:** If you disconnect, respawn, change rooms, or lag, the next tick automatically re-evaluates what is needed and picks up right where you left off.
 - **Fast Skipping:** A completed quest check (`quest(id)`) evaluates to `false` in 0ms and skips immediately to the next task.
 
+### The Default Identifier Rule (Strict Standard)
+- **Quests $\rightarrow$ Strictly Numeric Quest IDs:**
+  ```javascript
+  if (quest(2239, "thespan")) { ... }
+  if (ensureQuest(7551)) { ... }
+  autoQuest([9421, 9422, 9423]);
+  ```
+  The AQW server protocol (`%xt%zm%getQuest%1%<id>%`) only queries quests by numeric ID. Never use quest names.
+- **Map Items $\rightarrow$ Strictly Numeric MapItem IDs:**
+  ```javascript
+  if (!mapItem(1358, "Tek's Notes", 1)) return;
+  ```
+  Ground collectibles are embedded as numeric IDs in map SWFs.
+- **Monsters & Items $\rightarrow$ Clean, Human-Readable Names:**
+  ```javascript
+  if (!hunt("Shadow Siphon", "Shadow Residue", 6)) return;
+  if (!hasItem("Elders' Blood", 1)) return;
+  ```
+  Monster and item names live permanently in live memory and match in-game quest text directly (numeric IDs remain supported for disambiguating duplicate items/spawns).
+
 ---
 
 ## 2. Script Lifecycle Hooks
@@ -214,9 +234,10 @@ function onStop() {
 All functions listed below are globally available in `.hxs` scripts without any namespace prefix.
 
 > [!IMPORTANT]
-> **Identifiers Standard & Recommendation**:
-> - **Quests $\rightarrow$ Always use Numeric Quest IDs (`quest(2239)`)**: The AQW server protocol (`%xt%zm%getQuest%1%<id>%`) strictly requires numeric IDs to request quests from the server. Using numeric IDs guarantees the script can load and verify quests from anywhere (including your house on startup).
-> - **Monsters, Items & Drops $\rightarrow$ Use Human-Readable Names (`hunt("Dark Makai", "Dark Makai Defeated", 50)`)**: Monster and item names are permanently present in map and inventory memory and match in-game quest logs directly. Numeric IDs are also fully supported as an alternative when targeting specific spawns or items with identical names.
+> **The Default Identifier Rule (Strict Standard)**:
+> - **Quests $\rightarrow$ Strictly Numeric Quest IDs (`quest(2239)`)**: The AQW server protocol (`%xt%zm%getQuest%1%<id>%`) strictly requires numeric IDs to request quests from the server. Using numeric IDs guarantees the script can load and verify quests from anywhere (including your house on startup).
+> - **Map Items $\rightarrow$ Strictly Numeric MapItem IDs (`mapItem(1358, 1)`)**: Map collectibles are numeric IDs hardcoded in map SWFs.
+> - **Monsters, Items & Drops $\rightarrow$ Clean Human-Readable Names (`hunt("Dark Makai", "Dark Makai Defeated", 50)`)**: Monster and item names are permanently present in map and inventory memory and match in-game quest logs directly. Numeric IDs remain supported for disambiguation.
 
 ### Navigation & Map Movement
 - `ensureMap(mapName, cell?, pad?)` *(Bool)*: Ensures you are in `mapName` and cell. Drops combat stealthily before transferring. Automatically routes `"house"` to your personal house.
