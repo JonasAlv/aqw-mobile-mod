@@ -213,9 +213,10 @@ function onStop() {
 
 All functions listed below are globally available in `.hxs` scripts without any namespace prefix.
 
-> [!TIP]
-> **Universal Name & ID Support**:
-> All entity identifiers in the API — including **monsters**, **items**, **quests**, and **drops** — accept either their **String Name** (e.g. `"Dark Makai"`, `"Elders' Blood"`, `"The Span"`) or their **Integer ID** (e.g. `104`, `1234`, `2239`) interchangeably. Quest names resolve dynamically against loaded quest definitions in live game memory with zero external asset dependencies.
+> [!IMPORTANT]
+> **Identifiers Standard & Recommendation**:
+> - **Quests $\rightarrow$ Always use Numeric Quest IDs (`quest(2239)`)**: The AQW server protocol (`%xt%zm%getQuest%1%<id>%`) strictly requires numeric IDs to request quests from the server. Using numeric IDs guarantees the script can load and verify quests from anywhere (including your house on startup).
+> - **Monsters, Items & Drops $\rightarrow$ Use Human-Readable Names (`hunt("Dark Makai", "Dark Makai Defeated", 50)`)**: Monster and item names are permanently present in map and inventory memory and match in-game quest logs directly. Numeric IDs are also fully supported as an alternative when targeting specific spawns or items with identical names.
 
 ### Navigation & Map Movement
 - `ensureMap(mapName, cell?, pad?)` *(Bool)*: Ensures you are in `mapName` and cell. Drops combat stealthily before transferring. Automatically routes `"house"` to your personal house.
@@ -440,10 +441,12 @@ Direct root reference to the full underlying engine (`api.player`, `api.combat`,
 ## 7. Essential Rules & Best Practices
 
 1. **Never use blocking `while` loops.** ActionScript 3 runs on a single UI thread. A `while (!hasItem(...))` loop freezes the client and causes a crash. Let `onTick()` do the polling.
-2. **Never sum container counts.** Do NOT write `getTempQuantity(item) + getInventoryQuantity(item)`. Use `getQuestQuantity(item)` — it is de-duplicated across backpack, temp items, and quest trees.
-3. **Always unbank farm presets on start.** If an item exists in your bank, AQW routes newly dropped stacks directly into your bank, preventing quest turn-ins from detecting them.
-4. **Always guard quest actions with early returns.** Write `if (!hunt(...)) return;` so the tick loop yields while combat is ongoing.
-5. **Always finish scripts safely.** End scripts by calling `ensureHouse(); stop();`.
+2. **Always use numeric Quest IDs for quests (`quest(1234)`, `complete(1234)`).** The game server packet strictly requires numeric IDs to request quests from the server. Using IDs prevents network desync and guarantees the script can verify quests from anywhere (including your house on startup).
+3. **Use readable names for monsters and items.** Write `hunt("Dark Makai", "Dark Makai Defeated", 50)` instead of memorizing item IDs.
+4. **Never sum container counts.** Do NOT write `getTempQuantity(item) + getInventoryQuantity(item)`. Use `getQuestQuantity(item)` — it is de-duplicated across backpack, temp items, and quest trees.
+5. **Always unbank farm presets on start.** If an item exists in your bank, AQW routes newly dropped stacks directly into your bank, preventing quest turn-ins from detecting them.
+6. **Always guard quest actions with early returns.** Write `if (!hunt(...)) return;` so the tick loop yields while combat is ongoing.
+7. **Always finish scripts safely.** End scripts by calling `ensureHouse(); stop();`.
 
 ---
 
@@ -455,20 +458,21 @@ When prompting an AI assistant to generate new `.hxs` scripts, copy and paste th
 Generate an AQW HScript (.hxs) bot script following these strict requirements:
 1. Always implement function onStart(), function onTick(), and function onStop().
 2. Use clean top-level functions (quest, hunt, mapItem, complete, ensureMap, ensureHouse, hasItem, equipLoadout, stop, log). Do NOT use bot. or map. prefixes.
-3. For saga/story quests, use the deterministic Step-by-Step pattern:
+3. Always use numeric Quest IDs for quests (e.g. quest(2239)), and readable names for monsters and items (e.g. hunt("Sneak", "AQ Dimension Key", 1)).
+4. For saga/story quests, use the deterministic Step-by-Step pattern:
    if (quest(QUEST_ID, "mapname")) {
        if (!hunt("Monster Name", "Drop Name", QTY)) return;
        if (!mapItem(ITEM_ID, "Item Name", QTY)) return;
        complete(QUEST_ID);
        return;
    }
-4. For multi-quest storylines, add the safe house verification check on startup:
+5. For multi-quest storylines, add the safe house verification check on startup:
    if (!checkedProgress) {
        if (!isHouse()) { ensureHouse(); return; }
        if (!ensureQuestsLoaded([ID1, ID2, ...])) return;
        checkedProgress = true;
    }
-5. For end-game reagent farming, call unbankPreset("name") in onStart().
-6. Never write blocking while loops or Thread.sleep.
-7. On script completion or in onStop(), always call ensureHouse().
+6. For end-game reagent farming, call unbankPreset("name") in onStart().
+7. Never write blocking while loops or Thread.sleep.
+8. On script completion or in onStop(), always call ensureHouse().
 ```
