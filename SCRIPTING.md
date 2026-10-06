@@ -213,6 +213,10 @@ function onStop() {
 
 All functions listed below are globally available in `.hxs` scripts without any namespace prefix.
 
+> [!TIP]
+> **Universal Name & ID Support**:
+> All entity identifiers in the API — including **monsters**, **items**, **quests**, and **drops** — accept either their **String Name** (e.g. `"Dark Makai"`, `"Elders' Blood"`, `"The Span"`) or their **Integer ID** (e.g. `104`, `1234`, `2239`) interchangeably. Quest names resolve dynamically against loaded quest definitions in live game memory with zero external asset dependencies.
+
 ### Navigation & Map Movement
 - `ensureMap(mapName, cell?, pad?)` *(Bool)*: Ensures you are in `mapName` and cell. Drops combat stealthily before transferring. Automatically routes `"house"` to your personal house.
 - `ensureHouse()` *(Bool)*: Drops combat and teleports to your private house. Returns `true` once loaded.
@@ -238,15 +242,15 @@ All functions listed below are globally available in `.hxs` scripts without any 
 ---
 
 ### Combat & Hunting
-- `hunt(monster, item, qty = 1, callback?)` *(Bool)*: Hunts `monster` until backpack or temp inventory holds `qty` of `item`. Returns `true` when satisfied.
-- `hunt(monster, count, callback?)` *(Bool)*: Hunts `monster` until `count` total kills are reached. Returns `true` when satisfied.
+- `hunt(monster, item, qty = 1, callback?)` *(Bool)*: Hunts `monster` (name or ID) until backpack or temp inventory holds `qty` of `item` (name or ID). Returns `true` when satisfied.
+- `hunt(monster, count, callback?)` *(Bool)*: Hunts `monster` (name or ID) until `count` total kills are reached. Returns `true` when satisfied.
 - `hunt(monster, itemsArray, callback?)` *(Bool)*: Hunts `monster` for multiple items (e.g. `["Item A:10", "Item B:5"]`).
 - `hunt(monster, item, qty, mmid, callback?)` *(Bool)*: Strictly locks onto a specific Map Monster ID (MMID) spawn.
 - `hunt("*", count)` / `hunt("*", item, qty)`: Wildcard target; attacks any monster in the cell until count/items are met.
 - `kill(...)` *(Bool)*: Direct alias for `hunt(...)`.
-- `huntItem(monster, item, qty = 1, map?)` *(Bool)*: Navigates to `map`, checks inventory, and hunts for `item`.
+- `huntItem(monster, item, qty = 1, map?)` *(Bool)*: Navigates to `map`, checks inventory, and hunts for `item` (name or ID).
 - `huntMonster(monster, kills = 1, map?)` *(Bool)*: Navigates to `map` and hunts by kill count.
-- `attack(monster)`: Targets and attacks monster. Prioritizes lowest-HP candidate.
+- `attack(monster)`: Targets and attacks monster (name or ID). Prioritizes lowest-HP candidate.
 - `getBestTarget(nameOrId? = "*")` *(Object)*: Finds the optimal living monster in current cell, prioritizing lowest current HP.
 - `getBestMonsterTarget(cell?, nameOrId? = "*")` *(Object)*: Finds optimal living monster in cell, prioritizing lowest HP.
 - `sortByLowestHp(monsters)` *(Array)*: Sorts an array of monster objects by lowest current HP ascending.
@@ -258,65 +262,65 @@ All functions listed below are globally available in `.hxs` scripts without any 
 ---
 
 ### Quest Automation & Progression
-- `quest(questId, mapName?)` *(Bool)*: Skips block if quest is already completed; otherwise ensures map, accepts quest, and returns `true`.
-- `complete(questId, choice?)` *(Bool)*: Drops combat, turns in quest (with optional choice reward ID/name), and verifies server completion.
-- `ensureQuest(questId)` / `ensureAccept(questId)` *(Bool)*: Ensures quest is loaded and accepted. Returns `true` if already completed.
-- `canComplete(questId)` / `isQuestComplete(questId)` *(Bool)*: Returns `true` if all turn-in requirements are met.
-- `hasBeenCompleted(questId)` / `isCompletedBefore(questId)` *(Bool)*: Returns `true` if quest was completed previously.
-- `isQuestUnlocked(questId)` / `isUnlocked(questId)` *(Bool)*: Returns `true` if quest is unlocked.
-- `isQuestAccepted(questId)` *(Bool)*: Returns `true` if quest is currently in progress.
-- `ensureQuestsLoaded(questIds)` *(Bool)*: Pre-loads an array or single ID of quest definitions from server.
-- `areQuestsLoaded(questIds)` *(Bool)*: Returns `true` once all specified quest definitions are loaded.
-- `loadQuest(questId)` / `loadQuests(questIds)`: Requests quest definitions from server.
-- `acceptQuest(questId)`: Sends raw accept packet for loaded quest.
-- `completeQuest(questId, choice?)`: Sends raw turn-in packet without waiting.
-- `getMissingRequirements(questId)` *(Array)*: Returns array of outstanding requirement objects.
-- `mapItem(itemId, item, qty = 1, map?)` *(Bool)*: Gathers map item until inventory holds `qty` of `item`.
+- `quest(nameOrId, mapName?)` *(Bool)*: Skips block if quest is already completed; otherwise ensures map, accepts quest, and returns `true`. Accepts quest ID or quest name.
+- `complete(nameOrId, choice?)` *(Bool)*: Drops combat, turns in quest (with optional choice reward ID/name), and verifies server completion. Accepts quest ID or quest name.
+- `ensureQuest(nameOrId)` / `ensureAccept(nameOrId)` *(Bool)*: Ensures quest is loaded and accepted. Returns `true` if already completed.
+- `canComplete(nameOrId)` / `isQuestComplete(nameOrId)` *(Bool)*: Returns `true` if all turn-in requirements are met.
+- `hasBeenCompleted(nameOrId)` / `isCompletedBefore(nameOrId)` *(Bool)*: Returns `true` if quest was completed previously.
+- `isQuestUnlocked(nameOrId)` / `isUnlocked(nameOrId)` *(Bool)*: Returns `true` if quest is unlocked.
+- `isQuestAccepted(nameOrId)` *(Bool)*: Returns `true` if quest is currently in progress.
+- `ensureQuestsLoaded(namesOrIds)` *(Bool)*: Pre-loads an array or single ID/name of quest definitions from server.
+- `areQuestsLoaded(namesOrIds)` *(Bool)*: Returns `true` once all specified quest definitions are loaded.
+- `loadQuest(nameOrId)` / `loadQuests(namesOrIds)`: Requests quest definitions from server by ID or name.
+- `acceptQuest(nameOrId)`: Sends raw accept packet for loaded quest.
+- `completeQuest(nameOrId, choice?)`: Sends raw turn-in packet without waiting.
+- `getMissingRequirements(nameOrId)` *(Array)*: Returns array of outstanding requirement objects.
+- `mapItem(itemId, item, qty = 1, map?)` *(Bool)*: Gathers map item until inventory holds `qty` of `item` (name or ID).
 - `mapItem(itemId, qty = 1)` *(Bool)*: Collects map item `qty` times (for quest requirements with no inventory item).
 - `getMapItem(itemId)` *(Bool)*: Single-click map item pickup (rate-limited to 1500ms).
 - `resetMapItems()`: Clears gathered map-item count history.
-- `autoQuest([ids])`: Starts automated background questing (accepts, monitors requirements, turns in).
+- `autoQuest([namesOrIds])`: Starts automated background questing (accepts, monitors requirements, turns in).
 - `stopAutoQuest()`: Stops background auto-questing.
 - `isAutoQuestRunning()` *(Bool)*: Returns `true` if auto-questing is active.
 
 ---
 
 ### Inventory, Bank & Shopping
-- `hasItem(itemName, qty = 1)` *(Bool)*: Checks if backpack or temp inventory holds `qty` of item.
-- `getItemCount(itemName)` *(Int)*: Returns quantity in backpack.
-- `getQuestQuantity(itemName)` *(Int)*: De-duplicated count across backpack, temp inventory, and quest trees.
-- `getInventoryQuantity(itemName)` *(Int)*: Quantity in backpack only.
-- `getBankQuantity(itemName)` *(Int)*: Quantity in bank storage.
-- `getTempQuantity(itemName)` *(Int)*: Quantity in temporary quest container.
-- `hasTempItem(itemName, qty = 1)` *(Bool)*: Returns `true` if temp container holds `qty`.
-- `getItemLocation(itemName)` *(String)*: Returns `"temp"`, `"inventory"`, `"bank"`, `"house"`, or `""`.
-- `findItem(itemName)` *(Object)*: Returns `{ item, id, name, quantity, location }` or `null`.
+- `hasItem(nameOrId, qty = 1)` *(Bool)*: Checks if backpack or temp inventory holds `qty` of item (by name or ItemID).
+- `getItemCount(nameOrId)` *(Int)*: Returns quantity in backpack.
+- `getQuestQuantity(nameOrId)` *(Int)*: De-duplicated count across backpack, temp inventory, and quest trees.
+- `getInventoryQuantity(nameOrId)` *(Int)*: Quantity in backpack only.
+- `getBankQuantity(nameOrId)` *(Int)*: Quantity in bank storage.
+- `getTempQuantity(nameOrId)` *(Int)*: Quantity in temporary quest container.
+- `hasTempItem(nameOrId, qty = 1)` *(Bool)*: Returns `true` if temp container holds `qty`.
+- `getItemLocation(nameOrId)` *(String)*: Returns `"temp"`, `"inventory"`, `"bank"`, `"house"`, or `""`.
+- `findItem(nameOrId)` *(Object)*: Returns `{ item, id, name, quantity, location }` or `null`.
 - `getInventory()` *(Array)*: Returns all backpack item objects.
 - `getBankItems()` *(Array)*: Returns all banked item objects.
 - `getTempItems()` *(Array)*: Returns all temporary quest item objects.
-- `equip(itemName)`: Equips item.
-- `ensureEquipped(itemName)` *(Bool)*: Equips item if not already equipped.
-- `isEquipped(itemName)` *(Bool)*: Returns `true` if item is equipped.
+- `equip(nameOrId)`: Equips item by name or ItemID.
+- `ensureEquipped(nameOrId)` *(Bool)*: Equips item if not already equipped.
+- `isEquipped(nameOrId)` *(Bool)*: Returns `true` if item is equipped.
 - `bankAll(exclude?)`: Deposits all unequipped, non-temporary items into bank.
 - `bankAllAcItems(exclude?)`: Deposits unequipped AC-tagged items into bank (free storage).
 - `unbankPreset(name)`: Withdraws all items from a hardfarm preset (e.g. `"vhl"`, `"lr"`).
 - `unbankAllNonAcItems(exclude?)`: Withdraws non-AC items back into backpack.
 - `bankAcAndUnbankNonAc(exclude?)`: Banks AC items, then unbanks non-AC items.
 - `isBanking()` / `isUnbanking()` *(Bool)*: Returns `true` while bank transfer queue is active.
-- `buyItem(shopId, itemName, qty = 1)`: Loads shop and purchases item (throttled to 1/sec).
+- `buyItem(shopId, nameOrId, qty = 1)`: Loads shop and purchases item by name or ItemID (throttled to 1/sec).
 - `buyItems(list, gapMs = 1000)` *(Int)*: Queues multiple purchases safely.
-- `sellItem(itemName, qty = 1)`: Sells item to shop.
+- `sellItem(nameOrId, qty = 1)`: Sells item to shop by name or ItemID.
 
 ---
 
 ### Drops & Loot
 - `acceptAllDrops(enabled? = true)`: Automatically accepts all drops as they appear. Also supports assignment: `acceptAllDrops = true;`
 - `acceptAcDrops(enabled? = true)`: Automatically accepts AC-tagged drops only. Also supports assignment: `acceptAcDrops = true;`
-- `getDrop(itemName)`: Picks up a specific drop by name.
-- `getDrops(target? = "all")`: Picks up pending drops (`"all"`, `"any"`, or array of names).
-- `addBlacklist(itemName)`: Blocks item from drop queue.
-- `removeBlacklist(itemName)`: Removes item from blacklist.
-- `isBlacklisted(itemName)` *(Bool)*: Checks if item is blacklisted.
+- `getDrop(nameOrId)`: Picks up a specific drop by name or ItemID.
+- `getDrops(target? = "all")`: Picks up pending drops (`"all"`, `"any"`, or array of names/IDs).
+- `addBlacklist(nameOrId)`: Blocks item from drop queue by name or ItemID.
+- `removeBlacklist(nameOrId)`: Removes item from blacklist.
+- `isBlacklisted(nameOrId)` *(Bool)*: Checks if item is blacklisted.
 - `clearBlacklist()`: Clears drop blacklist.
 - `sellBlacklist()`: Sells all owned blacklisted items.
 
