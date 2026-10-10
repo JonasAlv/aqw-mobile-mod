@@ -22,13 +22,13 @@ package {
 		public var option_pagination:Boolean = true;
 		public var option_equipped_on_top:Boolean = true;
 
-		public var option_animation_monster_off:Boolean = false;
+		public var option_animation_monster_off:Boolean = true;
 		public var option_animation_helm_off:Boolean = false;
 		public var option_animation_armor_off:Boolean = false;
 		public var option_animation_cape_off:Boolean = false;
 		public var option_animation_hair_off:Boolean = false;
-		public var option_animation_misc_off:Boolean = false;
-		public var option_animation_pet_off:Boolean = false;
+		public var option_animation_misc_off:Boolean = true;
+		public var option_animation_pet_off:Boolean = true;
 		public var option_animation_weapon_off:Boolean = false;
 
 		public var option_filter_off:Boolean = false;

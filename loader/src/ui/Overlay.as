@@ -335,7 +335,7 @@ package ui {
 			new Menu("Graphics", new <Option>[
 				new Check(
 					HelperSetting.OPTION_ANIMATION_MONSTER,
-					false,
+					true,
 					"Disable Monster Animations",
 					"Freeze monster animations to improve FPS in battle.",
 					true,
@@ -413,7 +413,7 @@ package ui {
 				),
 				new Check(
 					HelperSetting.OPTION_ANIMATION_MISC,
-					false,
+					true,
 					"Disable Grounds Animations",
 					"Freeze animations.",
 					true,
@@ -426,7 +426,7 @@ package ui {
 				),
 				new Check(
 					HelperSetting.OPTION_ANIMATION_PET,
-					false,
+					true,
 					"Disable Pet Animations",
 					"Freeze animations.",
 					true,
