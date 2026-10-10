@@ -48,9 +48,7 @@ fi
 
 mkdir -p "$BUILD"
 
-# The API log belongs to the running build, so it is created in build/assets (which build.sh
-# populates as a copy). It used to be created in loader/assets, which wrote into the upstream
-# client tree and meant editing a repo file silently changed the running game.
+
 LOG_SRC="$BUILD/assets/api.log"
 mkdir -p "$BUILD/assets"
 touch "$LOG_SRC"
@@ -68,11 +66,7 @@ if [ -d "$WINE_PREFIX" ]; then
     ln -sf "$LOG_SRC" "$WINE_LOG_DIR/api.log" 2>/dev/null || true
 fi
 
-# ADL resolves descriptor resources relative to the build directory.
-# The <extensions> block is stripped: upstream declares the Discord RPC ANE, which
-# adl cannot load from the bare .ane and aborts the launch with "Requested extension
-# ... could not be found". build.sh writes the same stripped descriptor.
-# build.sh already writes a stripped descriptor; regenerate only if it is missing.
+
 DESCRIPTOR="$BUILD/Desktop-app.xml"
 if [ ! -f "$DESCRIPTOR" ]; then
     write_descriptor "$CLIENT/Desktop-app.xml" "$DESCRIPTOR"

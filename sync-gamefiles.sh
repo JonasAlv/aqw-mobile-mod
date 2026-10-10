@@ -2,10 +2,7 @@
 set -euo pipefail
 
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-# Gamefiles live under build/, never in loader/. loader/ is the upstream client tree: vendored
-# binaries written back into it are 3.7MB of untracked source-tree clutter that never shows up in
-# `git status` but still gets copied around and can drift out of sync with upstream.
-# `gamefiles-upstream` (not `gamefiles`) because build.sh wipes build/gamefiles on every run.
+
 GAMEFILES_DIR="$DIR/build/gamefiles-upstream"
 DESTINATION="${1:-$GAMEFILES_DIR}"
 if [[ "$#" -gt 1 ]]; then
@@ -99,12 +96,6 @@ fi
 APK_PATH="$CACHE_DIR/latest.apk"
 TAG_PATH="$CACHE_DIR/latest.tag"
 
-# Invalidate on a new release tag, not only on a changed digest.
-#
-# The digest alone is not enough: when a release ships without the `digest` field, APK_DIGEST is
-# empty and the digest branch below is skipped entirely, so a cached `latest.apk` would be reused
-# forever and "always fetch latest" would fail silently. Keying on the tag makes the cache correct
-# whether or not a digest is published.
 if [[ -f "$TAG_PATH" ]]; then
     CACHED_TAG="$(cat "$TAG_PATH")"
     if [[ "$CACHED_TAG" != "$RELEASE_TAG" ]]; then
@@ -140,9 +131,7 @@ if [[ ! -s "$APK_PATH" ]]; then
     printf '%s' "$RELEASE_TAG" > "$TAG_PATH"
 fi
 
-# List the archive once. Piping unzip into `grep -q` under `set -o pipefail` is
-# unreliable: grep exits on the first match, unzip takes SIGPIPE, and the failed
-# pipeline reads as "file missing" even when the entry is present.
+
 APK_LISTING="$TMP_DIR/apk-listing.txt"
 unzip -Z1 "$APK_PATH" > "$APK_LISTING"
 
