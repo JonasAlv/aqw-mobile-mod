@@ -267,16 +267,13 @@ jobs:
           Copy-Item -Path (Join-Path $apiDir "bin\AqwApi.swc") -Destination (Join-Path $staging "libs\AqwApi.swc") -Force
           Copy-Item -Path (Join-Path $uiDir "bin\ModUI.swc") -Destination (Join-Path $staging "libs\ModUI.swc") -Force
 
-          # 4. Compile WorkerMain.swf
-          Write-Host "=> [4/5] Compiling WorkerMain.swf..."
-          Invoke-Checked $amxmlc @(
-            "-strict=false",
-            (Join-Path $staging "worker-src\WorkerMain.as"),
-            "-source-path+=$(Join-Path $staging 'src')",
-            "-source-path+=$(Join-Path $staging 'worker-src')",
-            "-output", (Join-Path $staging "gamefiles\embed\WorkerMain.swf"),
-            "-swf-version=51"
-          ) "WorkerMain.swf compilation"
+
+          $workerSwf = Join-Path $loaderDir "libs\WorkerMain.swf"
+          if (-not (Test-Path $workerSwf)) {
+            throw "loader/libs/WorkerMain.swf is missing. Obtain a prebuilt copy from a desktop release that bundles it and save it there."
+          }
+          Copy-Item -Path $workerSwf -Destination (Join-Path $staging "gamefiles\embed\WorkerMain.swf") -Force
+          Write-Host "=> Staged WorkerMain.swf from loader/libs/WorkerMain.swf"
 
           # 5. Compile Desktop_code.swf and inject into Desktop.swf
           Write-Host "=> [5/5] Compiling Desktop_code.swf and injecting into Desktop.swf..."
@@ -291,7 +288,6 @@ jobs:
             "-define+=POCKET::IS_MOBILE,false",
             "-library-path+=$(Join-Path $staging 'libs')",
             "-source-path+=$(Join-Path $staging 'src')",
-            "-source-path+=$(Join-Path $staging 'worker-src')",
             "-output", (Join-Path $staging "Desktop_code.swf"),
             (Join-Path $staging "src\Pocket.as")
           ) "Desktop_code.swf compilation"
@@ -316,7 +312,6 @@ jobs:
               "-define+=POCKET::IS_DESKTOP,false",
               "-define+=POCKET::IS_MOBILE,true",
               "-library-path+=$(Join-Path $staging 'libs')",
-              "-source-path+=$(Join-Path $staging 'worker-src')",
               "-source-path+=$(Join-Path $staging 'src')",
               "-output", (Join-Path $staging "Mobile_code.swf"),
               (Join-Path $staging "src\Pocket.as")
