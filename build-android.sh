@@ -108,16 +108,32 @@ if [ "${SKIP_HAXE_API:-}" != "1" ]; then
     fi
 fi
 
-# ---- Step 3: Compile WorkerMain.swf inside sandbox ----
-echo "=> [3/5] Compiling WorkerMain.swf inside sandbox..."
-mkdir -p "$STAGING/gamefiles/embed"
-"$AMXMLC" \
-    -strict=false \
-    "$STAGING/worker-src/WorkerMain.as" \
-    -source-path+="$STAGING/src" \
-    -source-path+="$STAGING/worker-src" \
-    -output "$STAGING/gamefiles/embed/WorkerMain.swf" \
-    -swf-version=51
+# ---- Step 3: WorkerMain.swf ----
+# WorkerMain.as is a background worker that strips SWF animation/filters. It is NOT shipped in
+# upstream release assets, and recompiling it from loader/worker-src/ fails: SWFStripper.as
+# imports com.codeazur.as3swf, which is neither vendored in the repo nor available as a SWC.
+#
+# The working prebuilt copy lives in the desktop release zip at
+# gamefiles/embed/WorkerMain.swf (148477 bytes). sync-gamefiles.sh does not pull it because the
+# current upstream release assets do not bundle it, so we vendor a copy at
+# loader/libs/WorkerMain.swf and stage it from there. loader/worker-src/ is kept for reference
+# but is NOT compiled.
+#
+# SWFWorkerClient embeds it at compile time via [Embed(source="../../gamefiles/embed/WorkerMain.swf")],
+# which resolves relative to Pocket.as's source-path ($STAGING/src/), i.e. exactly that path — so
+# the Embed class is emitted into the injected ABC and the runtime does not throw
+# "Variable SWFWorkerClient_WorkerSWF is not defined".
+if [ -f "$DIR/loader/libs/WorkerMain.swf" ]; then
+    echo "=> [3/5] Staging WorkerMain.swf from loader/libs/WorkerMain.swf..."
+    mkdir -p "$STAGING/gamefiles/embed"
+    cp "$DIR/loader/libs/WorkerMain.swf" "$STAGING/gamefiles/embed/WorkerMain.swf"
+else
+    echo "ERROR: loader/libs/WorkerMain.swf is missing." >&2
+    echo "       Obtain a prebuilt copy from a desktop release that bundles it and save it at" >&2
+    echo "       loader/libs/WorkerMain.swf. Recompiling from loader/worker-src/ is not possible:" >&2
+    echo "       SWFStripper.as needs com.codeazur.as3swf, which is neither vendored nor a SWC." >&2
+    exit 1
+fi
 
 # ---- Step 4: Compile Mobile_code.swf & Inject into Mobile.swf inside sandbox ----
 echo "=> [4/5] Compiling Mobile_code.swf with Haxe SWCs..."
@@ -127,7 +143,6 @@ echo "=> [4/5] Compiling Mobile_code.swf with Haxe SWCs..."
     -define+=POCKET::IS_DESKTOP,false \
     -define+=POCKET::IS_MOBILE,true \
     -library-path+="$STAGING/libs" \
-    -source-path+="$STAGING/worker-src" \
     -source-path+="$STAGING/src" \
     -output "$STAGING/Mobile_code.swf" \
     "$STAGING/src/Pocket.as"
