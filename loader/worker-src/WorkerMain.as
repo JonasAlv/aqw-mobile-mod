@@ -26,7 +26,7 @@ package {
 					var errorMsg:String = null;
 
 					try {
-						resultBytes = SWFStripper.process(job.bytes as ByteArray, job.stripAnimation, job.stripFilters);
+						resultBytes = SWFStripper.process(job.bytes as ByteArray, job.stripAnimation, job.stripFilters, job.rasterize, job.rasterScale, job.rasterMaxSide);
 					} catch (err:Error) {
 						errorMsg = err.message;
 					}

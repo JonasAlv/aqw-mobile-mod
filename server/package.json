@@ -1,0 +1,19 @@
+{
+  "name": "aqw-pocket-server",
+  "module": "src/index.ts",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "start": "bun run src/index.ts"
+  },
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^7"
+  },
+  "dependencies": {
+    "google-translate-api-x": "^10.7.3",
+    "https-proxy-agent": "^9.1.0"
+  }
+}

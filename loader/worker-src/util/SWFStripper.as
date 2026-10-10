@@ -11,24 +11,35 @@ package util {
 
 	import flash.utils.ByteArray;
 
+	import rasterize.Rasterize;
+
 	public class SWFStripper {
 
-		public static function process(originalBytes:ByteArray, stripAnimation:Boolean, stripFilters:Boolean):ByteArray {
-			originalBytes.position = 0;
+		public static function process(originalBytes:ByteArray, stripAnimation:Boolean, stripFilters:Boolean, rasterize:Boolean = false, rasterScale:Number = 1.5, rasterMaxSide:int = 2048):ByteArray {
+			var bytes:ByteArray = originalBytes;
 
-			const swf:SWF = new SWF(originalBytes);
+			if (stripAnimation || stripFilters) {
+				originalBytes.position = 0;
 
-			stripTags(swf.tags, stripAnimation, stripFilters);
+				const swf:SWF = new SWF(originalBytes);
 
-			if (swf.tagsRaw && swf.tagsRaw.length > swf.tags.length) {
-				swf.tagsRaw.length = swf.tags.length;
+				stripTags(swf.tags, stripAnimation, stripFilters);
+
+				if (swf.tagsRaw && swf.tagsRaw.length > swf.tags.length) {
+					swf.tagsRaw.length = swf.tags.length;
+				}
+
+				bytes = new ByteArray();
+				swf.publish(bytes);
 			}
 
-			const newBytes:ByteArray = new ByteArray();
-			swf.publish(newBytes);
-			newBytes.position = 0;
+			if (rasterize) {
+				bytes = new Rasterize().convert(bytes, rasterScale, rasterMaxSide);
+			}
 
-			return newBytes;
+			bytes.position = 0;
+
+			return bytes;
 		}
 
 		private static function stripTags(tags:Vector.<ITag>, stripAnimation:Boolean, stripFilters:Boolean):void {

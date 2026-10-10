@@ -32,6 +32,10 @@ package util {
 			return s.replace(/[^a-zA-Z0-9]/g, "_");
 		}
 
+		public static function escapeHtml(value:String):String {
+			return value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+		}
+
 		/**
 		 * Removes trailing whitespace from a URL string.
 		 *

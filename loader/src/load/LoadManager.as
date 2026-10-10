@@ -224,6 +224,7 @@ package load {
 				const categoryCheck:Function = resolveCategoryCheck(loadData.url);
 				const animationOn:Boolean = categoryCheck != null && categoryCheck();
 				const filterOn:Boolean = categoryCheck != null && Pocket.SINGLETON.config.option_filter_off;
+				const rasterizeOn:Boolean = categoryCheck != null && Pocket.SINGLETON.config.option_rasterize;
 
 				const finishLoad:Function = function (finalBytes:ByteArray):void {
 					const byteLoader:Loader = loadData.loader == null ? new Loader() : loadData.loader;
@@ -290,8 +291,8 @@ package load {
 					byteLoader.loadBytes(finalBytes, loadData.context);
 				};
 
-				if (animationOn || filterOn) {
-					SWFWorkerClient.instance.process(rawBytes, animationOn, filterOn, finishLoad);
+				if (animationOn || filterOn || rasterizeOn) {
+					SWFWorkerClient.instance.process(rawBytes, animationOn, filterOn, rasterizeOn, Pocket.SINGLETON.config.option_rasterize_scale, Pocket.SINGLETON.config.option_rasterize_max_side, finishLoad);
 				} else {
 					finishLoad(rawBytes);
 				}

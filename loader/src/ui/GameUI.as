@@ -246,7 +246,7 @@ package ui {
 		}
 
 		public function applySkillBarStyle():void {
-			if (!this.pocket.game) {
+			if (!this.pocket.game || !this.pocket.game.ui || !this.pocket.game.ui.mcInterface || !this.pocket.game.ui.mcInterface.actBar) {
 				return;
 			}
 

@@ -97,6 +97,19 @@ package ui {
 						Pocket.SINGLETON.config.option_language = languages[savedIndex];
 					}
 				),
+				new Check(
+					HelperSetting.OPTION_GLOBAL_CHAT,
+					true,
+					"Global Chat",
+					"Chat with other Pocket players. Type /global message.",
+					true,
+					function (option:Check):void {
+						Pocket.SINGLETON.config.option_global_chat = option.state;
+					},
+					function (frame:String):void {
+						Pocket.SINGLETON.config.option_global_chat = HelperSetting.getBool(HelperSetting.OPTION_GLOBAL_CHAT, true);
+					}
+				),
 				new Toggle(
 					HelperSetting.OPTION_LOCK_ORIENTATION,
 					0,
@@ -454,6 +467,55 @@ package ui {
 					},
 					function (frame:String):void {
 						Pocket.SINGLETON.config.option_filter_off = HelperSetting.getBool(HelperSetting.OPTION_FILTER);
+					}
+				),
+				new Check(
+					HelperSetting.OPTION_RASTERIZE,
+					true,
+					"Rasterize Vectors",
+					"Convert vector art to bitmaps.",
+					true,
+					function (option:Check):void {
+						const pocket:Pocket = Pocket.SINGLETON;
+
+						Pocket.SINGLETON.config.option_rasterize = option.state;
+
+						if (pocket.game) {
+							pocket.game.MsgBox.notify("Rasterize setting saved. Join a new map/relog to take effect.");
+						}
+					},
+					function (frame:String):void {
+						Pocket.SINGLETON.config.option_rasterize = HelperSetting.getBool(HelperSetting.OPTION_RASTERIZE);
+					}
+				),
+				new Toggle(
+					HelperSetting.OPTION_RASTERIZE_SCALE,
+					3,
+					"Rasterize Quality",
+					"Bitmap scale. Higher is sharper but uses more memory. Takes effect on next load.",
+					true,
+					["0.5x", "0.75x", "1x", "1.5x", "2x"],
+					function (option:Toggle):void {
+						Pocket.SINGLETON.config.option_rasterize_scale = [0.5, 0.75, 1, 1.5, 2][option.getIndex()];
+					},
+					null,
+					function (frame:String):void {
+						Pocket.SINGLETON.config.option_rasterize_scale = [0.5, 0.75, 1, 1.5, 2][HelperSetting.getInt(HelperSetting.OPTION_RASTERIZE_SCALE, 3)];
+					}
+				),
+				new Toggle(
+					HelperSetting.OPTION_RASTERIZE_MAX_SIDE,
+					2,
+					"Rasterize Max Size",
+					"Largest bitmap side in pixels. Bigger art is downscaled to fit.",
+					true,
+					["512 px", "1024 px", "2048 px", "4096 px"],
+					function (option:Toggle):void {
+						Pocket.SINGLETON.config.option_rasterize_max_side = [512, 1024, 2048, 4096][option.getIndex()];
+					},
+					null,
+					function (frame:String):void {
+						Pocket.SINGLETON.config.option_rasterize_max_side = [512, 1024, 2048, 4096][HelperSetting.getInt(HelperSetting.OPTION_RASTERIZE_MAX_SIDE, 2)];
 					}
 				)
 			]),

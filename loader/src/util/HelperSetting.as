@@ -55,7 +55,12 @@ package util {
 		public static const OPTION_ANIMATION_WEAPON:String = "option_animation_weapon";
 		public static const OPTION_ANIMATION_MAP:String = "option_animation_map";
 
+		public static const OPTION_GLOBAL_CHAT:String = "option_global_chat";
+
 		public static const OPTION_FILTER:String = "option_filter";
+		public static const OPTION_RASTERIZE:String = "option_rasterize";
+		public static const OPTION_RASTERIZE_SCALE:String = "option_rasterize_scale";
+		public static const OPTION_RASTERIZE_MAX_SIDE:String = "option_rasterize_max_side";
 
 		public static const LAYOUT_JOYSTICK_MOUSE:String = "layout_joystick";
 		public static const LAYOUT_JOYSTICK_KEYBOARD:String = "layout_joystick_keyboard";

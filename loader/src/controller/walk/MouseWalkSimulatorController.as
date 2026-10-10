@@ -29,6 +29,8 @@ package controller.walk {
             super(pocket);
         }
 
+        private var lastPT:Point;
+
         public override function update():void {
             if (!this.pocket.game.world || !this.pocket.game.world.myAvatar) {
                 return;
@@ -113,13 +115,18 @@ package controller.walk {
                 return;
             }
 
-            const mvPT:Point = pMC.simulateTo(localX, localY, moveSpeed);
+            if (this.frameTick == 0) {
+                const mvPT:Point = pMC.simulateTo(localX, localY, moveSpeed);
 
-            if (mvPT == null) {
-                return;
+                if (mvPT == null) {
+                    return;
+                }
+
+                this.lastPT = mvPT;
+
+                pMC.walkTo(mvPT.x, mvPT.y, moveSpeed);
+
             }
-
-            pMC.walkTo(mvPT.x, mvPT.y, moveSpeed);
 
             this.frameTick++;
 
@@ -128,8 +135,8 @@ package controller.walk {
 
                 this.pocket.game.world.moveRequest({
                     mc: pMC,
-                    tx: mvPT.x,
-                    ty: mvPT.y,
+                    tx: this.lastPT.x,
+                    ty: this.lastPT.y,
                     sp: moveSpeed
                 });
             }

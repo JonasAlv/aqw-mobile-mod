@@ -11,6 +11,7 @@ if [[ "$#" -gt 1 ]]; then
 fi
 CACHE_DIR="$DIR/build/upstream-apk-cache"
 RELEASE_API="https://api.github.com/repos/anthony-hyo/aqw-mobile/releases/latest"
+GAME_CDN_BASE="https://game.aq.com/game/"
 REQUIRED_FILES=(
     "gamefiles/game.swf"
     "gamefiles/book-of-lore.swf"
@@ -18,6 +19,14 @@ REQUIRED_FILES=(
 )
 OPTIONAL_FILES=(
     "gamefiles/world-map.swf"
+)
+
+# CDN URLs for files not included in the APK
+# The upstream APK only bundles game.swf now; other gamefiles are loaded from the game CDN
+declare -A CDN_URLS=(
+    ["gamefiles/book-of-lore.swf"]="gamefiles/news/spiderbook3.swf"
+    ["gamefiles/character-select.swf"]="gamefiles/interface/CharSelect/charselect.swf"
+    ["gamefiles/world-map.swf"]="gamefiles/news/Map-UI_r38.swf"
 )
 
 for tool in curl python3 unzip sha256sum; do
@@ -33,6 +42,10 @@ trap 'rm -rf "$TMP_DIR"' EXIT
 
 curl --fail --silent --show-error --location \
     --retry 3 \
+    --retry-delay 2 \
+    --retry-max-time 60 \
+    --max-time 30 \
+    --connect-timeout 10 \
     --header "Accept: application/vnd.github+json" \
     --header "User-Agent: aqw-mobile-mod-gamefile-sync" \
     "$RELEASE_API" \
@@ -116,6 +129,10 @@ if [[ ! -s "$APK_PATH" ]]; then
     echo "=> Downloading upstream AQW Mobile $RELEASE_TAG APK..."
     curl --fail --silent --show-error --location \
         --retry 3 \
+        --retry-delay 2 \
+        --retry-max-time 120 \
+        --max-time 300 \
+        --connect-timeout 30 \
         --header "User-Agent: aqw-mobile-mod-gamefile-sync" \
         "$APK_URL" \
         --output "$TMP_DIR/latest.apk"
@@ -135,29 +152,85 @@ fi
 APK_LISTING="$TMP_DIR/apk-listing.txt"
 unzip -Z1 "$APK_PATH" > "$APK_LISTING"
 
+# Function to download a file from the game CDN
+download_from_cdn() {
+    local archive_path="$1"
+    local dest_path="$2"
+    local cdn_relative="${CDN_URLS[$archive_path]:-}"
+    
+    if [[ -z "$cdn_relative" ]]; then
+        # Fallback: try the standard path
+        cdn_relative="$archive_path"
+    fi
+    
+    local cdn_url="${GAME_CDN_BASE}${cdn_relative}"
+    
+    echo "=> Attempting to download '$archive_path' from game CDN: $cdn_url"
+    curl --fail --silent --show-error --location \
+        --retry 3 \
+        --retry-delay 2 \
+        --retry-max-time 60 \
+        --max-time 120 \
+        --connect-timeout 30 \
+        --header "User-Agent: aqw-mobile-mod-gamefile-sync" \
+        "$cdn_url" \
+        --output "$dest_path"
+    
+    if [[ -s "$dest_path" ]]; then
+        echo "=> Successfully downloaded '$archive_path' from CDN"
+        return 0
+    else
+        echo "=> CDN download failed or empty for '$archive_path'"
+        rm -f "$dest_path"
+        return 1
+    fi
+}
+
 SYNCED_FILES=()
 for archive_path in "${REQUIRED_FILES[@]}" "${OPTIONAL_FILES[@]}"; do
     apk_path="$archive_path"
     if ! grep -Fqx -- "$apk_path" "$APK_LISTING"; then
         apk_path="assets/$archive_path"
     fi
-    if ! grep -Fqx -- "$apk_path" "$APK_LISTING"; then
-        if [[ " ${OPTIONAL_FILES[*]} " == *" $archive_path "* ]] \
-            && [[ -s "$DESTINATION/${archive_path#gamefiles/}" ]]; then
-            echo "=> Upstream APK omits '$archive_path'; keeping the existing bundled copy."
-            continue
-        fi
-        echo "ERROR: Upstream APK is missing '$archive_path' (also checked assets/$archive_path)." >&2
-        exit 1
-    fi
-
+    
     extracted_path="$TMP_DIR/${archive_path#gamefiles/}"
     mkdir -p "$(dirname "$extracted_path")"
-    unzip -p "$APK_PATH" "$apk_path" > "$extracted_path"
-    if [[ ! -s "$extracted_path" ]]; then
-        echo "ERROR: Extracted '$archive_path' is empty." >&2
+    
+    file_synced=false
+    
+    # Try extracting from APK first
+    if grep -Fqx -- "$apk_path" "$APK_LISTING"; then
+        unzip -p "$APK_PATH" "$apk_path" > "$extracted_path"
+        if [[ -s "$extracted_path" ]]; then
+            echo "=> Extracted '$archive_path' from upstream APK"
+            file_synced=true
+        else
+            echo "=> WARNING: Extracted '$archive_path' from APK is empty"
+        fi
+    fi
+    
+    # If not in APK or empty, try downloading from CDN
+    if [[ "$file_synced" = false ]]; then
+        if download_from_cdn "$archive_path" "$extracted_path"; then
+            file_synced=true
+        fi
+    fi
+    
+    # If still not synced, check if it's optional and we have a cached copy
+    if [[ "$file_synced" = false ]]; then
+        if [[ " ${OPTIONAL_FILES[*]} " == *" $archive_path "* ]] \
+            && [[ -s "$DESTINATION/${archive_path#gamefiles/}" ]]; then
+            echo "=> '$archive_path' not in APK or CDN; keeping existing bundled copy."
+            file_synced=true
+        fi
+    fi
+    
+    # Final check
+    if [[ "$file_synced" = false ]]; then
+        echo "ERROR: Could not obtain '$archive_path' from APK or CDN." >&2
         exit 1
     fi
+    
     SYNCED_FILES+=("$archive_path")
 done
 
