@@ -129,25 +129,32 @@ for required_swc in AqwApi.swc ModUI.swc; do
     fi
 done
 
-# ---- Step 2: Compile WorkerMain.swf from the Haxe UI's AS3 worker ----
-# WorkerMain.as runs in a background thread and strips SWF animation/filters. It depends on
-# com.codeazur.as3swf, which lives under loader/worker-src/com/codeazur/ and must be added to the
-# source-path so amxmlc resolves it. (It is NOT a SWC — it is plain AS3 source.)
+# ---- Step 2: WorkerMain.swf ----
+# WorkerMain.as is a background worker that strips SWF animation/filters. It is NOT shipped in
+# upstream release assets, and recompiling it from loader/worker-src/ fails: SWFStripper.as
+# imports com.codeazur.as3swf, which is neither vendored in the repo nor available as a SWC.
 #
-# The worker SWF is written to $STAGING/gamefiles/embed/WorkerMain.swf. SWFWorkerClient embeds it
-# at compile time via [Embed(source="../../gamefiles/embed/WorkerMain.swf")], which resolves
-# relative to Pocket.as's source-path ($STAGING/src/), i.e. exactly that path — so the Embed class
-# is emitted into the injected ABC and the runtime does not throw
+# The working prebuilt copy lives in the desktop release zip at
+# gamefiles/embed/WorkerMain.swf (148477 bytes). sync-gamefiles.sh does not pull it because the
+# current upstream release assets do not bundle it, so we vendor a copy at
+# loader/libs/WorkerMain.swf and stage it from there. loader/worker-src/ is kept for reference
+# but is NOT compiled.
+#
+# SWFWorkerClient embeds it at compile time via [Embed(source="../../gamefiles/embed/WorkerMain.swf")],
+# which resolves relative to Pocket.as's source-path ($STAGING/src/), i.e. exactly that path — so
+# the Embed class is emitted into the injected ABC and the runtime does not throw
 # "Variable SWFWorkerClient_WorkerSWF is not defined".
-echo "=> [3/6] Compiling WorkerMain.swf (loader/worker-src)..."
-mkdir -p "$STAGING/gamefiles/embed"
-"$AMXMLC" \
-    -strict=false \
-    "$STAGING/worker-src/WorkerMain.as" \
-    -source-path+="$STAGING/src" \
-    -source-path+="$STAGING/worker-src" \
-    -output "$STAGING/gamefiles/embed/WorkerMain.swf" \
-    -swf-version=51
+if [ -f "$DIR/loader/libs/WorkerMain.swf" ]; then
+    echo "=> [3/6] Staging WorkerMain.swf from loader/libs/WorkerMain.swf..."
+    mkdir -p "$STAGING/gamefiles/embed"
+    cp "$DIR/loader/libs/WorkerMain.swf" "$STAGING/gamefiles/embed/WorkerMain.swf"
+else
+    echo "ERROR: loader/libs/WorkerMain.swf is missing." >&2
+    echo "       Obtain a prebuilt copy from a desktop release that bundles it and save it at" >&2
+    echo "       loader/libs/WorkerMain.swf. Recompiling from loader/worker-src/ is not possible:" >&2
+    echo "       SWFStripper.as needs com.codeazur.as3swf, which is neither vendored nor a SWC." >&2
+    exit 1
+fi
 
 # ---- Step 3: Compile our code, then inject it into the pristine upstream SWF ----
 # The original FLA artwork exists only inside the upstream Desktop.swf / Mobile.swf.
@@ -183,7 +190,6 @@ inject_code_into_shell() {
         -define+=POCKET::IS_MOBILE,"$is_mobile" \
         -library-path+="$STAGING/libs" \
         -source-path+="$STAGING/src" \
-        -source-path+="$STAGING/worker-src" \
         -output "$STAGING/${label}_code.swf" \
         "$STAGING/src/Pocket.as"
 
