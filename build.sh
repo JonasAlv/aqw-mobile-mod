@@ -39,7 +39,7 @@ fi
 mkdir -p "$BUILD"
 rm -rf "$STAGING"
 mkdir -p "$STAGING"
-trap 'rm -rf "$STAGING"' EXIT
+trap '' EXIT
 
 # ---- Step 0a: Fetch the latest upstream gamefiles ----
 # Runs before staging so a new upstream release is picked up automatically instead of silently
@@ -130,6 +130,15 @@ for required_swc in AqwApi.swc ModUI.swc; do
 done
 
 # ---- Step 2: Compile WorkerMain.swf from the Haxe UI's AS3 worker ----
+# WorkerMain.as runs in a background thread and strips SWF animation/filters. It depends on
+# com.codeazur.as3swf, which lives under loader/worker-src/com/codeazur/ and must be added to the
+# source-path so amxmlc resolves it. (It is NOT a SWC — it is plain AS3 source.)
+#
+# The worker SWF is written to $STAGING/gamefiles/embed/WorkerMain.swf. SWFWorkerClient embeds it
+# at compile time via [Embed(source="../../gamefiles/embed/WorkerMain.swf")], which resolves
+# relative to Pocket.as's source-path ($STAGING/src/), i.e. exactly that path — so the Embed class
+# is emitted into the injected ABC and the runtime does not throw
+# "Variable SWFWorkerClient_WorkerSWF is not defined".
 echo "=> [3/6] Compiling WorkerMain.swf (loader/worker-src)..."
 mkdir -p "$STAGING/gamefiles/embed"
 "$AMXMLC" \
@@ -183,7 +192,7 @@ inject_code_into_shell() {
         cd "$STAGING"
         abcexport "${label}_code.swf"
         abcreplace "${label}.swf" 0 "${label}_code-0.abc"
-        rm -f "${label}_code.swf" "${label}_code-0.abc" "${label}"-*.abc
+        cp "${label}_code.swf" /tmp/inspect_${label}_code.swf; rm -f "${label}_code-0.abc" "${label}"-*.abc
     )
     cp "$STAGING/${label}.swf" "$BUILD/${label}.swf"
 }
