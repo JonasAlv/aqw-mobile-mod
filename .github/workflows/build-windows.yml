@@ -172,38 +172,49 @@ jobs:
           Add-Type -AssemblyName System.IO.Compression.FileSystem
           $zip = [System.IO.Compression.ZipFile]::OpenRead($apkPath)
           try {
-            $required = @(
-              "gamefiles/game.swf",
-              "gamefiles/book-of-lore.swf",
-              "gamefiles/character-select.swf"
-            )
-            $optional = @("gamefiles/world-map.swf")
-            foreach ($assetPath in ($required + $optional)) {
-              $entry = $zip.Entries | Where-Object { $_.FullName -ceq $assetPath } | Select-Object -First 1
-              if ($null -eq $entry) {
-                $entry = $zip.Entries | Where-Object { $_.FullName -ceq "assets/$assetPath" } | Select-Object -First 1
-              }
-              if ($null -eq $entry) {
-                if ($optional -contains $assetPath) {
-                  Write-Host "Upstream APK omits optional '$assetPath'; continuing without it."
-                  continue
-                }
-                throw "The upstream APK is missing required asset '$assetPath'."
-              }
+            # Upstream APK now only bundles game.swf; other gamefiles are downloaded from CDN
+            $entry = $zip.Entries | Where-Object { $_.FullName -ceq "gamefiles/game.swf" } | Select-Object -First 1
+            if ($null -eq $entry) {
+              $entry = $zip.Entries | Where-Object { $_.FullName -ceq "assets/gamefiles/game.swf" } | Select-Object -First 1
+            }
+            if ($null -eq $entry) {
+              throw "The upstream APK is missing required asset 'gamefiles/game.swf'."
+            }
 
-              $fileName = [System.IO.Path]::GetFileName($assetPath)
-              $target = Join-Path $gamefilesDest $fileName
-              $inputStream = $entry.Open()
-              $outputStream = [System.IO.File]::Create($target)
-              try { $inputStream.CopyTo($outputStream) }
-              finally {
-                $inputStream.Dispose()
-                $outputStream.Dispose()
-              }
+            $target = Join-Path $gamefilesDest "game.swf"
+            $inputStream = $entry.Open()
+            $outputStream = [System.IO.File]::Create($target)
+            try { $inputStream.CopyTo($outputStream) }
+            finally {
+              $inputStream.Dispose()
+              $outputStream.Dispose()
             }
           }
           finally {
             $zip.Dispose()
+          }
+
+          # Download remaining gamefiles from game CDN
+          Write-Host "=> Downloading remaining gamefiles from game CDN..."
+          $cdnFiles = @{
+            "book-of-lore.swf"     = "https://game.aq.com/game/gamefiles/news/spiderbook3.swf"
+            "character-select.swf" = "https://game.aq.com/game/gamefiles/interface/CharSelect/charselect.swf"
+            "world-map.swf"        = "https://game.aq.com/game/gamefiles/news/Map-UI_r38.swf"
+          }
+          foreach ($fileName in $cdnFiles.Keys) {
+            $url = $cdnFiles[$fileName]
+            $target = Join-Path $gamefilesDest $fileName
+            Write-Host "   Downloading $fileName from $url..."
+            try {
+              Invoke-WebRequest -Uri $url -Headers $headers -OutFile $target -TimeoutSec 120
+              if (-not (Test-Path $target) -or (Get-Item $target).Length -eq 0) {
+                throw "Downloaded file is empty or missing."
+              }
+              Write-Host "   OK: $fileName"
+            } catch {
+              Write-Error "Failed to download $fileName from CDN: $_"
+              throw "CDN download failed for $fileName"
+            }
           }
 
           "upstream_version=$upstreamVersion" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
