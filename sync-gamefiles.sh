@@ -209,7 +209,17 @@ for archive_path in "${REQUIRED_FILES[@]}" "${OPTIONAL_FILES[@]}"; do
         fi
     fi
     
-    # If not in APK or empty, try downloading from CDN
+    # Pocket-patched copies vendored in vendor/gamefiles/ beat the raw CDN file: game.swf loads
+    # app:/gamefiles/world-map.swf and expects upstream's bytecode patches, which the raw CDN
+    # Map-UI_r38.swf lacks (the map then never opens). Upstream's patches are not public.
+    vendored_path="$DIR/vendor/$archive_path"
+    if [[ "$file_synced" = false && -s "$vendored_path" ]]; then
+        cp "$vendored_path" "$extracted_path"
+        echo "=> Using vendored patched '$archive_path'"
+        file_synced=true
+    fi
+
+    # If not in APK or vendored, try downloading from CDN
     if [[ "$file_synced" = false ]]; then
         if download_from_cdn "$archive_path" "$extracted_path"; then
             file_synced=true
