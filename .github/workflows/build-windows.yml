@@ -218,6 +218,7 @@ jobs:
           }
 
           # Fallback to vendor/ for patched world-map.swf (upstream's patches not in CDN)
+          $workspace = $env:GITHUB_WORKSPACE
           $vendorWorldMap = Join-Path $workspace "aqw-mobile-mod\vendor\gamefiles\world-map.swf"
           $targetWorldMap = Join-Path $gamefilesDest "world-map.swf"
           if (Test-Path $vendorWorldMap -and (Get-Item $vendorWorldMap).Length -gt 0) {
