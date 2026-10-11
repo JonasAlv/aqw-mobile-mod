@@ -221,7 +221,7 @@ jobs:
           $workspace = $env:GITHUB_WORKSPACE
           $vendorWorldMap = Join-Path $workspace "aqw-mobile-mod\vendor\gamefiles\world-map.swf"
           $targetWorldMap = Join-Path $gamefilesDest "world-map.swf"
-          if (Test-Path $vendorWorldMap -and (Get-Item $vendorWorldMap).Length -gt 0) {
+          if ((Test-Path $vendorWorldMap) -and ((Get-Item $vendorWorldMap).Length -gt 0)) {
             Copy-Item -Path $vendorWorldMap -Destination $targetWorldMap -Force
             Write-Host "   Using vendored patched world-map.swf"
           }
