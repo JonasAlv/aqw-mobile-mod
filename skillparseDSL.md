@@ -125,6 +125,27 @@ Aliases: `counter`, `hit`, `attacked`, `mobattack`.
 | :--- | :--- | :--- |
 | `wait(500ms)` | Waits 500 milliseconds before allowing this skill to fire. | `2[wait(500ms)]` |
 
+### 3.9. Skill Cooldown & Readiness Checks
+
+Allows checking if a skill is ready to fire or currently on cooldown:
+
+| Rule Syntax | Description | Example |
+| :--- | :--- | :--- |
+| `!cd(X)` / `!cooldown(X)` | Skill `X` is off cooldown (cooldown $\le 0$). | `4[!cd(4)]` or `0[!cd(4)] > 4` |
+| `ready(X)` | Skill `X` is off cooldown and ready to fire. | `4[ready(4)]` |
+| `!onCooldown(X)` | Skill `X` is not on cooldown. | `4[!onCooldown(4)]` |
+| `cd(X)` / `onCooldown(X)` | Skill `X` is currently on cooldown (cooldown $> 0$). | `2[cd(4)]` |
+| `!ready(X)` | Skill `X` is NOT ready (on cooldown). | `2[!ready(4)]` |
+| `cd(X) <= 1.5s` | Remaining cooldown on skill `X` is $\le 1.5$ seconds. | `4[cd(4) <= 1.5s]` |
+| `cd(X) == 0` | Remaining cooldown on skill `X` is exactly 0. | `4[cd(4) == 0]` |
+
+> [!TIP]
+> **Omitting the skill index**: When used on a skill without specifying `(X)`, the rule checks the current skill slot itself:
+> - `4[!cd]` $\equiv$ `4[!cd(4)]`
+> - `4[ready]` $\equiv$ `4[ready(4)]`
+> - `4[cd <= 1.5s]` $\equiv$ `4[cd(4) <= 1.5s]`
+> - `4[!oncooldown]` $\equiv$ `4[!oncooldown(4)]`
+
 ---
 
 ## 4. Logical Operators Inside Brackets
@@ -249,28 +270,42 @@ combo = 0[!aura(self:Vehemency)] > 2 > 2 | 0[!aura(self:Superpower)] > 2 > 3 | 4
 | `0 > 3 > 3` | Lorebook $\to$ 3rd Index $\to$ 3rd Index | **Rewind**: Heal over Time (HoT) | 24s |
 | `0 > 2 > 1` | Lorebook $\to$ 2nd Index $\to$ 1st Index | **Acutance**: +50% Crit Chance | 12s |
 
-**Configuration & Optimal Rotation:**
+**Configuration & Optimal Rotations:**
 > [!IMPORTANT]
-> Because slot 0 is *Lorebook of Beginnings* (an active skill), set `autoattack = false` (or UI `AA: OFF`).
+> Because slot 0 is *Lorebook of Beginnings* (an active skill with GCD), set `autoattack = false` (or UI `AA: OFF`).
 > Splotched (6s duration) must be placed at the very front to prevent priority starvation from 12s buffs.
 
+#### Option A: Zero-Stall Solo Rotation (Pure 4.5s Hand-Off Chains)
+Completely eliminates the 50s cooldown skill for a 100% predictable, repeating cycle of 4.5s chains:
 ```ini
-[Archivist of Temporis : Solo]
+[Archivist of Temporis : Solo-Linear]
 mode = WaitForCooldown
 timeout = 1500
 autoattack = false
 resetontarget = true
-combo = 0[!aura(target:Splotched) & tgt:hp > 50%] > 1 > 2 | 0[!aura(self:Vehemency)] > 2 > 2 | 0[!aura(self:Superpower)] > 2 > 3 | 4[aura(self:Vehemency) & aura(self:Superpower)] | 0[!aura(self:Page Turned)] > 1 > 3 | 0 > 1 > 1
+combo = 0[!aura(target:Splotched) & tgt:hp > 50%] > 1 > 2 | 0[!aura(self:Vehemency)] > 2 > 2 | 0[!aura(self:Superpower)] > 2 > 3 | 0[!aura(self:Page Turned)] > 1 > 3 | 0 > 1 > 1
 ```
 
-**Lifecycle Trace:**
+#### Option B: Advanced Solo / Group Rotation (Rewrite Time with Cooldown & AuraTimer Guards)
+Capitalizes on Skill 4 (*Rewrite Time*) to refresh both 12s buffs in a single 1.5s GCD (saving 7.5s of manual recasting), while explicitly guarding against cooldown stalls:
+```ini
+[Archivist of Temporis : Solo-Optimal]
+mode = WaitForCooldown
+timeout = 1500
+autoattack = false
+resetontarget = true
+combo = 0[!aura(target:Splotched) & tgt:hp > 50%] > 1 > 2 | 0[!aura(self:Vehemency)] > 2 > 2 | 0[!aura(self:Superpower)] > 2 > 3 | 4[!cd(4) & auraTime(self:Vehemency) <= 4s] | 0[!aura(self:Page Turned)] > 1 > 3 | 0 > 1 > 1
+```
+
+**Lifecycle Trace for Option B:**
 1. **Pull (0.0s – 4.5s)**: First cast is slot 0, activating Rank 10 *Epigraph* (50% DR for 8s). Targets HP > 50%, so casts `0 > 1 > 2` $\to$ applies *Splotched* (6s).
 2. **Buff 1 (4.5s – 9.0s)**: Casts `0 > 2 > 2` $\to$ applies *Vehemency* (12s).
 3. **Buff 2 (9.0s – 13.5s)**: Casts `0 > 2 > 3` $\to$ applies *Superpower* (12s). *Vehemency* has ~7.5s left.
-4. **Rewrite Time (13.5s)**: Both buffs are active $\to$ fires slot `4` (*Rewrite Time*), resetting *Vehemency* and *Superpower* to full 12s and party broadcasting. Skill 4 enters 50s cooldown.
-5. **Ramp-Up (13.5s – 18.0s)**: Casts `0 > 1 > 3` $\to$ applies *Page Turned* (24s).
-6. **DoT Upkeep**: Splotched drops after 6s $\to$ Branch 0 immediately triggers and reapplies `0 > 1 > 2`.
-7. **Burst DPS**: When all buffs and DoT are active, falls through to `0 > 1 > 1` for spammed direct damage.
+4. **Rewrite Time Window**: As *Vehemency* reaches $\le 4$ seconds, if Skill 4 is ready (`!cd(4)`), it immediately fires slot `4` (*Rewrite Time*), resetting both *Vehemency* and *Superpower* to a full 12s in just 1 GCD (1.5s).
+5. **Cooldown Gating (Next 50 Seconds)**: While Skill 4 is on cooldown, `!cd(4)` evaluates to false (and the engine's pre-selection gate verifies `cdRemaining > 1500`), so Branch 3 is skipped with **0ms delay**. The bot naturally falls back to manual upkeep (`0 > 2 > 2` and `0 > 2 > 3`) whenever buffs expire.
+6. **Ramp-Up**: Casts `0 > 1 > 3` $\to$ applies *Page Turned* (24s).
+7. **DoT Upkeep**: Splotched drops after 6s $\to$ Branch 0 immediately triggers and reapplies `0 > 1 > 2`.
+8. **Burst DPS**: When buffs and DoT are active, falls cleanly into `0 > 1 > 1` for spammed direct burst damage.
 
 ### Example 2: Chrono ShadowHunter (Riposte & Dodge Counter)
 Slot 0 is a skill, slot 3 is a riposte that requires a mob hit.
