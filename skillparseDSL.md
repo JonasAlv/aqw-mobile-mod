@@ -286,8 +286,7 @@ resetontarget = true
 combo = 0[!aura(target:Splotched) & tgt:hp > 50%] > 1 > 2 | 0[!aura(self:Vehemency)] > 2 > 2 | 0[!aura(self:Superpower)] > 2 > 3 | 0[!aura(self:Page Turned)] > 1 > 3 | 0 > 1 > 1
 ```
 
-#### Option B: Advanced Solo / Group Rotation (Padded Rewrite Time)
-#### Option B: Advanced Solo / Group Rotation (Infinite Page Turned & Padded Rewrite Time)
+#### Option B: Advanced Solo / Group Rotation (Infinite Page Turned & Clean Rewrite Time)
 Maintains *Page Turned* indefinitely on the enemy without losing stacks, refreshes *Vehemency* and *Superpower* via Skill 4 (*Rewrite Time*) every 50 seconds, and seamlessly transitions into direct burst damage:
 ```ini
 [Archivist of Temporis : Solo-Optimal]
@@ -295,7 +294,7 @@ mode = WaitForCooldown
 timeout = 1500
 autoattack = false
 resetontarget = true
-combo = 0[!aura(target:Page Turned) | auraTime(target:Page Turned) <= 5s] > 1 > 3 | 4[ready(4) & aura(self:Vehemency)] > 1 > 1 | 0[!aura(self:Vehemency)] > 2 > 2 | 0[!aura(self:Superpower)] > 2 > 3 | 0[!aura(target:Splotched) & tgt:hp > 50%] > 1 > 2 | 0 > 1 > 1
+combo = 0[!aura(target:Page Turned) | auraTime(target:Page Turned) <= 5s] > 1 > 3 | 4[ready(4) & aura(self:Vehemency)] | 0[!aura(self:Vehemency)] > 2 > 2 | 0[!aura(self:Superpower)] > 2 > 3 | 0[!aura(target:Splotched) & tgt:hp > 50%] > 1 > 2 | 0 > 1 > 1
 ```
 
 **Why This Resolves Both Issues:**
@@ -304,11 +303,11 @@ combo = 0[!aura(target:Page Turned) | auraTime(target:Page Turned) <= 5s] > 1 > 
    - Using `!aura(target:Page Turned) | auraTime(target:Page Turned) <= 5s` ensures it casts at combat start when missing, **AND** re-casts `0 > 1 > 3` whenever the 24s timer drops below 5s.
    - The 24-second timer is refreshed back to full **before it expires**, preserving all accumulated stacks indefinitely!
 2. **Rewrite Time Recasting (`ready(4) & aura(self:Vehemency)`)**:
-   - In the old string, placing Splotched (6s) and manual buffs before Skill 4 caused an endless priority starvation loop that prevented Skill 4 from ever finding its narrow 4s window.
-   - Placing `4[ready(4) & aura(self:Vehemency)] > 1 > 1` ahead of the manual buff branches guarantees that whenever Skill 4 comes off its 50s cooldown and buffs are up, it fires immediately:
-     - Refreshes both *Vehemency* and *Superpower* back to 12s in 1.5s.
-     - Padded with `> 1 > 1` (3.0s) for high direct burst damage and perfect 4.5s cadence.
-   - For the next 50 seconds while Skill 4 is on cooldown, the engine naturally falls back to manual upkeep (`0 > 2 > 2` and `0 > 2 > 3`) with 0ms delay.
+   - Placing `4[ready(4) & aura(self:Vehemency)]` ahead of the manual buff branches guarantees that whenever Skill 4 comes off its 50s cooldown and buffs are active, it fires immediately:
+     - Refreshes both *Vehemency* and *Superpower* back to 12s in a single 1.5s GCD.
+     - Does **not** append `> 1 > 1` to Skill 4: Index skills cost 40 MP each, and because the previous combo left the player at 20 MP, trying to cast `1` without `0` causes mana starvation and a 3-second timeout stall.
+     - Instead, Skill 4 finishes cleanly in 1.5s. By then, Slot 0's 4.5s cooldown has already expired in the background (6.0s elapsed since last cast). The bot immediately enters `0 > 1 > 1`, where Slot 0 instantly refills mana to 100 with **zero idle pause**!
+   - For the next 50 seconds while Skill 4 recharges, the engine's fixed native cooldown tracker cleanly skips Branch 1 with 0ms delay, and the bot naturally falls back to manual upkeep (`0 > 2 > 2` and `0 > 2 > 3`) whenever buffs expire.
 3. **Burst DPS**: When buffs, DoT, and Page Turned are active, the bot continuously spams `0 > 1 > 1` to deal astronomical damage with high Page Turned stacks!
 
 ### Example 2: Chrono ShadowHunter (Riposte & Dodge Counter)
