@@ -144,7 +144,7 @@ inject_code_into_shell() {
         cd "$STAGING"
         abcexport "${label}_code.swf"
         abcreplace "${label}.swf" 0 "${label}_code-0.abc"
-        cp "${label}_code.swf" /tmp/inspect_${label}_code.swf; rm -f "${label}_code-0.abc" "${label}"-*.abc
+        rm -f "${label}_code-0.abc" "${label}"-*.abc
     )
     cp "$STAGING/${label}.swf" "$BUILD/${label}.swf"
 }
