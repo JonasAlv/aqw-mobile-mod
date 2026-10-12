@@ -226,16 +226,51 @@ combo = 0[!aura(self:Vehemency)] > 2 > 2 | 0[!aura(self:Superpower)] > 2 > 3 | 4
 
 ## 8. Complete Working Examples
 
-### Example 1: Archivist of Time / Archivist of Temporis (Complex Branching)
-Slot 0 is an active scroll skill, so `autoattack = false`.
+### Example 1: Archivist of Temporis / Archivist of Time (Spellbook Inscription & Index Combos)
+
+**Class Mechanics:**
+- **Slot 0 (`0`)**: *Lorebook of Beginnings* (4.5s CD, Inscribes Lore, **restores 100% mana**, triggers Rank 10 *Epigraph* for 50% Damage Resistance for 8s on pull).
+- **Slot 1 (`1`)**: *The First Index* (Damaging spells, costs 40 mana, 1.5s CD).
+- **Slot 2 (`2`)**: *The Second Index* (Enchanting spells, costs 40 mana, 1.5s CD).
+- **Slot 3 (`3`)**: *The Third Index* (Protection spells, costs 40 mana, 1.5s CD).
+- **Slot 4 (`4`)**: *Rewrite Time* (50s CD, refreshes all active Index buff durations on self to full 12s and grants them to allies).
+
+**Index Spell Combinations:**
+| Combo | Spells Invoked | Effect / Aura Applied | Duration |
+| :--- | :--- | :--- | :--- |
+| `0 > 1 > 2` | Lorebook $\to$ 1st Index $\to$ 2nd Index | **Splotched**: Target DoT based on target HP% | 6s |
+| `0 > 2 > 2` | Lorebook $\to$ 2nd Index $\to$ 2nd Index | **Vehemency**: +40% Physical & Magical Damage | 12s |
+| `0 > 2 > 3` | Lorebook $\to$ 2nd Index $\to$ 3rd Index | **Superpower**: +30% INT, STR, and Luck | 12s |
+| `0 > 1 > 3` | Lorebook $\to$ 1st Index $\to$ 3rd Index | **Page Turned**: Successive Lorebook damage scaling | 24s |
+| `4` | Rewrite Time | **Buff Refresh**: Resets all active buffs to full 12s | 50s CD |
+| `0 > 1 > 1` | Lorebook $\to$ 1st Index $\to$ 1st Index | **Burst Damage**: Direct damaging spell spam | Instant |
+| `0 > 3 > 2` | Lorebook $\to$ 3rd Index $\to$ 2nd Index | **Resiliency**: +25% Damage Resistance (Defensive) | 24s |
+| `0 > 3 > 1` | Lorebook $\to$ 3rd Index $\to$ 1st Index | **Fortification**: +75% END & -25% mana costs | 24s |
+| `0 > 3 > 3` | Lorebook $\to$ 3rd Index $\to$ 3rd Index | **Rewind**: Heal over Time (HoT) | 24s |
+| `0 > 2 > 1` | Lorebook $\to$ 2nd Index $\to$ 1st Index | **Acutance**: +50% Crit Chance | 12s |
+
+**Configuration & Optimal Rotation:**
+> [!IMPORTANT]
+> Because slot 0 is *Lorebook of Beginnings* (an active skill), set `autoattack = false` (or UI `AA: OFF`).
+> Splotched (6s duration) must be placed at the very front to prevent priority starvation from 12s buffs.
+
 ```ini
-[Archivist of Time : Solo]
+[Archivist of Temporis : Solo]
 mode = WaitForCooldown
 timeout = 1500
 autoattack = false
 resetontarget = true
-combo = 0[!aura(self:Vehemency)] > 2 > 2 | 0[!aura(self:Superpower)] > 2 > 3 | 0[!aura(self:Page Turned)] > 1 > 3 | 0[!aura(target:Splotched) & tgt:hp > 50%] > 1 > 2 | 4[aura(self:Vehemency) & aura(self:Superpower)] | 0 > 1 > 1
+combo = 0[!aura(target:Splotched) & tgt:hp > 50%] > 1 > 2 | 0[!aura(self:Vehemency)] > 2 > 2 | 0[!aura(self:Superpower)] > 2 > 3 | 4[aura(self:Vehemency) & aura(self:Superpower)] | 0[!aura(self:Page Turned)] > 1 > 3 | 0 > 1 > 1
 ```
+
+**Lifecycle Trace:**
+1. **Pull (0.0s – 4.5s)**: First cast is slot 0, activating Rank 10 *Epigraph* (50% DR for 8s). Targets HP > 50%, so casts `0 > 1 > 2` $\to$ applies *Splotched* (6s).
+2. **Buff 1 (4.5s – 9.0s)**: Casts `0 > 2 > 2` $\to$ applies *Vehemency* (12s).
+3. **Buff 2 (9.0s – 13.5s)**: Casts `0 > 2 > 3` $\to$ applies *Superpower* (12s). *Vehemency* has ~7.5s left.
+4. **Rewrite Time (13.5s)**: Both buffs are active $\to$ fires slot `4` (*Rewrite Time*), resetting *Vehemency* and *Superpower* to full 12s and party broadcasting. Skill 4 enters 50s cooldown.
+5. **Ramp-Up (13.5s – 18.0s)**: Casts `0 > 1 > 3` $\to$ applies *Page Turned* (24s).
+6. **DoT Upkeep**: Splotched drops after 6s $\to$ Branch 0 immediately triggers and reapplies `0 > 1 > 2`.
+7. **Burst DPS**: When all buffs and DoT are active, falls through to `0 > 1 > 1` for spammed direct damage.
 
 ### Example 2: Chrono ShadowHunter (Riposte & Dodge Counter)
 Slot 0 is a skill, slot 3 is a riposte that requires a mob hit.
