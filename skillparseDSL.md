@@ -310,6 +310,23 @@ combo = 0[!aura(target:Page Turned) | auraTime(target:Page Turned) <= 5s] > 1 > 
    - For the next 50 seconds while Skill 4 recharges, the engine's fixed native cooldown tracker cleanly skips Branch 1 with 0ms delay, and the bot naturally falls back to manual upkeep (`0 > 2 > 2` and `0 > 2 > 3`) whenever buffs expire.
 3. **Burst DPS**: When buffs, DoT, and Page Turned are active, the bot continuously spams `0 > 1 > 1` to deal astronomical damage with high Page Turned stacks!
 
+#### Option C: Linear Full-Buff Ramp & Burst Sequence (34-Step Cycle)
+A deterministic, non-branching sequence that applies all core buffs, triggers Skill 4 (*Rewrite Time*), immediately restores mana with `0`, and unloads three full burst cycles before looping:
+```ini
+[Archivist of Temporis : Linear-Ramp]
+mode = WaitForCooldown
+timeout = 1500
+autoattack = false
+resetontarget = true
+combo = 0 > 1 > 3 > 0 > 3 > 1 > 0 > 3 > 2 > 0 > 3 > 3 > 0 > 2 > 1 > 0 > 2 > 2 > 0 > 2 > 3 > 4 > 0 > 1 > 1 > 0 > 1 > 1 > 0 > 1 > 1 > 0 > 1 > 3
+```
+
+**Why the `> 4 > 0 > 1 > 1` Transition Works Flawlessly:**
+* **Buff Refresh**: Skill 4 (*Rewrite Time*, 1.5s) refreshes all active 12-second buffs back to maximum duration.
+* **Instant Mana Restoration**: By placing `0` (*Lorebook of Beginnings*) directly after `4`, the player instantly recovers 100 MP with **0ms delay** (because Slot 0 had 6.0 seconds to recharge since the previous combo).
+* **Burst Nukes**: With full 100 MP, the three successive `0 > 1 > 1` burst cycles fire without any resource stalling or cooldown desync!
+* **Target Behavior**: For bosses / high-HP targets, use `resetontarget = true`. When farming fast-dying trash mobs, toggle `resetontarget = false` so target deaths don't reset to Slot 0 mid-recharge.
+
 ### Example 2: Chrono ShadowHunter (Riposte & Dodge Counter)
 Slot 0 is a skill, slot 3 is a riposte that requires a mob hit.
 ```ini
