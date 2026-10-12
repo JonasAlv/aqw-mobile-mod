@@ -3,15 +3,20 @@ name: Build Windows App
 on:
   workflow_dispatch:
     inputs:
+      include_cpu:
+        description: 'Include CPU render mode build'
+        required: true
+        default: true
+        type: boolean
       include_direct:
         description: 'Include Direct render mode build'
         required: true
         default: true
         type: boolean
       include_gpu:
-        description: 'Include legacy GPU render mode build'
+        description: 'Include GPU render mode build'
         required: true
-        default: false
+        default: true
         type: boolean
       build_android:
         description: 'Also package Android ARMv8 APK'
@@ -407,13 +412,19 @@ jobs:
             "<versionLabel>$cleanVersion</versionLabel>"
           )
 
-          # Modes to build: auto (recommended default), optional direct, optional gpu
-          $modes = @("auto")
+          # Modes to build: cpu, direct, gpu (no auto)
+          $modes = @()
+          if ("${{ github.event.inputs.include_cpu }}" -ne "false") {
+            $modes += "cpu"
+          }
           if ("${{ github.event.inputs.include_direct }}" -ne "false") {
             $modes += "direct"
           }
-          if ("${{ github.event.inputs.include_gpu }}" -eq "true") {
+          if ("${{ github.event.inputs.include_gpu }}" -ne "false") {
             $modes += "gpu"
+          }
+          if ($modes.Count -eq 0) {
+            $modes = @("cpu", "direct", "gpu")
           }
 
           foreach ($mode in $modes) {
@@ -439,8 +450,7 @@ jobs:
 
             if ($LASTEXITCODE -ne 0) { throw "AIR bundle packaging failed for mode $mode." }
 
-            $suffix = if ($mode -eq "auto") { "" } else { "-$mode" }
-            $zipName = "aqw-$upstreamVer-$date-x64$suffix.zip"
+            $zipName = "aqw-$upstreamVer-$date-x64-$mode.zip"
             $zipPath = Join-Path $artifactsDir $zipName
             if (Test-Path $zipPath) { Remove-Item -Path $zipPath -Force }
 
@@ -450,39 +460,42 @@ jobs:
 
           # Optional Android package
           if ("${{ github.event.inputs.build_android }}" -eq "true") {
-            Write-Host "=> Packaging Android ARMv8 APK..."
-            $apkName = "aqwmod-$upstreamVer-$date-armv8.apk"
-            $apkPath = Join-Path $artifactsDir $apkName
+            Write-Host "=> Packaging Android ARMv8 APKs..."
+            foreach ($mode in $modes) {
+              $apkName = "aqwmod-$upstreamVer-$date-armv8-$mode.apk"
+              $apkPath = Join-Path $artifactsDir $apkName
 
-            $rawMobileXml = Get-Content (Join-Path $loaderDir "Mobile-app.xml") -Raw
-            $mobileXml = [System.Text.RegularExpressions.Regex]::Replace(
-              $rawMobileXml,
-              "<versionNumber>.*?</versionNumber>",
-              "<versionNumber>$cleanVersion</versionNumber>"
-            )
-            $mobileXml = [System.Text.RegularExpressions.Regex]::Replace(
-              $mobileXml,
-              "<versionLabel>.*?</versionLabel>",
-              "<versionLabel>$cleanVersion</versionLabel>"
-            )
-            $mobileXml = [System.Text.RegularExpressions.Regex]::Replace(
-              $mobileXml,
-              "<renderMode>.*?</renderMode>",
-              "<renderMode>auto</renderMode>"
-            )
-            $mobileXmlPath = Join-Path $buildDir "Mobile-app-armv8.xml"
-            Set-Content -Path $mobileXmlPath -Value $mobileXml -Encoding utf8
+              $rawMobileXml = Get-Content (Join-Path $loaderDir "Mobile-app.xml") -Raw
+              $mobileXml = [System.Text.RegularExpressions.Regex]::Replace(
+                $rawMobileXml,
+                "<versionNumber>.*?</versionNumber>",
+                "<versionNumber>$cleanVersion</versionNumber>"
+              )
+              $mobileXml = [System.Text.RegularExpressions.Regex]::Replace(
+                $mobileXml,
+                "<versionLabel>.*?</versionLabel>",
+                "<versionLabel>$cleanVersion</versionLabel>"
+              )
+              $mobileXml = [System.Text.RegularExpressions.Regex]::Replace(
+                $mobileXml,
+                "<renderMode>.*?</renderMode>",
+                "<renderMode>$mode</renderMode>"
+              )
+              $mobileXmlPath = Join-Path $buildDir "Mobile-app-armv8-$mode.xml"
+              Set-Content -Path $mobileXmlPath -Value $mobileXml -Encoding utf8
 
-            & $adt -package `
-              -target apk-captive-runtime `
-              -arch armv8 `
-              -storetype PKCS12 `
-              -keystore $certificate -storepass $certPass `
-              $apkPath $mobileXmlPath `
-              -C $buildDir Mobile.swf `
-              -C $staging assets icons gamefiles
+              Write-Host "   -> Packaging $apkName (arch: armv8, mode: $mode)..."
+              & $adt -package `
+                -target apk-captive-runtime `
+                -arch armv8 `
+                -storetype PKCS12 `
+                -keystore $certificate -storepass $certPass `
+                $apkPath $mobileXmlPath `
+                -C $buildDir Mobile.swf `
+                -C $staging assets icons gamefiles
 
-            if ($LASTEXITCODE -ne 0) { throw "Android APK packaging failed." }
+              if ($LASTEXITCODE -ne 0) { throw "Android APK packaging failed for mode $mode." }
+            }
           }
 
       - name: Upload Build Artifacts

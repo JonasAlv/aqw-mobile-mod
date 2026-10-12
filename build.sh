@@ -153,9 +153,13 @@ if [ -d "$CLIENT/META-INF" ]; then
 fi
 
 write_descriptor "$CLIENT/Desktop-app.xml" "$BUILD/Desktop-app.xml"
+sed "s|<renderMode>.*</renderMode>|<renderMode>direct</renderMode>|" \
+    "$BUILD/Desktop-app.xml" > "$BUILD/Desktop-app-direct.xml"
 sed "s|<renderMode>.*</renderMode>|<renderMode>gpu</renderMode>|" \
     "$BUILD/Desktop-app.xml" > "$BUILD/Desktop-app-gpu.xml"
+sed "s|<renderMode>.*</renderMode>|<renderMode>cpu</renderMode>|" \
+    "$BUILD/Desktop-app.xml" > "$BUILD/Desktop-app-cpu.xml"
 
 echo "=> Build complete. Upstream loader/ untouched; artifacts in build/:"
 ls -la "$BUILD/Desktop.swf" "$BUILD/Mobile.swf" 2>/dev/null || true
-echo "=> Launch with: ./run.sh [--auto|--direct|--gpu]"
+echo "=> Launch with: ./run.sh [--cpu|--direct|--gpu]"

@@ -15,20 +15,20 @@ for arg in "$@"; do
         --build|-b)
             BUILD_REQUESTED=1
             ;;
-        --auto|--direct|--gpu)
+        --cpu|--direct|--gpu)
             if [ -n "$RENDER_MODE" ]; then
-                echo "ERROR: Choose only one of --auto, --direct, or --gpu." >&2
+                echo "ERROR: Choose only one of --cpu, --direct, or --gpu." >&2
                 exit 2
             fi
             RENDER_MODE="${arg#--}"
             ;;
         --help|-h)
-            echo "Usage: ./run.sh [--build|-b] [--auto|--direct|--gpu]"
+            echo "Usage: ./run.sh [--build|-b] [--cpu|--direct|--gpu]"
             exit 0
             ;;
         *)
             echo "ERROR: Unknown option '$arg'." >&2
-            echo "Usage: ./run.sh [--build|-b] [--auto|--direct|--gpu]" >&2
+            echo "Usage: ./run.sh [--build|-b] [--cpu|--direct|--gpu]" >&2
             exit 2
             ;;
     esac

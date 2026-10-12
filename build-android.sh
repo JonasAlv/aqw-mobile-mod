@@ -36,7 +36,7 @@ fi
 
 TARGET_MODES=("$@")
 if [ ${#TARGET_MODES[@]} -eq 0 ]; then
-    TARGET_MODES=("auto" "gpu" "direct")
+    TARGET_MODES=("cpu" "direct" "gpu")
 fi
 
 KEYSTORE="${KEYSTORE:-$DIR/aqwpocket_keystore_local.p12}"
@@ -153,14 +153,10 @@ echo "=> Packaging APKs (${TARGET_MODES[*]}) for architectures: ${ARCHS[*]} (ver
 BUILT_APKS=()
 for CURRENT_ARCH in "${ARCHS[@]}"; do
     for MODE in "${TARGET_MODES[@]}"; do
-        if [ "${#TARGET_MODES[@]}" -eq 1 ]; then
+        if [ "$MODE" = "auto" ] && [ "${#TARGET_MODES[@]}" -eq 1 ]; then
             OUTPUT_FILE="aqwmod-${UPSTREAM_VERSION}-${BUILD_DATE}-${CURRENT_ARCH}.apk"
         else
-            if [ "$MODE" = "auto" ]; then
-                OUTPUT_FILE="aqwmod-${UPSTREAM_VERSION}-${BUILD_DATE}-${CURRENT_ARCH}.apk"
-            else
-                OUTPUT_FILE="aqwmod-${UPSTREAM_VERSION}-${BUILD_DATE}-${CURRENT_ARCH}-${MODE}.apk"
-            fi
+            OUTPUT_FILE="aqwmod-${UPSTREAM_VERSION}-${BUILD_DATE}-${CURRENT_ARCH}-${MODE}.apk"
         fi
         OUTPUT_PATH="$OUTPUT_DIR/$OUTPUT_FILE"
         TMP_APP_XML="$BUILD/Mobile-app-${CURRENT_ARCH}-${MODE}.xml"
