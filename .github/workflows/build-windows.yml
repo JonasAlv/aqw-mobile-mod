@@ -301,7 +301,6 @@ jobs:
           Invoke-Checked $amxmlc @(
             "+configname=air",
             "-strict=false",
-            "-debug=true",
             "-default-size", "960", "550",
             "-default-frame-rate", "120",
             "-default-background-color", "0x000000",
@@ -330,7 +329,6 @@ jobs:
             Invoke-Checked $amxmlc @(
               "+configname=air",
               "-strict=false",
-              "-debug=true",
               "-define+=POCKET::IS_DESKTOP,false",
               "-define+=POCKET::IS_MOBILE,true",
               "-library-path+=$(Join-Path $staging 'libs')",
