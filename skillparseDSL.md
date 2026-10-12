@@ -287,28 +287,29 @@ combo = 0[!aura(target:Splotched) & tgt:hp > 50%] > 1 > 2 | 0[!aura(self:Vehemen
 ```
 
 #### Option B: Advanced Solo / Group Rotation (Padded Rewrite Time)
-Capitalizes on Skill 4 (*Rewrite Time*) to refresh both 12s buffs in a single 1.5s GCD. By padding Skill 4 with `> 1 > 1`, the branch becomes exactly 3 skills (4.5s), matching Slot 0's 4.5s cooldown and completely eliminating the post-cast pause:
+#### Option B: Advanced Solo / Group Rotation (Infinite Page Turned & Padded Rewrite Time)
+Maintains *Page Turned* indefinitely on the enemy without losing stacks, refreshes *Vehemency* and *Superpower* via Skill 4 (*Rewrite Time*) every 50 seconds, and seamlessly transitions into direct burst damage:
 ```ini
 [Archivist of Temporis : Solo-Optimal]
 mode = WaitForCooldown
 timeout = 1500
 autoattack = false
 resetontarget = true
-combo = 0[!aura(target:Splotched) & tgt:hp > 50%] > 1 > 2 | 0[!aura(self:Vehemency)] > 2 > 2 | 0[!aura(self:Superpower)] > 2 > 3 | 4[!cd(4) & auraTime(self:Vehemency) <= 4s] > 1 > 1 | 0[!aura(self:Page Turned)] > 1 > 3 | 0 > 1 > 1
+combo = 0[!aura(target:Page Turned) | auraTime(target:Page Turned) <= 5s] > 1 > 3 | 4[ready(4) & aura(self:Vehemency)] > 1 > 1 | 0[!aura(self:Vehemency)] > 2 > 2 | 0[!aura(self:Superpower)] > 2 > 3 | 0[!aura(target:Splotched) & tgt:hp > 50%] > 1 > 2 | 0 > 1 > 1
 ```
 
-**Lifecycle Trace for Option B:**
-1. **Pull (0.0s – 4.5s)**: First cast is slot 0, activating Rank 10 *Epigraph* (50% DR for 8s). Targets HP > 50%, so casts `0 > 1 > 2` $\to$ applies *Splotched* (6s).
-2. **Buff 1 (4.5s – 9.0s)**: Casts `0 > 2 > 2` $\to$ applies *Vehemency* (12s).
-3. **Buff 2 (9.0s – 13.5s)**: Casts `0 > 2 > 3` $\to$ applies *Superpower* (12s). *Vehemency* has ~7.5s left.
-4. **Padded Rewrite Time Window**: As *Vehemency* reaches $\le 4$ seconds, if Skill 4 is ready (`!cd(4)`), it fires `4 > 1 > 1`:
-   - Slot `4` (*Rewrite Time*, 1.5s): Resets both *Vehemency* and *Superpower* back to 12s.
-   - Slot `1` $\to$ Slot `1` (3.0s): Deals high direct burst damage while Slot 0 recharges in the background.
-   - Total duration: exactly $1.5\text{s} + 1.5\text{s} + 1.5\text{s} = 4.5\text{s}$, seamlessly aligning with Slot 0's 4.5s cooldown!
-5. **Cooldown Gating (Next 50 Seconds)**: While Skill 4 is on cooldown, `!cd(4)` evaluates to false, so Branch 3 is skipped with **0ms delay**. The bot naturally falls back to manual upkeep (`0 > 2 > 2` and `0 > 2 > 3`) whenever buffs expire.
-6. **Ramp-Up**: Casts `0 > 1 > 3` $\to$ applies *Page Turned* (24s).
-7. **DoT Upkeep**: Splotched drops after 6s $\to$ Branch 0 immediately triggers and reapplies `0 > 1 > 2`.
-8. **Burst DPS**: When buffs and DoT are active, falls cleanly into `0 > 1 > 1` for spammed direct burst damage with **zero idle pauses**.
+**Why This Resolves Both Issues:**
+1. **Infinite Page Turned Stacking (`target:Page Turned`)**:
+   - *Page Turned* is an enemy debuff (`target`), not a player buff (`self`).
+   - Using `!aura(target:Page Turned) | auraTime(target:Page Turned) <= 5s` ensures it casts at combat start when missing, **AND** re-casts `0 > 1 > 3` whenever the 24s timer drops below 5s.
+   - The 24-second timer is refreshed back to full **before it expires**, preserving all accumulated stacks indefinitely!
+2. **Rewrite Time Recasting (`ready(4) & aura(self:Vehemency)`)**:
+   - In the old string, placing Splotched (6s) and manual buffs before Skill 4 caused an endless priority starvation loop that prevented Skill 4 from ever finding its narrow 4s window.
+   - Placing `4[ready(4) & aura(self:Vehemency)] > 1 > 1` ahead of the manual buff branches guarantees that whenever Skill 4 comes off its 50s cooldown and buffs are up, it fires immediately:
+     - Refreshes both *Vehemency* and *Superpower* back to 12s in 1.5s.
+     - Padded with `> 1 > 1` (3.0s) for high direct burst damage and perfect 4.5s cadence.
+   - For the next 50 seconds while Skill 4 is on cooldown, the engine naturally falls back to manual upkeep (`0 > 2 > 2` and `0 > 2 > 3`) with 0ms delay.
+3. **Burst DPS**: When buffs, DoT, and Page Turned are active, the bot continuously spams `0 > 1 > 1` to deal astronomical damage with high Page Turned stacks!
 
 ### Example 2: Chrono ShadowHunter (Riposte & Dodge Counter)
 Slot 0 is a skill, slot 3 is a riposte that requires a mob hit.
