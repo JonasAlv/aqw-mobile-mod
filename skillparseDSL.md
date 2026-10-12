@@ -1,0 +1,288 @@
+# AQW Skill Rotation DSL Reference & Guide
+
+This document is the authoritative specification and user guide for the **AQW Skill Rotation DSL** (Domain-Specific Language) implemented in `com.aqwapi.utils.SkillDslParser` and executed by `com.aqwapi.modules.CombatEngine`.
+
+It is written so that humans and AI/LLMs can understand, parse, and generate valid class rotation configs.
+
+---
+
+## 1. Quick Syntax Overview
+
+A rotation is a chain of skill slots executed in order:
+```text
+1 > 2 > 3 > 4
+```
+
+Skills can be gated by conditional rules in square brackets `[...]`:
+```text
+0[!aura(self:Vehemency)] > 2 > 2
+```
+
+Multiple conditional sub-rotations (branches) can be joined using the pipe `|` operator:
+```text
+0[!aura(self:Vehemency)] > 2 > 2 | 0[!aura(self:Superpower)] > 2 > 3 | 4[aura(self:Vehemency) & aura(self:Superpower)] | 0 > 1 > 1
+```
+
+---
+
+## 2. Skill Slots
+
+| Token | Meaning | Notes |
+| :--- | :--- | :--- |
+| `0` or `aa` | Action Bar Slot 0 | Auto Attack on standard classes; active damage/buff skill on classes like Chrono ShadowHunter or Archivist. |
+| `1` | Skill 1 | First active class skill (mapped to "a1"). |
+| `2` | Skill 2 | Second active class skill (mapped to "a2"). |
+| `3` | Skill 3 | Third active class skill (mapped to "a3"). |
+| `4` | Skill 4 | Fourth active class skill (mapped to "a4"). |
+| `5` | Skill 5 | Fifth slot (potions/scrolls/extra skill, mapped to "a5"). |
+
+---
+
+## 3. Condition Rules Reference
+
+Conditions are placed inside square brackets `[ ... ]` immediately following a skill slot.
+
+### 3.1. Auras (Buffs & Debuffs)
+
+| Rule Syntax | Target | Description | Example |
+| :--- | :--- | :--- | :--- |
+| `aura(self:Name)` | Player | True if aura is active on player (stacks > 0). | `4[aura(self:Focus)]` |
+| `!aura(self:Name)` | Player | True if aura is NOT active on player (stacks == 0). | `2[!aura(self:Vehemency)]` |
+| `aura(target:Name)` | Target | True if aura is active on target. | `1[aura(target:Decay)]` |
+| `!aura(target:Name)` | Target | True if aura is NOT active on target. | `0[!aura(target:Splotched)]` |
+| `aura(self:Name) >= N` | Player | True if aura has at least `N` stacks. | `4[aura(self:Chaos) >= 3]` |
+| `aura(self:Name) <= N` | Player | True if aura has at most `N` stacks. | `1[aura(self:Rounds Empty) <= 1]` |
+| `aura(Name)` | Player | Omitting target defaults to `self`. | `3[aura(Temporal Rift)]` |
+
+> **Note on Aura Names**: Multi-word aura names with spaces are fully supported (e.g., `self:Page Turned`, `self:Temporal Rift`). Case-insensitive comparison is used.
+
+### 3.2. Aura Expiration / Remaining Time
+
+Checks remaining duration before an aura expires:
+
+| Rule Syntax | Description | Example |
+| :--- | :--- | :--- |
+| `auraTime(self:Name) <= 1.5s` | Aura duration remaining on player is $\le 1.5$ seconds. | `2[auraTime(self:Focus) <= 1.5s]` |
+| `auraRemaining(target:Name) < 2s` | Aura duration remaining on target is $< 2$ seconds. | `3[auraRemaining(target:DoT) < 2s]` |
+
+Aliases: `auraTime(...)`, `aura_time(...)`, `auratimer(...)`, `auraremaining(...)`.
+Units: Seconds (`s`) or milliseconds (`ms`).
+
+### 3.3. Player Health (HP)
+
+| Rule Syntax | Description | Example |
+| :--- | :--- | :--- |
+| `hp < 50%` | Current player HP is below 50% of max HP. | `2[hp < 50%]` |
+| `hp > 80%` | Current player HP is above 80% of max HP. | `4[hp > 80%]` |
+| `hp < 2500` | Flat HP threshold (values > 100 are automatically treated as flat HP). | `2[hp < 2500]` |
+
+Aliases: `hp`, `health`. Comparisons: `<`, `<=`, `>`, `>=`, `==`.
+
+### 3.4. Player Mana (MP)
+
+| Rule Syntax | Description | Example |
+| :--- | :--- | :--- |
+| `mp > 30%` | Player MP is above 30% of max MP. | `3[mp > 30%]` |
+| `mp < 20%` | Player MP is below 20% of max MP. | `1[mp < 20%]` |
+| `mp > 40` | Flat MP threshold. | `4[mp > 40]` |
+
+Aliases: `mp`, `mana`. Comparisons: `<`, `<=`, `>`, `>=`, `==`.
+
+### 3.5. Target Health
+
+| Rule Syntax | Description | Example |
+| :--- | :--- | :--- |
+| `tgt:hp > 50%` | Target current HP is above 50%. | `0[tgt:hp > 50%]` |
+| `tgt:hp < 20%` | Target current HP is below 20%. | `4[tgt:hp < 20%]` |
+| `target:hp > 500000` | Flat target HP threshold. | `3[target:hp > 500000]` |
+
+Aliases: `tgt:hp`, `target:hp`, `target_hp`, `target.hp`, `mon:hp`, `tgt:health`, `target:health`.
+
+### 3.6. Party Health
+
+| Rule Syntax | Description | Example |
+| :--- | :--- | :--- |
+| `party:hp < 50%` | Any party member in the room is below 50% HP. | `3[party:hp < 50%]` |
+
+Aliases: `party:hp`, `party_hp`, `party.hp`, `party:health`.
+
+### 3.7. Counter & Reaction (Incoming Enemy Attacks)
+
+Used for classes with riposte, dodge, or reactionary counters:
+
+| Rule Syntax | Type | Description |
+| :--- | :--- | :--- |
+| `[counter]` | Hard Lock | Holds the rotation until the enemy resolves an attack against the player. Will not skip or time out. |
+| `[counter <= 1.5s]` | Timed Window | Passes if the enemy attacked within the last 1.5 seconds. |
+| `[counter=dodge <= 2s]` | Typed Window | Passes if the enemy's attack was dodged within the last 2 seconds. Supported types: `hit`, `crit`, `miss`, `dodge`, `parry`, `block`. |
+| `[counter x3]` | Hit Count | Waits until 3 enemy attacks have resolved before passing. |
+
+Aliases: `counter`, `hit`, `attacked`, `mobattack`.
+
+### 3.8. Artificial Delays
+
+| Rule Syntax | Description | Example |
+| :--- | :--- | :--- |
+| `wait(500ms)` | Waits 500 milliseconds before allowing this skill to fire. | `2[wait(500ms)]` |
+
+---
+
+## 4. Logical Operators Inside Brackets
+
+You can combine multiple conditions on a single skill using:
+- **`&` (AND)**: All conditions must pass.
+- **`|` (OR)**: At least one condition must pass.
+
+### Examples:
+```text
+// Cast skill 4 only if player has both Vehemency and Superpower auras:
+4[aura(self:Vehemency) & aura(self:Superpower)]
+
+// Cast skill 0 if target lacks Splotched AND target HP is above 50%:
+0[!aura(target:Splotched) & tgt:hp > 50%]
+
+// Cast emergency heal if player HP is under 40% OR party HP is under 50%:
+3[hp < 40% | party:hp < 50%]
+```
+
+---
+
+## 5. Branching Rotations (`|`)
+
+When a rotation string contains the pipe character `|` between skill chains, it defines multiple **priority branches**:
+
+```text
+Branch1 | Branch2 | Branch3 | Fallback
+```
+
+### Execution Lifecycle:
+1. **Selection (Top-to-Bottom / Left-to-Right)**:
+   - Evaluates the **first skill** of each branch in order.
+   - For a branch to be chosen:
+     - Its first skill's condition rules must pass.
+     - Its first skill must be off cooldown (or ready within the configured timeout window).
+   - The first branch meeting these criteria is **locked**.
+2. **Execution**:
+   - The engine steps through all skills in the locked branch until completed.
+3. **Reset**:
+   - Once all skills in the locked branch have fired, the branch unlocks.
+   - On the next tick, branch selection begins again from the very first branch.
+4. **Fallback Branch**:
+   - Place an unconditional branch at the end (e.g. `| 0 > 1 > 1` or `| 1 > 2`) so the bot always has a default rotation when no conditional branches match.
+
+---
+
+## 6. Rotation Modes & Configuration
+
+Config files (`skills.json`, `userSkills.json`, or `.ini` format) define class modes with these settings:
+
+```ini
+[ClassName : ModeName]
+mode = WaitForCooldown
+timeout = 1500
+autoattack = false
+resetontarget = true
+combo = 0[!aura(self:Vehemency)] > 2 > 2 | 0[!aura(self:Superpower)] > 2 > 3 | 4[aura(self:Vehemency) & aura(self:Superpower)] | 0 > 1 > 1
+```
+
+### Key Parameters:
+
+| Key | Values | Default | Description |
+| :--- | :--- | :--- | :--- |
+| `mode` (or `skillUseMode`) | `WaitForCooldown`, `UseIfAvailable` | `WaitForCooldown` | Controls how the engine behaves when a skill is on cooldown. |
+| `timeout` (or `skillTimeout`) | Milliseconds (e.g. `1500`) | `1500` (WFC), `0` (UIA) | Wait time before skipping a blocked skill (see below). |
+| `autoattack` (or `auto`) | `true`, `false` | `true` | Controls the native Auto Attack routine. |
+| `resetontarget` | `true`, `false` | `false` | If `true`, restarts combo from the beginning when switching targets. |
+| `stopOnTargetAuras` | Comma-separated aura names | `""` | Target auras (reflect/counter) that cause combat to pause. |
+
+---
+
+## 7. Deep-Dive: Execution Modes
+
+### 7.1. `WaitForCooldown`
+- Steps through skills sequentially: $S_0 \to S_1 \to S_2 \dots$
+- If the current skill is on cooldown or waiting for GCD, the engine **waits**.
+- Minimum timeout is clamped to **1 GCD ($1500\text{ms}$)**.
+- If the skill remains blocked after `timeout` ms, it advances to the next skill.
+
+### 7.2. `UseIfAvailable`
+- Scans skills sequentially.
+- If a skill's rules fail or it is on cooldown:
+  - If `timeout == 0` (default): **Skips immediately** to the next skill.
+  - If `timeout > 0`: **Waits up to `timeout` ms** before skipping to the next skill.
+
+### 7.3. `autoattack` Setting (Crucial for Slot 0)
+- **`autoattack = true` (Standard classes)**:
+  - The game's native Auto Attack routine runs independently in parallel.
+  - Native autoattack has no GCD and never locks skills.
+  - In skill rotations, any slot `0` is **ignored and skipped with zero delay**.
+- **`autoattack = false` (Special classes like Chrono ShadowHunter, Archivist of Time / Temporis)**:
+  - Native autoattack routine is cancelled (`clearNativeAutoAttack`).
+  - Slot `0` is a **genuine skill with GCD**.
+  - Slot `0` is fully evaluated with rules, cooldowns, and GCD gates just like skills 1–5.
+  - Branch selection gates on slot `0`'s cooldown readiness.
+
+---
+
+## 8. Complete Working Examples
+
+### Example 1: Archivist of Time / Archivist of Temporis (Complex Branching)
+Slot 0 is an active scroll skill, so `autoattack = false`.
+```ini
+[Archivist of Time : Solo]
+mode = WaitForCooldown
+timeout = 1500
+autoattack = false
+resetontarget = true
+combo = 0[!aura(self:Vehemency)] > 2 > 2 | 0[!aura(self:Superpower)] > 2 > 3 | 0[!aura(self:Page Turned)] > 1 > 3 | 0[!aura(target:Splotched) & tgt:hp > 50%] > 1 > 2 | 4[aura(self:Vehemency) & aura(self:Superpower)] | 0 > 1 > 1
+```
+
+### Example 2: Chrono ShadowHunter (Riposte & Dodge Counter)
+Slot 0 is a skill, slot 3 is a riposte that requires a mob hit.
+```ini
+[Chrono ShadowHunter : Dodge]
+mode = WaitForCooldown
+timeout = 1500
+autoattack = false
+resetontarget = true
+combo = 1 > 2 > 3[counter] > 2 > 3[counter] > 2 > 3[counter] > 4
+```
+
+### Example 3: Void Highlord (Health Thresholds & Stacks)
+```ini
+[Void Highlord : Solo]
+mode = WaitForCooldown
+timeout = 1500
+autoattack = true
+resetontarget = true
+combo = 2[hp > 60%] > 4[hp > 40%] > 1 > 3 > 5
+```
+
+### Example 4: Legion Revenant (Priority Buff Rotation)
+```ini
+[Legion Revenant : Farm]
+mode = UseIfAvailable
+timeout = 0
+autoattack = true
+resetontarget = false
+combo = 4[!aura(self:Depravity)] > 3[!aura(self:Anathema)] > 1 > 2
+```
+
+---
+
+## 9. Guidelines for AI / LLM Generation
+
+When an AI assistant is asked to create or update an AQW rotation:
+
+1. **Check Slot 0**:
+   - Does this class have Auto Attack on slot 0? $\to$ Set `autoattack = true`. Do not use `0` as a conditional trigger.
+   - Does this class have an active skill on slot 0 (Archivist, Chrono ShadowHunter)? $\to$ Set `autoattack = false`.
+2. **Branching Order**:
+   - Order branches by **priority**: Buff upkeep first, nuke second, fallback rotation last.
+   - The final branch should have no conditions so the bot never deadlocks.
+3. **Use Accurate Aura Names**:
+   - Specify the target explicitly: `self:AuraName` or `target:AuraName`.
+   - Preserve exact aura name casing and spacing (e.g. `self:Temporal Rift`).
+4. **Choose the Right Mode**:
+   - Strict sequences (combos that must execute in order) $\to$ `WaitForCooldown` (`timeout = 1500`).
+   - Priority spam rotations (fire whatever is off cooldown) $\to$ `UseIfAvailable` (`timeout = 0`).
