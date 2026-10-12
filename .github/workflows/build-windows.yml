@@ -3,10 +3,15 @@ name: Build Windows App
 on:
   workflow_dispatch:
     inputs:
-      include_gpu:
-        description: 'Include GPU render mode build'
+      include_direct:
+        description: 'Include Direct render mode build'
         required: true
         default: true
+        type: boolean
+      include_gpu:
+        description: 'Include legacy GPU render mode build'
+        required: true
+        default: false
         type: boolean
       build_android:
         description: 'Also package Android ARMv8 APK'
@@ -194,13 +199,24 @@ jobs:
             $zip.Dispose()
           }
 
-          # Download remaining gamefiles from game CDN
-          Write-Host "=> Downloading remaining gamefiles from game CDN..."
+          # Check and sync remaining gamefiles
+          Write-Host "=> Checking and syncing remaining gamefiles..."
+          $workspace = $env:GITHUB_WORKSPACE
+          $vendorWorldMap = Join-Path $workspace "aqw-mobile-mod\vendor\gamefiles\world-map.swf"
+          $targetWorldMap = Join-Path $gamefilesDest "world-map.swf"
+
           $cdnFiles = @{
             "book-of-lore.swf"     = "https://game.aq.com/game/gamefiles/news/spiderbook3.swf"
             "character-select.swf" = "https://game.aq.com/game/gamefiles/interface/CharSelect/charselect.swf"
-            "world-map.swf"        = "https://game.aq.com/game/gamefiles/news/Map-UI_r38.swf"
           }
+
+          if ((Test-Path $vendorWorldMap) -and ((Get-Item $vendorWorldMap).Length -gt 0)) {
+            Copy-Item -Path $vendorWorldMap -Destination $targetWorldMap -Force
+            Write-Host "   Using vendored patched world-map.swf"
+          } else {
+            $cdnFiles["world-map.swf"] = "https://game.aq.com/game/gamefiles/news/Map-UI_r38.swf"
+          }
+
           foreach ($fileName in $cdnFiles.Keys) {
             $url = $cdnFiles[$fileName]
             $target = Join-Path $gamefilesDest $fileName
@@ -215,15 +231,6 @@ jobs:
               Write-Error "Failed to download $fileName from CDN: $_"
               throw "CDN download failed for $fileName"
             }
-          }
-
-          # Fallback to vendor/ for patched world-map.swf (upstream's patches not in CDN)
-          $workspace = $env:GITHUB_WORKSPACE
-          $vendorWorldMap = Join-Path $workspace "aqw-mobile-mod\vendor\gamefiles\world-map.swf"
-          $targetWorldMap = Join-Path $gamefilesDest "world-map.swf"
-          if ((Test-Path $vendorWorldMap) -and ((Get-Item $vendorWorldMap).Length -gt 0)) {
-            Copy-Item -Path $vendorWorldMap -Destination $targetWorldMap -Force
-            Write-Host "   Using vendored patched world-map.swf"
           }
 
           "upstream_version=$upstreamVersion" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
@@ -352,6 +359,9 @@ jobs:
       - name: Package Windows Bundles (and optional APK)
         id: package-bundles
         shell: pwsh
+        env:
+          KEYSTORE_P12_BASE64: ${{ secrets.KEYSTORE_P12_BASE64 }}
+          KEYSTORE_PASS: ${{ secrets.KEYSTORE_PASS }}
         run: |
           $workspace = $env:GITHUB_WORKSPACE
           $modDir = Join-Path $workspace "aqw-mobile-mod"
@@ -364,10 +374,18 @@ jobs:
           $airBin = Join-Path $env:AIR_HOME "bin"
           $adt = Join-Path $airBin "adt.bat"
 
-          # 1. Create temporary self-signed certificate
-          $certificate = Join-Path $env:RUNNER_TEMP "aqw-pocket-ci.p12"
-          & $adt -certificate -cn "AQW Pocket CI" 2048-RSA $certificate "temporary-ci-password"
-          if ($LASTEXITCODE -ne 0) { throw "Failed to generate temporary signing certificate." }
+          # 1. Certificate setup (support persistent repository secret if present, fallback to self-signed)
+          $certificate = Join-Path $env:RUNNER_TEMP "aqw-pocket-signing.p12"
+          $certPass = "temporary-ci-password"
+          if ($env:KEYSTORE_P12_BASE64) {
+            Write-Host "=> Using persistent signing certificate from repository secret..."
+            [System.IO.File]::WriteAllBytes($certificate, [System.Convert]::FromBase64String($env:KEYSTORE_P12_BASE64))
+            if ($env:KEYSTORE_PASS) { $certPass = $env:KEYSTORE_PASS }
+          } else {
+            Write-Host "=> Generating temporary signing certificate..."
+            & $adt -certificate -cn "AQW Pocket Mod CI" 2048-RSA $certificate $certPass
+            if ($LASTEXITCODE -ne 0) { throw "Failed to generate temporary signing certificate." }
+          }
 
           # 2. Prepare descriptor
           $upstreamVer = "${{ steps.sync-gamefiles.outputs.upstream_version }}"
@@ -377,15 +395,9 @@ jobs:
           $date = Get-Date -Format "dd-MM-yy"
 
           $rawDescriptor = Get-Content (Join-Path $loaderDir "Desktop-app.xml") -Raw
-          # Strip extensions element to avoid missing extension descriptor error at packaging
+          # Keep extensions intact for DiscordRPC; update version numbers
           $cleanDescriptor = [System.Text.RegularExpressions.Regex]::Replace(
             $rawDescriptor,
-            "(?s)[ \t]*<extensions>.*?</extensions>\s*",
-            ""
-          )
-          # Update version numbers
-          $cleanDescriptor = [System.Text.RegularExpressions.Regex]::Replace(
-            $cleanDescriptor,
             "<versionNumber>.*?</versionNumber>",
             "<versionNumber>$cleanVersion</versionNumber>"
           )
@@ -395,9 +407,12 @@ jobs:
             "<versionLabel>$cleanVersion</versionLabel>"
           )
 
-          # Modes to build: direct (recommended) and optional gpu
-          $modes = @("direct")
-          if ("${{ github.event.inputs.include_gpu }}" -ne "false") {
+          # Modes to build: auto (recommended default), optional direct, optional gpu
+          $modes = @("auto")
+          if ("${{ github.event.inputs.include_direct }}" -ne "false") {
+            $modes += "direct"
+          }
+          if ("${{ github.event.inputs.include_gpu }}" -eq "true") {
             $modes += "gpu"
           }
 
@@ -415,16 +430,17 @@ jobs:
             if (Test-Path $bundleDir) { Remove-Item -Path $bundleDir -Recurse -Force }
 
             & $adt -package -storetype pkcs12 `
-              -keystore $certificate -storepass "temporary-ci-password" `
+              -keystore $certificate -storepass $certPass `
               -target bundle -arch x64 `
               $bundleDir $descriptorFile `
+              -extdir (Join-Path $staging "libs") `
               -C $buildDir Desktop.swf `
               -C $staging gamefiles assets icons
 
             if ($LASTEXITCODE -ne 0) { throw "AIR bundle packaging failed for mode $mode." }
 
-            # Target artifact name matching user style: aqw-<upstreamversion>-<dd-mm-yy>-<arch>.zip
-            $zipName = "aqw-$upstreamVer-$date-x64-$mode.zip"
+            $suffix = if ($mode -eq "auto") { "" } else { "-$mode" }
+            $zipName = "aqw-$upstreamVer-$date-x64$suffix.zip"
             $zipPath = Join-Path $artifactsDir $zipName
             if (Test-Path $zipPath) { Remove-Item -Path $zipPath -Force }
 
@@ -452,16 +468,16 @@ jobs:
             $mobileXml = [System.Text.RegularExpressions.Regex]::Replace(
               $mobileXml,
               "<renderMode>.*?</renderMode>",
-              "<renderMode>direct</renderMode>"
+              "<renderMode>auto</renderMode>"
             )
-            $mobileXmlPath = Join-Path $buildDir "Mobile-app-armv8-direct.xml"
+            $mobileXmlPath = Join-Path $buildDir "Mobile-app-armv8.xml"
             Set-Content -Path $mobileXmlPath -Value $mobileXml -Encoding utf8
 
             & $adt -package `
               -target apk-captive-runtime `
               -arch armv8 `
               -storetype PKCS12 `
-              -keystore $certificate -storepass "temporary-ci-password" `
+              -keystore $certificate -storepass $certPass `
               $apkPath $mobileXmlPath `
               -C $buildDir Mobile.swf `
               -C $staging assets icons gamefiles

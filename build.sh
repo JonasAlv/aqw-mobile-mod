@@ -67,19 +67,6 @@ else
     echo "   gamefiles before launching (the client downloads them otherwise)."
 fi
 
-DISCORD_EXT="$CLIENT/META-INF/AIR/extensions/fi.joniaromaa.adobeair.discordrpc"
-if [ -f "$DISCORD_EXT/catalog.xml" ] && [ -f "$DISCORD_EXT/library.swf" ]; then
-    python3 - "$DISCORD_EXT" "$STAGING/libs/DiscordRpc.swc" <<'PY'
-import os
-import sys
-import zipfile
-
-ext_dir, out_path = sys.argv[1], sys.argv[2]
-with zipfile.ZipFile(out_path, "w", zipfile.ZIP_DEFLATED) as swc:
-    swc.write(os.path.join(ext_dir, "catalog.xml"), "catalog.xml")
-    swc.write(os.path.join(ext_dir, "library.swf"), "library.swf")
-PY
-fi
 
 if [ "${SKIP_HAXE:-}" != "1" ]; then
     if [ -d "$HAXE_API_DIR" ]; then
