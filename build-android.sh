@@ -74,6 +74,8 @@ if [ -d "$GAMEFILES_SRC" ]; then
 else
     echo "   Warning: no gamefiles found; the APK will ship without them." >&2
 fi
+rm -f "$STAGING/gamefiles/book-of-lore.swf" "$STAGING/gamefiles/character-select.swf" "$STAGING/gamefiles/world-map.swf"
+rm -rf "$STAGING/gamefiles/embed"
 cp -r "$DIR/loader/assets" "$STAGING/assets"
 cp -r "$DIR/loader/icons" "$STAGING/icons"
 cp "$DIR/loader/Mobile-app.xml" "$STAGING/Mobile-app.xml"
@@ -96,9 +98,8 @@ if [ "${SKIP_HAXE_API:-}" != "1" ]; then
 fi
 
 if [ -f "$DIR/loader/libs/WorkerMain.swf" ]; then
-    echo "=> [3/5] Staging WorkerMain.swf from loader/libs/WorkerMain.swf..."
-    mkdir -p "$STAGING/gamefiles/embed"
-    cp "$DIR/loader/libs/WorkerMain.swf" "$STAGING/gamefiles/embed/WorkerMain.swf"
+    echo "=> [3/5] WorkerMain.swf verified in loader/libs/WorkerMain.swf (embedded at compile time)..."
+    cp "$DIR/loader/libs/WorkerMain.swf" "$STAGING/libs/WorkerMain.swf"
 else
     echo "ERROR: loader/libs/WorkerMain.swf is missing." >&2
     echo "       Obtain a prebuilt copy from a desktop release that bundles it and save it at" >&2
@@ -182,10 +183,7 @@ for CURRENT_ARCH in "${ARCHS[@]}"; do
                 icons/icon-96x96.png \
                 icons/icon-144x144.png \
                 icons/icon-192x192.png \
-                gamefiles/game.swf \
-                gamefiles/world-map.swf \
-                gamefiles/book-of-lore.swf \
-                gamefiles/character-select.swf
+                gamefiles/game.swf
 
         rm -f "$TMP_APP_XML"
 

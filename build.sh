@@ -58,14 +58,18 @@ if [ -d "$CLIENT/libs" ]; then
     cp -r "$CLIENT/libs/." "$STAGING/libs/" 2>/dev/null || true
 fi
 if [ -d "$UPSTREAM_GAMEFILES" ] && [ -n "$(ls -A "$UPSTREAM_GAMEFILES" 2>/dev/null)" ]; then
-    cp -r "$UPSTREAM_GAMEFILES" "$STAGING/gamefiles"
+    mkdir -p "$STAGING/gamefiles"
+    cp -r "$UPSTREAM_GAMEFILES/." "$STAGING/gamefiles/"
 elif [ -d "$LEGACY_GAMEFILES" ]; then
     echo "   Notice: falling back to the legacy loader/gamefiles/ copy."
-    cp -r "$LEGACY_GAMEFILES" "$STAGING/gamefiles"
+    mkdir -p "$STAGING/gamefiles"
+    cp -r "$LEGACY_GAMEFILES/." "$STAGING/gamefiles/"
 else
     echo "   Notice: no gamefiles found. Run ./sync-gamefiles.sh to fetch the upstream"
     echo "   gamefiles before launching (the client downloads them otherwise)."
 fi
+rm -f "$STAGING/gamefiles/book-of-lore.swf" "$STAGING/gamefiles/character-select.swf" "$STAGING/gamefiles/world-map.swf"
+rm -rf "$STAGING/gamefiles/embed"
 
 
 if [ "${SKIP_HAXE:-}" != "1" ]; then
@@ -94,9 +98,8 @@ for required_swc in AqwApi.swc ModUI.swc; do
 done
 
 if [ -f "$DIR/loader/libs/WorkerMain.swf" ]; then
-    echo "=> [3/6] Staging WorkerMain.swf from loader/libs/WorkerMain.swf..."
-    mkdir -p "$STAGING/gamefiles/embed"
-    cp "$DIR/loader/libs/WorkerMain.swf" "$STAGING/gamefiles/embed/WorkerMain.swf"
+    echo "=> [3/6] WorkerMain.swf verified in loader/libs/WorkerMain.swf (embedded at compile time)..."
+    cp "$DIR/loader/libs/WorkerMain.swf" "$STAGING/libs/WorkerMain.swf"
 else
     echo "ERROR: loader/libs/WorkerMain.swf is missing." >&2
     echo "       Obtain a prebuilt copy from a desktop release that bundles it and save it at" >&2

@@ -204,40 +204,6 @@ jobs:
             $zip.Dispose()
           }
 
-          # Check and sync remaining gamefiles
-          Write-Host "=> Checking and syncing remaining gamefiles..."
-          $workspace = $env:GITHUB_WORKSPACE
-          $vendorWorldMap = Join-Path $workspace "aqw-mobile-mod\vendor\gamefiles\world-map.swf"
-          $targetWorldMap = Join-Path $gamefilesDest "world-map.swf"
-
-          $cdnFiles = @{
-            "book-of-lore.swf"     = "https://game.aq.com/game/gamefiles/news/spiderbook3.swf"
-            "character-select.swf" = "https://game.aq.com/game/gamefiles/interface/CharSelect/charselect.swf"
-          }
-
-          if ((Test-Path $vendorWorldMap) -and ((Get-Item $vendorWorldMap).Length -gt 0)) {
-            Copy-Item -Path $vendorWorldMap -Destination $targetWorldMap -Force
-            Write-Host "   Using vendored patched world-map.swf"
-          } else {
-            $cdnFiles["world-map.swf"] = "https://game.aq.com/game/gamefiles/news/Map-UI_r38.swf"
-          }
-
-          foreach ($fileName in $cdnFiles.Keys) {
-            $url = $cdnFiles[$fileName]
-            $target = Join-Path $gamefilesDest $fileName
-            Write-Host "   Downloading $fileName from $url..."
-            try {
-              Invoke-WebRequest -Uri $url -Headers $headers -OutFile $target -TimeoutSec 120
-              if (-not (Test-Path $target) -or (Get-Item $target).Length -eq 0) {
-                throw "Downloaded file is empty or missing."
-              }
-              Write-Host "   OK: $fileName"
-            } catch {
-              Write-Error "Failed to download $fileName from CDN: $_"
-              throw "CDN download failed for $fileName"
-            }
-          }
-
           "upstream_version=$upstreamVersion" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
 
       - name: Build API, UI, Worker, and Inject Mod Code
@@ -275,7 +241,7 @@ jobs:
           if (Test-Path $staging) { Remove-Item -Path $staging -Recurse -Force }
           New-Item -ItemType Directory -Path `
             (Join-Path $staging "libs"), `
-            (Join-Path $staging "gamefiles\embed") -Force | Out-Null
+            (Join-Path $staging "gamefiles") -Force | Out-Null
 
           Copy-Item -Path (Join-Path $loaderDir "src") -Destination (Join-Path $staging "src") -Recurse -Force
           Copy-Item -Path (Join-Path $loaderDir "worker-src") -Destination (Join-Path $staging "worker-src") -Recurse -Force
@@ -286,10 +252,10 @@ jobs:
           Copy-Item -Path (Join-Path $loaderDir "Desktop.swf") -Destination (Join-Path $staging "Desktop.swf") -Force
           Copy-Item -Path (Join-Path $loaderDir "Mobile.swf") -Destination (Join-Path $staging "Mobile.swf") -Force
 
-          # Copy upstream synced gamefiles
+          # Copy upstream synced gamefiles (only game.swf; others are loaded from CDN at runtime)
           $gamefilesUpstream = Join-Path $buildDir "gamefiles-upstream"
           if (Test-Path $gamefilesUpstream) {
-            Copy-Item -Path (Join-Path $gamefilesUpstream "*") -Destination (Join-Path $staging "gamefiles") -Recurse -Force
+            Copy-Item -Path (Join-Path $gamefilesUpstream "game.swf") -Destination (Join-Path $staging "gamefiles\game.swf") -Force
           }
 
           # Copy SWCs and ANEs to staging libs
@@ -300,13 +266,12 @@ jobs:
           Copy-Item -Path (Join-Path $uiDir "bin\ModUI.swc") -Destination (Join-Path $staging "libs\ModUI.swc") -Force
 
 
-          # 4. Stage WorkerMain.swf
+          # 4. Verify WorkerMain.swf
           $workerSwf = Join-Path $loaderDir "libs\WorkerMain.swf"
           if (-not (Test-Path $workerSwf)) {
             throw "loader/libs/WorkerMain.swf is missing. Obtain a prebuilt copy from a desktop release that bundles it and save it there."
           }
-          Copy-Item -Path $workerSwf -Destination (Join-Path $staging "gamefiles\embed\WorkerMain.swf") -Force
-          Write-Host "=> [4/5] Staged WorkerMain.swf from loader/libs/WorkerMain.swf"
+          Write-Host "=> [4/5] Verified WorkerMain.swf in loader/libs/WorkerMain.swf (embedded at compile time)"
 
           # 5. Compile Desktop_code.swf and inject into Desktop.swf
           Write-Host "=> [5/5] Compiling Desktop_code.swf and injecting into Desktop.swf..."
