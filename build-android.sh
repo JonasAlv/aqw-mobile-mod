@@ -74,8 +74,13 @@ if [ -d "$GAMEFILES_SRC" ]; then
 else
     echo "   Warning: no gamefiles found; the APK will ship without them." >&2
 fi
-rm -f "$STAGING/gamefiles/book-of-lore.swf" "$STAGING/gamefiles/character-select.swf" "$STAGING/gamefiles/world-map.swf"
+rm -f "$STAGING/gamefiles/book-of-lore.swf" "$STAGING/gamefiles/character-select.swf"
 rm -rf "$STAGING/gamefiles/embed"
+
+if [ -f "$DIR/vendor/gamefiles/world-map.swf" ]; then
+    mkdir -p "$STAGING/gamefiles"
+    cp "$DIR/vendor/gamefiles/world-map.swf" "$STAGING/gamefiles/world-map.swf"
+fi
 cp -r "$DIR/loader/assets" "$STAGING/assets"
 cp -r "$DIR/loader/icons" "$STAGING/icons"
 cp "$DIR/loader/Mobile-app.xml" "$STAGING/Mobile-app.xml"

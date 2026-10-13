@@ -102,9 +102,6 @@ package {
 
 				// Initialize Haxe Api with the live game object
 				Api.init(_pocket.game);
-				try {
-					Api.patchAirSecurity();
-				} catch (e:Error) {}
 			}
 		}
 
