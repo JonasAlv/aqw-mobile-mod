@@ -12,8 +12,7 @@ package util {
 
 	public class SWFWorkerClient {
 
-		[Embed(source="../../libs/WorkerMain.swf", mimeType="application/octet-stream")]
-		private static const WorkerSWF:Class;
+		private static const WorkerSWF:Class = SWFWorkerClient_WorkerSWF;
 
 		private static var _instance:SWFWorkerClient;
 

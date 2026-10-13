@@ -1,4 +1,4 @@
-﻿package {
+package {
 
 	import data.Release;
 	import data.Version;
@@ -34,7 +34,19 @@
 		import discord.DiscordRichPresence;
 	}
 
+	import util.SWFWorkerClient_WorkerSWF;
+	import ui.option.Divide;
+	import ui.input.Skill;
+	import Desktop_fla.Symbol2580_54;
+
 	public class Pocket extends Sprite {
+
+		private static const _FORCE_SYMBOLS:Array = [
+			SWFWorkerClient_WorkerSWF,
+			Divide,
+			Skill,
+			Symbol2580_54
+		];
 
 		private static var _SINGLETON:Pocket;
 
