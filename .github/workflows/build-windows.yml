@@ -143,22 +143,6 @@ jobs:
           "AIR_HOME=$airDir" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
           "$airDir\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
 
-      - name: Configure AIR legacy Android packaging
-        if: ${{ github.event.inputs.build_android == 'true' }}
-        shell: pwsh
-        run: |
-          # Work around the AIR SDK D8/R8 failure on its bundled multidex keep list.
-          $configDir = Join-Path $env:USERPROFILE ".airsdk"
-          New-Item -ItemType Directory -Path $configDir -Force | Out-Null
-          $configPath = Join-Path $configDir "adt.cfg"
-          $config = if (Test-Path $configPath) { Get-Content $configPath -Raw } else { "" }
-          if ($config -notmatch "<BuildLegacyAPK>true</BuildLegacyAPK>") {
-            $config = $config -replace "</?adtConfig>", ""
-            $config = $config.Trim()
-            $config += "`n<BuildLegacyAPK>true</BuildLegacyAPK>`n"
-            Set-Content -Path $configPath -Value $config -Encoding utf8
-          }
-          Write-Host "Configured AIR ADT to use legacy Android APK packaging."
       - name: Set up RABCDAsm tools (abcexport, abcreplace)
         shell: pwsh
         run: |
