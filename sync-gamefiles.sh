@@ -14,6 +14,7 @@ RELEASE_API="https://api.github.com/repos/anthony-hyo/aqw-mobile/releases/latest
 GAME_CDN_BASE="https://game.aq.com/game/"
 REQUIRED_FILES=(
     "gamefiles/game.swf"
+    "gamefiles/world-map.swf"
 )
 
 for tool in curl python3 unzip sha256sum; do
