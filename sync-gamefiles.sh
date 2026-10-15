@@ -170,10 +170,7 @@ done
 rm -f "$DESTINATION/book-of-lore.swf" "$DESTINATION/character-select.swf"
 rm -rf "$DESTINATION/embed"
 
-if [ -s "$DIR/vendor/gamefiles/world-map.swf" ]; then
-    cp "$DIR/vendor/gamefiles/world-map.swf" "$DESTINATION/world-map.swf"
-    echo "=> Synced vendored patched 'world-map.swf'"
-fi
+
 
 for archive_path in "${SYNCED_FILES[@]}"; do
     cp "$TMP_DIR/${archive_path#gamefiles/}" "$DESTINATION/${archive_path#gamefiles/}"

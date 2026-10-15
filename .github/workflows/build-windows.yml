@@ -258,12 +258,7 @@ jobs:
             Copy-Item -Path (Join-Path $gamefilesUpstream "game.swf") -Destination (Join-Path $staging "gamefiles\game.swf") -Force
           }
 
-          # Bundle vendored patched world-map.swf for map fix
-          $vendorMap = Join-Path $env:GITHUB_WORKSPACE "aqw-mobile-mod\vendor\gamefiles\world-map.swf"
-          if (Test-Path $vendorMap) {
-            Copy-Item -Path $vendorMap -Destination (Join-Path $staging "gamefiles\world-map.swf") -Force
-            Write-Host "=> Bundled vendored world-map.swf into staging gamefiles/"
-          }
+
 
           # Copy SWCs and ANEs to staging libs
           if (Test-Path (Join-Path $loaderDir "libs")) {

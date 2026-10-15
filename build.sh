@@ -71,11 +71,7 @@ fi
 rm -f "$STAGING/gamefiles/book-of-lore.swf" "$STAGING/gamefiles/character-select.swf"
 rm -rf "$STAGING/gamefiles/embed"
 
-if [ -f "$DIR/vendor/gamefiles/world-map.swf" ]; then
-    mkdir -p "$STAGING/gamefiles"
-    cp "$DIR/vendor/gamefiles/world-map.swf" "$STAGING/gamefiles/world-map.swf"
-    echo "=> Bundling vendored world-map.swf into gamefiles/"
-fi
+
 
 
 if [ "${SKIP_HAXE:-}" != "1" ]; then
