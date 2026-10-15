@@ -495,7 +495,7 @@ if (Test-Path $loaderAssets -PathType Container) {
               $mobileXmlPath = Join-Path $buildDir "Mobile-app-$arch-$mode.xml"
               Set-Content -Path $mobileXmlPath -Value $mobileXml -Encoding utf8
 
-              Write-Host "   -> Packaging $apkName (arch: armv8, mode: $mode)..."
+              Write-Host "   -> Packaging $apkName (arch: $arch, mode: $mode)..."
               & $adt -package `
                 -target apk-captive-runtime `
                 -arch $arch `
