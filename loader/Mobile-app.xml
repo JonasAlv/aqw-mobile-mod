@@ -40,8 +40,6 @@
 <application
   android:hardwareAccelerated="true"
   android:windowSoftInputMode="stateVisible|adjustPan" />
-</manifest>]]></manifestAdditions>
-    <BuildLegacyAPK>true</BuildLegacyAPK>
-  </android>
+</manifest>]]></manifestAdditions></android>
   <supportedLanguages>en</supportedLanguages>
 </application>
