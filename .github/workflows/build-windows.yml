@@ -496,8 +496,10 @@ jobs:
               Set-Content -Path $mobileXmlPath -Value $mobileXml -Encoding utf8
 
               Write-Host "   -> Packaging $apkName (arch: $arch, mode: $mode)..."
-              # Match aqworlds' known-good ADT invocation structure: each -C
-              # explicitly pairs a source directory with one packaged path.
+              # Mirror build-android.sh's locally verified packaging inputs:
+              # Mobile.swf from build/, then assets and explicit icon/game SWF files
+              # from staging. Avoid recursively packaging the entire icons/gamefiles
+              # directories, which can include files the local script deliberately omits.
               $androidPackageArgs = @(
                 "-package",
                 "-target", "apk-captive-runtime",
@@ -509,14 +511,14 @@ jobs:
                 $mobileXmlPath,
                 "-C", $buildDir, "Mobile.swf",
                 "-C", $staging, "assets",
-                "-C", $staging, "icons"
+                "-C", $staging, "icons/icon-36x36.png",
+                "-C", $staging, "icons/icon-48x48.png",
+                "-C", $staging, "icons/icon-72x72.png",
+                "-C", $staging, "icons/icon-96x96.png",
+                "-C", $staging, "icons/icon-144x144.png",
+                "-C", $staging, "icons/icon-192x192.png",
+                "-C", $staging, "gamefiles/game.swf"
               )
-
-              # Include the synchronized game.swf when present.
-              $stagingGamefiles = Join-Path $staging "gamefiles"
-              if (Test-Path $stagingGamefiles -PathType Container) {
-                $androidPackageArgs += @("-C", $staging, "gamefiles")
-              }
 
               & $adt @androidPackageArgs
               if ($LASTEXITCODE -ne 0) { throw "Android APK packaging failed for $arch/$mode." }
