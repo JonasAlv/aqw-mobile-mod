@@ -91,7 +91,13 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: "17"
+          java-version: "21"
+
+      - name: Verify Java toolchain
+        shell: pwsh
+        run: |
+          java -version
+          Write-Host "JAVA_HOME=$env:JAVA_HOME"
 
       - name: Set up Haxe
         uses: HaxeFoundation/setup-haxe@v2
