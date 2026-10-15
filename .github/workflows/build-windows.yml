@@ -271,13 +271,13 @@ jobs:
           Copy-Item -Path (Join-Path $loaderDir "src") -Destination (Join-Path $staging "src") -Recurse -Force
           Copy-Item -Path (Join-Path $loaderDir "worker-src") -Destination (Join-Path $staging "worker-src") -Recurse -Force
           
-$stagingAssets = Join-Path $staging "assets"
-New-Item -ItemType Directory -Path $stagingAssets -Force | Out-Null
+          $stagingAssets = Join-Path $staging "assets"
+          New-Item -ItemType Directory -Path $stagingAssets -Force | Out-Null
 
-$loaderAssets = Join-Path $loaderDir "assets"
-if (Test-Path $loaderAssets -PathType Container) {
-    Copy-Item -Path (Join-Path $loaderAssets "*") -Destination $stagingAssets -Recurse -Force
-}
+          $loaderAssets = Join-Path $loaderDir "assets"
+          if (Test-Path $loaderAssets -PathType Container) {
+              Copy-Item -Path (Join-Path $loaderAssets "*") -Destination $stagingAssets -Recurse -Force
+          }
 
           Copy-Item -Path (Join-Path $loaderDir "icons") -Destination (Join-Path $staging "icons") -Recurse -Force
           Copy-Item -Path (Join-Path $loaderDir "Desktop-app.xml") -Destination (Join-Path $staging "Desktop-app.xml") -Force
