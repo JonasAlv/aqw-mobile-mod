@@ -496,15 +496,29 @@ jobs:
               Set-Content -Path $mobileXmlPath -Value $mobileXml -Encoding utf8
 
               Write-Host "   -> Packaging $apkName (arch: $arch, mode: $mode)..."
-              & $adt -package `
-                -target apk-captive-runtime `
-                -arch $arch `
-                -storetype PKCS12 `
-                -keystore $certificate -storepass $certPass `
-                $apkPath $mobileXmlPath `
-                -C $buildDir Mobile.swf `
-                -C $staging assets icons gamefiles
+              # Match aqworlds' known-good ADT invocation structure: each -C
+              # explicitly pairs a source directory with one packaged path.
+              $androidPackageArgs = @(
+                "-package",
+                "-target", "apk-captive-runtime",
+                "-arch", $arch,
+                "-storetype", "PKCS12",
+                "-keystore", $certificate,
+                "-storepass", $certPass,
+                $apkPath,
+                $mobileXmlPath,
+                "-C", $buildDir, "Mobile.swf",
+                "-C", $staging, "assets",
+                "-C", $staging, "icons"
+              )
 
+              # Include the synchronized game.swf when present.
+              $stagingGamefiles = Join-Path $staging "gamefiles"
+              if (Test-Path $stagingGamefiles -PathType Container) {
+                $androidPackageArgs += @("-C", $staging, "gamefiles")
+              }
+
+              & $adt @androidPackageArgs
               if ($LASTEXITCODE -ne 0) { throw "Android APK packaging failed for $arch/$mode." }
               }
             }
