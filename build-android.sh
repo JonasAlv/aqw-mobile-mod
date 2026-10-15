@@ -78,7 +78,12 @@ rm -f "$STAGING/gamefiles/book-of-lore.swf" "$STAGING/gamefiles/character-select
 rm -rf "$STAGING/gamefiles/embed"
 
 
-cp -r "$DIR/loader/assets" "$STAGING/assets"
+
+mkdir -p "$STAGING/assets"
+if [ -d "$DIR/loader/assets" ]; then
+    cp -r "$DIR/loader/assets/." "$STAGING/assets/"
+fi
+
 cp -r "$DIR/loader/icons" "$STAGING/icons"
 cp "$DIR/loader/Mobile-app.xml" "$STAGING/Mobile-app.xml"
 cp "$DIR/loader/Mobile.swf" "$STAGING/Mobile.swf"

@@ -48,7 +48,12 @@ echo "=> [0/6] Copying loader/ to sandbox (build/staging/)..."
 mkdir -p "$STAGING/libs"
 cp -r "$CLIENT/src" "$STAGING/src"
 cp -r "$CLIENT/worker-src" "$STAGING/worker-src"
-cp -r "$CLIENT/assets" "$STAGING/assets"
+
+mkdir -p "$STAGING/assets"
+if [ -d "$CLIENT/assets" ]; then
+    cp -r "$CLIENT/assets/." "$STAGING/assets/"
+fi
+
 cp -r "$CLIENT/icons" "$STAGING/icons"
 cp "$CLIENT/Desktop-app.xml" "$STAGING/Desktop-app.xml"
 cp "$CLIENT/Mobile-app.xml" "$STAGING/Mobile-app.xml"
