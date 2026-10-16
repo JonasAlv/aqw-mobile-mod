@@ -308,6 +308,19 @@ jobs:
               Copy-Item -Path (Join-Path $loaderAssets "*") -Destination $stagingAssets -Recurse -Force
           }
 
+          $apiScripts = Join-Path $apiDir "assets\\scripts"
+          if (-not (Test-Path $apiScripts -PathType Container)) {
+            throw "Bundled API scripts directory is missing: $apiScripts"
+          }
+          $stagingScripts = Join-Path $stagingAssets "scripts"
+          New-Item -ItemType Directory -Path $stagingScripts -Force | Out-Null
+          Copy-Item -Path (Join-Path $apiScripts "*") -Destination $stagingScripts -Recurse -Force
+          $stagedScripts = @(Get-ChildItem -Path $stagingScripts -Filter "*.hxs" -Recurse -File)
+          if ($stagedScripts.Count -eq 0) {
+            throw "No bundled .hxs scripts were staged from $apiScripts"
+          }
+          Write-Host "Staged $($stagedScripts.Count) bundled API script(s)."
+
           Copy-Item -Path (Join-Path $loaderDir "icons") -Destination (Join-Path $staging "icons") -Recurse -Force
           Copy-Item -Path (Join-Path $loaderDir "Desktop-app.xml") -Destination (Join-Path $staging "Desktop-app.xml") -Force
           Copy-Item -Path (Join-Path $loaderDir "Mobile-app.xml") -Destination (Join-Path $staging "Mobile-app.xml") -Force
