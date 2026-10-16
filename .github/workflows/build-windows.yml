@@ -544,6 +544,7 @@ jobs:
                   $apkPath,
                   $mobileXmlPath,
                   "-C", $buildDir, "Mobile.swf",
+                  "-C", $staging, "libs",
                   "-C", $staging, "assets",
                   "-C", $staging, "icons/icon-36x36.png",
                   "-C", $staging, "icons/icon-48x48.png",
