@@ -213,7 +213,7 @@ resolve_repo_dir() {
 # project-relative paths continue to work; the subshell trap removes it on success or failure.
 run_haxe_ui_build() (
     local project_dir="$1" api_dir="$2" temp_hxml
-    temp_hxml="$(mktemp "$project_dir/.build-local.XXXXXX")"
+    temp_hxml="$(mktemp "$project_dir/.build-local.XXXXXX.hxml")"
     trap 'rm -f "$temp_hxml"' EXIT
     awk -v api_src="$api_dir/src" '
         $0 == "-cp ../aqw-haxe-api/src" {
