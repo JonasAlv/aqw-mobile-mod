@@ -52,7 +52,7 @@ haxe_ui() (
  awk -v api_src="$api/src" '$0=="-cp ../aqw-haxe-api/src"{printf "-cp %s\n",api_src;done=1;next}{print}END{if(!done)printf "-cp %s\n",api_src}' "$project/build.hxml" > "$tmp"
  cd "$project"; if command -v haxe >/dev/null; then haxe "$tmp"; elif command -v pnpm >/dev/null; then pnpm exec haxe "$tmp"; else npx haxe "$tmp"; fi
 )
-strip_descriptor(){ python3 -c 'import re,sys;sys.stdout.write(re.sub(r"[ \\t]*<extensions>.*?</extensions>\\s*","",sys.stdin.read(),flags=re.S))' < "$1" > "$2"; }
+strip_descriptor(){ python3 -c 'import re,sys;sys.stdout.write(re.sub(r"[ \t]*<extensions>.*?</extensions>\s*","",sys.stdin.read(),flags=re.S))' < "$1" > "$2"; }
 doctor(){
  load_repos; repo API "$HAXE_API_DIR"; repo UI "$HAXE_UI_DIR"
  for t in git haxe java python3 sha256sum; do command -v "$t" >/dev/null 2>&1 && echo "OK $t: $(command -v "$t")" || echo "MISSING $t"; done
@@ -68,7 +68,7 @@ build(){
  if ((sync)) && [[ "${SKIP_SYNC:-0}" != 1 ]]; then "$DIR/sync-gamefiles.sh" "$BUILD/gamefiles-upstream"; else echo "=> Sync skipped; using cached gamefiles."; fi
  cp -r "$CLIENT/src" "$STAGING/src"; cp -r "$CLIENT/worker-src" "$STAGING/worker-src"; [[ ! -d "$CLIENT/assets" ]] || cp -r "$CLIENT/assets/." "$STAGING/assets/"
  cp -r "$CLIENT/icons" "$STAGING/icons"; cp "$CLIENT/Desktop-app.xml" "$CLIENT/Mobile-app.xml" "$STAGING/"
- cp "$CLIENT/Desktop.swf" "$CLIENT/Mobile.swf" "$STAGING/"; [[ ! -d "$CLIENT/libs" ]] || cp -r "$CLIENT/libs/." "$STAGING/libs/"
+ cp "$CLIENT/Desktop.swf" "$CLIENT/Mobile.swf" "$STAGING/"; mkdir -p "$STAGING/gamefiles"; [[ ! -d "$CLIENT/libs" ]] || cp -r "$CLIENT/libs/." "$STAGING/libs/"
  if [[ -d "$BUILD/gamefiles-upstream" && -n "$(ls -A "$BUILD/gamefiles-upstream" 2>/dev/null)" ]]; then mkdir -p "$STAGING/gamefiles"; cp -r "$BUILD/gamefiles-upstream/." "$STAGING/gamefiles/"
  elif [[ -d "$CLIENT/gamefiles" ]]; then mkdir -p "$STAGING/gamefiles"; cp -r "$CLIENT/gamefiles/." "$STAGING/gamefiles/"; fi
  rm -f "$STAGING/gamefiles/book-of-lore.swf" "$STAGING/gamefiles/character-select.swf"; rm -rf "$STAGING/gamefiles/embed"
