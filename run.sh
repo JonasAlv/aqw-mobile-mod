@@ -71,14 +71,20 @@ DESCRIPTOR="$BUILD/Desktop-app.xml"
 if [ ! -f "$DESCRIPTOR" ]; then
     write_descriptor "$CLIENT/Desktop-app.xml" "$DESCRIPTOR"
 fi
+
+LAUNCH_DESCRIPTOR="Desktop-app.xml"
 if [ -n "$RENDER_MODE" ]; then
-    sed -i -E "s|<renderMode>[^<]*</renderMode>|<renderMode>$RENDER_MODE</renderMode>|" "$DESCRIPTOR"
+    # Keep the reusable descriptor untouched; apply this choice only to this launch.
+    LAUNCH_DESCRIPTOR="Desktop-app-launch.xml"
+    write_descriptor "$CLIENT/Desktop-app.xml" "$BUILD/$LAUNCH_DESCRIPTOR"
+    sed -i -E "s|<renderMode>[^<]*</renderMode>|<renderMode>$RENDER_MODE</renderMode>|" "$BUILD/$LAUNCH_DESCRIPTOR"
+    trap 'rm -f "$BUILD/$LAUNCH_DESCRIPTOR"' EXIT
 fi
 
 resolve_air_windows
 
 echo "=> Launching ADL via Wine (render mode: ${RENDER_MODE:-descriptor default})..."
 cd "$BUILD"
-wine "$ADL" -profile extendedDesktop "Desktop-app.xml"
+wine "$ADL" -profile extendedDesktop "$LAUNCH_DESCRIPTOR"
 
 echo "=> ADL closed."
