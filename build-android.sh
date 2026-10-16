@@ -142,21 +142,27 @@ fi
 
 if [ "${SKIP_HAXE_API:-}" != "1" ]; then
     echo "=> [2a/5] Compiling Haxe API from $HAXE_API_DIR..."
+    rm -f "$HAXE_API_DIR/bin/AqwApi.swc"
     run_haxe_build "$HAXE_API_DIR"
     if [ ! -s "$HAXE_API_DIR/bin/AqwApi.swc" ]; then
         echo "ERROR: Haxe API build did not produce bin/AqwApi.swc." >&2
         exit 1
     fi
     cp "$HAXE_API_DIR/bin/AqwApi.swc" "$STAGING/libs/AqwApi.swc"
+    echo "   API SWC SHA-256: $(sha256sum "$STAGING/libs/AqwApi.swc" | cut -d \" \" -f1)"
 
     echo "=> [2b/5] Compiling Haxe UI from $HAXE_UI_DIR..."
+    rm -f "$HAXE_UI_DIR/bin/ModUI.swc"
     run_haxe_ui_build "$HAXE_UI_DIR" "$HAXE_API_DIR"
     if [ ! -s "$HAXE_UI_DIR/bin/ModUI.swc" ]; then
         echo "ERROR: Haxe UI build did not produce bin/ModUI.swc." >&2
         exit 1
     fi
     cp "$HAXE_UI_DIR/bin/ModUI.swc" "$STAGING/libs/ModUI.swc"
+    echo "   UI SWC SHA-256: $(sha256sum "$STAGING/libs/ModUI.swc" | cut -d \" \" -f1)"
     echo "=> Using freshly built UI library: $STAGING/libs/ModUI.swc"
+else
+    echo "WARNING: SKIP_HAXE_API=1; using prebuilt SWCs copied from loader/libs/ (not compiling Haxe sources)." >&2
 fi
 
 for required_swc in AqwApi.swc ModUI.swc; do
