@@ -60,6 +60,8 @@ if [ "${1:-}" = "--clean" ] || [ "${2:-}" = "--clean" ]; then
 fi
 
 mkdir -p "$BUILD"
+# Never leave a previous successful SWF looking like the output of a failed build.
+rm -f "$BUILD/Desktop.swf" "$BUILD/Mobile.swf"
 rm -rf "$STAGING"
 mkdir -p "$STAGING"
 
@@ -115,6 +117,7 @@ if [ "${SKIP_HAXE:-}" != "1" ]; then
         exit 1
     fi
     cp "$HAXE_API_DIR/bin/AqwApi.swc" "$STAGING/libs/AqwApi.swc"
+    cmp -s "$HAXE_API_DIR/bin/AqwApi.swc" "$STAGING/libs/AqwApi.swc" || { echo "ERROR: staged AqwApi.swc differs from freshly compiled output." >&2; exit 1; }
     echo "   API SWC SHA-256: $(sha256sum "$STAGING/libs/AqwApi.swc" | awk '{print $1}')"
 
     echo "=> [2/6] Compiling ModUI from $HAXE_UI_DIR..."
@@ -125,6 +128,7 @@ if [ "${SKIP_HAXE:-}" != "1" ]; then
         exit 1
     fi
     cp "$HAXE_UI_DIR/bin/ModUI.swc" "$STAGING/libs/ModUI.swc"
+    cmp -s "$HAXE_UI_DIR/bin/ModUI.swc" "$STAGING/libs/ModUI.swc" || { echo "ERROR: staged ModUI.swc differs from freshly compiled output." >&2; exit 1; }
     echo "   UI SWC SHA-256: $(sha256sum "$STAGING/libs/ModUI.swc" | awk '{print $1}')"
     echo "=> Using freshly built UI library: $STAGING/libs/ModUI.swc"
 else
