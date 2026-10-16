@@ -561,8 +561,10 @@ jobs:
                 $apkZip = [System.IO.Compression.ZipFile]::OpenRead($apkPath)
                 try { $apkEntries = @($apkZip.Entries | ForEach-Object { $_.FullName }) }
                 finally { $apkZip.Dispose() }
-                if (-not ($apkEntries -contains "libs/WorkerMain.swf")) {
-                  throw "APK $apkName is missing libs/WorkerMain.swf."
+                if (-not ($apkEntries -contains "assets/libs/WorkerMain.swf")) {
+                  Write-Host "APK entries containing WorkerMain.swf:"
+                  $apkEntries | Where-Object { $_ -match "WorkerMain\.swf$" } | ForEach-Object { Write-Host "  $_" }
+                  throw "APK $apkName is missing assets/libs/WorkerMain.swf."
                 }
                                 if (-not ($apkEntries | Where-Object { $_ -match ("^lib/" + [regex]::Escape($abi) + "/.+\.so$") })) {
                   throw "APK $apkName is missing native libraries for $abi."
