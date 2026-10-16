@@ -223,7 +223,7 @@ run_haxe_ui_build() (
         }
         { print }
         END {
-            if (!replaced) printf "%s%s%s%s\n", "-cp ", "\"", api_src, "\""
+            if (!replaced) printf "-cp %s\n", api_src
         }
     ' "$project_dir/build.hxml" > "$temp_hxml"
 
