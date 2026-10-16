@@ -308,7 +308,7 @@ jobs:
               Copy-Item -Path (Join-Path $loaderAssets "*") -Destination $stagingAssets -Recurse -Force
           }
 
-          $apiScripts = Join-Path $apiDir "assets\\scripts"
+          $apiScripts = Join-Path $apiDir "assets\scripts"
           if (-not (Test-Path $apiScripts -PathType Container)) {
             throw "Bundled API scripts directory is missing: $apiScripts"
           }
