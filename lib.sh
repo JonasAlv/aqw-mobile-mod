@@ -204,39 +204,35 @@ resolve_repo_dir() {
     if [ -d "$candidate" ]; then
         (cd "$candidate" && pwd -P)
     else
-        printf '%s\\n' "$candidate"
+        printf '%s\n' "$candidate"
     fi
 }
 
 # Compile the UI with the API source path resolved from configuration rather than relying on
-# aqw-haxe-api being a sibling directory. Build HXML paths are relative to the project cwd, so
-# create the temporary HXML inside the UI checkout and remove it on exit.
-run_haxe_ui_build() {
+# aqw-haxe-api being a sibling directory. Keep the temporary HXML in the UI checkout so its
+# project-relative paths continue to work; the subshell trap removes it on success or failure.
+run_haxe_ui_build() (
     local project_dir="$1" api_dir="$2" temp_hxml
     temp_hxml="$(mktemp "$project_dir/.build-local.XXXXXX")"
     trap 'rm -f "$temp_hxml"' EXIT
     awk -v api_src="$api_dir/src" '
         $0 == "-cp ../aqw-haxe-api/src" {
-            printf "-cp \\"%s\\"\\n", api_src
+            printf "%s%s%s%s\n", "-cp ", "\\\"", api_src, "\\\""
             replaced = 1
             next
         }
         { print }
         END {
-            if (!replaced) printf "-cp \\"%s\\"\\n", api_src
+            if (!replaced) printf "%s%s%s%s\n", "-cp ", "\\\"", api_src, "\\\""
         }
     ' "$project_dir/build.hxml" > "$temp_hxml"
 
-    (
-        cd "$project_dir"
-        if command -v haxe >/dev/null 2>&1; then
-            haxe "$temp_hxml"
-        elif command -v pnpm >/dev/null 2>&1; then
-            pnpm exec haxe "$temp_hxml"
-        else
-            npx haxe "$temp_hxml"
-        fi
-    )
-    rm -f "$temp_hxml"
-    trap - EXIT
-}
+    cd "$project_dir"
+    if command -v haxe >/dev/null 2>&1; then
+        haxe "$temp_hxml"
+    elif command -v pnpm >/dev/null 2>&1; then
+        pnpm exec haxe "$temp_hxml"
+    else
+        npx haxe "$temp_hxml"
+    fi
+)
