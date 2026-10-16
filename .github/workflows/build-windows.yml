@@ -494,7 +494,7 @@ jobs:
               $bundleDir $descriptorFile `
               -extdir (Join-Path $staging "libs") `
               -C $buildDir Desktop.swf `
-              -C $staging gamefiles assets icons
+              -C $staging libs gamefiles assets icons
 
             if ($LASTEXITCODE -ne 0) { throw "AIR bundle packaging failed for mode $mode." }
 
