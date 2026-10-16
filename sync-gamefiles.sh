@@ -3,11 +3,29 @@ set -euo pipefail
 
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 GAMEFILES_DIR="$DIR/build/gamefiles-upstream"
-DESTINATION="${1:-$GAMEFILES_DIR}"
 if [[ "$#" -gt 1 ]]; then
     echo "Usage: sync-gamefiles.sh [gamefiles-directory]" >&2
     exit 2
 fi
+DESTINATION="${1:-$GAMEFILES_DIR}"
+DESTINATION="$(python3 - "$DESTINATION" "$DIR" <<'PY'
+import os
+import sys
+
+destination = os.path.realpath(sys.argv[1])
+repo = os.path.realpath(sys.argv[2])
+build = os.path.join(repo, "build")
+cache = os.path.join(build, "upstream-windows-cache")
+
+# The sync replaces the destination directory atomically at the end. Refuse paths
+# that could erase the checkout, its parent, or the release-download cache.
+if destination == os.path.sep or destination == repo or repo.startswith(destination + os.path.sep):
+    raise SystemExit("ERROR: Refusing unsafe gamefiles destination: " + destination)
+if destination == build or destination == cache or destination.startswith(cache + os.path.sep) or cache.startswith(destination + os.path.sep):
+    raise SystemExit("ERROR: Destination would overwrite the build directory or release cache: " + destination)
+print(destination)
+PY
+)"
 CACHE_DIR="$DIR/build/upstream-windows-cache"
 RELEASE_API="https://api.github.com/repos/anthony-hyo/aqw-mobile/releases/latest"
 
