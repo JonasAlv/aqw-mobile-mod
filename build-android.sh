@@ -161,10 +161,12 @@ for MODE in "${TARGET_MODES[@]}"; do
     echo "   -> Packaging $OUTPUT_FILE (renderMode: $MODE, arch: all)..."
     cp "$STAGING/Mobile-app.xml" "$TMP_APP_XML"
     sed -i "s|<renderMode>.*</renderMode>|<renderMode>${MODE}</renderMode>|" "$TMP_APP_XML"
+    if ! grep -q "<buildArchitectures>" "$TMP_APP_XML"; then
+        sed -i 's|</android>|<buildArchitectures>armv7,armv8,x86,x64</buildArchitectures></android>|' "$TMP_APP_XML"
+    fi
 
     "$ADT" -package \
         -target apk-captive-runtime \
-        -arch all \
         -storetype PKCS12 \
         -keystore "$KEYSTORE" \
         -storepass password \
