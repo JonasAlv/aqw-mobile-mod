@@ -114,9 +114,9 @@ run_client(){
    return
  fi
  [[ "${AQW_ADL:-wine}" == "wine" ]] || die "Unknown AQW_ADL value '${AQW_ADL}'; use wine or linux."
- adl="${AIRSDK_WINDOWS:-${AIR_WINDOWS_HOME:-${HOME}/.airsdk/AIRSDK_Windows/bin/adl64.exe}}"
- [[ -f "$adl" ]] || [[ -f "${adl%/*}/adl64.exe" ]] || die "Windows ADL not found: $adl"
- if [[ -d "$adl" ]]; then adl="$adl/bin/adl64.exe"; elif [[ ! -f "$adl" ]]; then adl="${adl%/*}/adl64.exe"; fi
+ adl="${AIRSDK_WINDOWS:-${AIR_WINDOWS_HOME:-${HOME}/.airsdk/AIRSDK_Windows/bin}}"
+ if [[ -d "$adl" ]]; then adl="$adl/adl64.exe"; fi
+ [[ -f "$adl" ]] || die "Windows ADL not found: $adl"
  command -v wine >/dev/null 2>&1 || die "Wine is unavailable; install Wine or set AQW_ADL=linux to use native Linux ADL."
  echo "=> Launching with Windows ADL via Wine: $adl"
  (cd "$BUILD"; wine "$adl" -profile extendedDesktop "$descriptor")
