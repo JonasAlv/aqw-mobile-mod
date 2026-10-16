@@ -18,8 +18,13 @@ on:
         required: true
         default: true
         type: boolean
-      build_android:
-        description: 'Also package universal multi-architecture Android APKs'
+      android_armv7:
+        description: 'Build Android ARMv7 APKs'
+        required: true
+        default: false
+        type: boolean
+      android_armv8:
+        description: 'Build Android ARMv8 APKs'
         required: true
         default: false
         type: boolean
@@ -353,7 +358,7 @@ jobs:
 
           Copy-Item -Path (Join-Path $staging "Desktop.swf") -Destination (Join-Path $buildDir "Desktop.swf") -Force
 
-          if ("${{ github.event.inputs.build_android }}" -eq "true") {
+          if ("${{ github.event.inputs.android_armv7 }}" -eq "true" -or "${{ github.event.inputs.android_armv8 }}" -eq "true") {
             Write-Host "=> Compiling Mobile_code.swf and injecting into Mobile.swf..."
             Invoke-Checked $amxmlc @(
               "+configname=air",
@@ -471,80 +476,61 @@ jobs:
             Compress-Archive -Path $bundleDir -DestinationPath $zipPath -CompressionLevel Optimal
           }
 
-          if ("${{ github.event.inputs.build_android }}" -eq "true") {
+          if ("${{ github.event.inputs.android_armv7 }}" -eq "true" -or "${{ github.event.inputs.android_armv8 }}" -eq "true") {
             Write-Host "=> Packaging Android APKs..."
             $androidModes = @()
             if ("${{ github.event.inputs.android_cpu }}" -eq "true") { $androidModes += "cpu" }
             if ("${{ github.event.inputs.android_direct }}" -eq "true") { $androidModes += "direct" }
             if ("${{ github.event.inputs.android_gpu }}" -eq "true") { $androidModes += "gpu" }
-            if ($androidModes.Count -eq 0) { throw "Android build is enabled, but no render mode was selected." }
+            if ($androidModes.Count -eq 0) { throw "Android architecture selected, but no Android render mode was selected." }
 
-            foreach ($mode in $androidModes) {
-              $apkName = "AQWMod-$upstreamVer-$date-multiarch-$mode.apk"
-              $apkPath = Join-Path $artifactsDir $apkName
+            $androidArchs = @()
+            if ("${{ github.event.inputs.android_armv7 }}" -eq "true") { $androidArchs += "armv7" }
+            if ("${{ github.event.inputs.android_armv8 }}" -eq "true") { $androidArchs += "armv8" }
+            foreach ($arch in $androidArchs) {
+              $abi = if ($arch -eq "armv7") { "armeabi-v7a" } else { "arm64-v8a" }
+              foreach ($mode in $androidModes) {
+                $apkName = "AQWMod-$upstreamVer-$date-$arch-$mode.apk"
+                $apkPath = Join-Path $artifactsDir $apkName
+                $rawMobileXml = Get-Content (Join-Path $loaderDir "Mobile-app.xml") -Raw
+                $mobileXml = [System.Text.RegularExpressions.Regex]::Replace($rawMobileXml, "<versionNumber>.*?</versionNumber>", "<versionNumber>$cleanVersion</versionNumber>")
+                $mobileXml = [System.Text.RegularExpressions.Regex]::Replace($mobileXml, "<versionLabel>.*?</versionLabel>", "<versionLabel>$cleanVersion</versionLabel>")
+                $mobileXml = [System.Text.RegularExpressions.Regex]::Replace($mobileXml, "<renderMode>.*?</renderMode>", "<renderMode>$mode</renderMode>")
+                $mobileXmlPath = Join-Path $buildDir "Mobile-app-$arch-$mode.xml"
+                Set-Content -Path $mobileXmlPath -Value $mobileXml -Encoding utf8
 
-              $rawMobileXml = Get-Content (Join-Path $loaderDir "Mobile-app.xml") -Raw
-              $mobileXml = [System.Text.RegularExpressions.Regex]::Replace(
-                $rawMobileXml,
-                "<versionNumber>.*?</versionNumber>",
-                "<versionNumber>$cleanVersion</versionNumber>"
-              )
-              $mobileXml = [System.Text.RegularExpressions.Regex]::Replace(
-                $mobileXml,
-                "<versionLabel>.*?</versionLabel>",
-                "<versionLabel>$cleanVersion</versionLabel>"
-              )
-              $mobileXml = [System.Text.RegularExpressions.Regex]::Replace(
-                $mobileXml,
-                "<renderMode>.*?</renderMode>",
-                "<renderMode>$mode</renderMode>"
-              )
-              $mobileXmlPath = Join-Path $buildDir "Mobile-app-multiarch-$mode.xml"
-              Set-Content -Path $mobileXmlPath -Value $mobileXml -Encoding utf8
+                Write-Host "   -> Packaging $apkName (architecture: $arch, mode: $mode)..."
+                $androidPackageArgs = @(
+                  "-package",
+                  "-target", "apk-captive-runtime",
+                  "-arch", $arch,
+                  "-storetype", "PKCS12",
+                  "-keystore", $certificate,
+                  "-storepass", $certPass,
+                  $apkPath,
+                  $mobileXmlPath,
+                  "-C", $buildDir, "Mobile.swf",
+                  "-C", $staging, "assets",
+                  "-C", $staging, "icons/icon-36x36.png",
+                  "-C", $staging, "icons/icon-48x48.png",
+                  "-C", $staging, "icons/icon-72x72.png",
+                  "-C", $staging, "icons/icon-96x96.png",
+                  "-C", $staging, "icons/icon-144x144.png",
+                  "-C", $staging, "icons/icon-192x192.png",
+                  "-C", $staging, "gamefiles"
+                )
+                & $adt @androidPackageArgs
+                if ($LASTEXITCODE -ne 0) { throw "Android $arch APK packaging failed for mode $mode." }
 
-              Write-Host "   -> Packaging $apkName (all architectures, mode: $mode)..."
-              $androidPackageArgs = @(
-                "-package",
-                "-target", "apk-captive-runtime",
-                "-arch", "all",
-                "-storetype", "PKCS12",
-                "-keystore", $certificate,
-                "-storepass", $certPass,
-                $apkPath,
-                $mobileXmlPath,
-                "-C", $buildDir, "Mobile.swf",
-                "-C", $staging, "assets",
-                "-C", $staging, "icons/icon-36x36.png",
-                "-C", $staging, "icons/icon-48x48.png",
-                "-C", $staging, "icons/icon-72x72.png",
-                "-C", $staging, "icons/icon-96x96.png",
-                "-C", $staging, "icons/icon-144x144.png",
-                "-C", $staging, "icons/icon-192x192.png",
-                "-C", $staging, "gamefiles"
-              )
-
-              & $adt @androidPackageArgs
-              if ($LASTEXITCODE -ne 0) { throw "Universal Android APK packaging failed for mode $mode." }
-
-              Add-Type -AssemblyName System.IO.Compression
-              $apkZip = [System.IO.Compression.ZipFile]::OpenRead($apkPath)
-              try {
-                $apkEntries = @($apkZip.Entries | ForEach-Object { $_.FullName })
-              } finally {
-                $apkZip.Dispose()
-              }
-              $requiredAbis = @{
-                "armeabi-v7a" = "ARMv7"
-                "arm64-v8a" = "ARM64"
-                "x86" = "x86"
-                "x86_64" = "x64"
-              }
-              foreach ($abi in $requiredAbis.Keys) {
+                Add-Type -AssemblyName System.IO.Compression
+                $apkZip = [System.IO.Compression.ZipFile]::OpenRead($apkPath)
+                try { $apkEntries = @($apkZip.Entries | ForEach-Object { $_.FullName }) }
+                finally { $apkZip.Dispose() }
                 if (-not ($apkEntries | Where-Object { $_ -match ("^lib/" + [regex]::Escape($abi) + "/.+\.so$") })) {
-                  throw "APK $apkName is missing native libraries for $abi ($($requiredAbis[$abi])). Refusing to publish a non-universal APK."
+                  throw "APK $apkName is missing native libraries for $abi."
                 }
+                Write-Host "Verified native libraries for $abi."
               }
-              Write-Host "Verified APK contains native libraries for all four ABIs: $($requiredAbis.Values -join ', ')."
             }
           }
 
