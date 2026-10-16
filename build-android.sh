@@ -24,7 +24,7 @@ rm -f "$BUILD"/Mobile-app-*.xml
 mkdir -p "$BUILD"
 mkdir -p "$STAGING"
 mkdir -p "$OUTPUT_DIR"
-rm -rf "${OUTPUT_DIR:?}"/*
+rm -f "${OUTPUT_DIR:?}"/AQWMod-*.apk
 
 trap 'rm -rf "$STAGING"' EXIT
 
@@ -32,6 +32,16 @@ TARGET_MODES=("$@")
 if [ ${#TARGET_MODES[@]} -eq 0 ]; then
     TARGET_MODES=("cpu" "direct" "gpu")
 fi
+
+for mode in "${TARGET_MODES[@]}"; do
+    case "$mode" in
+        cpu|direct|gpu) ;;
+        *)
+            echo "ERROR: Unknown render mode '$mode'. Choose cpu, direct, or gpu." >&2
+            exit 2
+            ;;
+    esac
+done
 
 KEYSTORE="${KEYSTORE:-$DIR/aqwpocket_keystore_local.p12}"
 HAXE_API_DIR="${HAXE_API_DIR:-$DIR/../aqw-haxe-api}"
@@ -64,7 +74,7 @@ GAMEFILES_SRC="$BUILD/gamefiles-upstream"
 [ -d "$GAMEFILES_SRC" ] || GAMEFILES_SRC="$DIR/loader/gamefiles"
 mkdir -p "$STAGING/gamefiles"
 if [ -d "$GAMEFILES_SRC" ]; then
-    cp -r "$GAMEFILES_SRC/"* "$STAGING/gamefiles/"
+    cp -r "$GAMEFILES_SRC/." "$STAGING/gamefiles/"
 else
     echo "   Warning: no gamefiles found; the APK will ship without them." >&2
 fi

@@ -437,7 +437,7 @@ jobs:
             $modes += "gpu"
           }
           if ($modes.Count -eq 0) {
-            $modes = @("cpu", "direct", "gpu")
+            throw "No Windows render modes selected. Enable at least one of include_cpu, include_direct, or include_gpu in Run workflow."
           }
 
           foreach ($mode in $modes) {

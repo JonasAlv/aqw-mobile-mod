@@ -81,10 +81,17 @@ resolve_java_home() {
 # AIR SDK for Linux desktop and Android packaging.
 resolve_air_env() {
     local amxmlc adt
-    amxmlc="$(resolve_tool AIR_HOME amxmlc "AIRSDK_HOME is also accepted for older layouts.")" || return 1
+    if [ -z "${AIR_HOME:-}" ] && [ -n "${AIRSDK_HOME:-}" ]; then
+        AIR_HOME="$AIRSDK_HOME"
+    fi
+    amxmlc="$(resolve_tool AIR_HOME amxmlc "Set AIR_HOME (or AIRSDK_HOME) to the AIR SDK directory.")" || return 1
     adt="$(command -v adt 2>/dev/null || true)"
     if [ -z "$adt" ] && [ -f "${AIR_HOME:-}/bin/adt" ]; then
         adt="${AIR_HOME}/bin/adt"
+    fi
+    if [ -z "$adt" ]; then
+        echo "ERROR: Could not locate 'adt'. Put it on PATH or set AIR_HOME to the AIR SDK directory." >&2
+        return 1
     fi
 
     JAVA_HOME="$(resolve_java_home)" || return 1

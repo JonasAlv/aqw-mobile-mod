@@ -34,7 +34,6 @@ fi
 mkdir -p "$BUILD"
 rm -rf "$STAGING"
 mkdir -p "$STAGING"
-trap '' EXIT
 
 if [ "${SKIP_SYNC:-0}" = "1" ]; then
     echo "=> [0/6] SKIP_SYNC=1 - using cached gamefiles."
