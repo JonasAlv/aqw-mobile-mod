@@ -1,7 +1,8 @@
 #!/bin/bash
 # build-android.sh - Build Android APKs locally using isolated build sandbox
-# Builds universal multi-architecture APKs (all supported Android architectures)
-# Output: android_builds/AQWMod-${UPSTREAM_VERSION}-${BUILD_DATE}-multiarch-${MODE}.apk
+# Builds separate Android APKs for selected architectures (armv7 and/or armv8).
+# Set ANDROID_ARCHS="armv7 armv8" (default) or a single architecture.
+# Output: android_builds/AQWMod-${UPSTREAM_VERSION}-${BUILD_DATE}-${ARCH}-${MODE}.apk
 
 set -euo pipefail
 
@@ -38,6 +39,22 @@ for mode in "${TARGET_MODES[@]}"; do
         cpu|direct|gpu) ;;
         *)
             echo "ERROR: Unknown render mode '$mode'. Choose cpu, direct, or gpu." >&2
+            exit 2
+            ;;
+    esac
+done
+
+ANDROID_ARCHS="${ANDROID_ARCHS:-armv7 armv8}"
+read -r -a TARGET_ARCHS <<< "$ANDROID_ARCHS"
+if [ ${#TARGET_ARCHS[@]} -eq 0 ]; then
+    echo "ERROR: No Android architectures selected. Set ANDROID_ARCHS to armv7, armv8, or both." >&2
+    exit 2
+fi
+for arch in "${TARGET_ARCHS[@]}"; do
+    case "$arch" in
+        armv7|armv8) ;;
+        *)
+            echo "ERROR: Unknown Android architecture '$arch'. Choose armv7 and/or armv8." >&2
             exit 2
             ;;
     esac
@@ -160,62 +177,59 @@ fi
 
 BUILD_DATE="${BUILD_DATE:-$(date +'%d-%m-%y')}"
 
-echo "=> Packaging universal multi-architecture APKs (${TARGET_MODES[*]}) (version: $UPSTREAM_VERSION, date: $BUILD_DATE)..."
+echo "=> Packaging Android APKs (architectures: ${TARGET_ARCHS[*]}; render modes: ${TARGET_MODES[*]}) (version: $UPSTREAM_VERSION, date: $BUILD_DATE)..."
 
 BUILT_APKS=()
-for MODE in "${TARGET_MODES[@]}"; do
-    OUTPUT_FILE="AQWMod-${UPSTREAM_VERSION}-${BUILD_DATE}-multiarch-${MODE}.apk"
-    OUTPUT_PATH="$OUTPUT_DIR/$OUTPUT_FILE"
-    TMP_APP_XML="$BUILD/Mobile-app-multiarch-${MODE}.xml"
+for ARCH in "${TARGET_ARCHS[@]}"; do
+    case "$ARCH" in
+        armv7) EXPECTED_ABI="armeabi-v7a" ;;
+        armv8) EXPECTED_ABI="arm64-v8a" ;;
+    esac
+    for MODE in "${TARGET_MODES[@]}"; do
+        OUTPUT_FILE="AQWMod-${UPSTREAM_VERSION}-${BUILD_DATE}-${ARCH}-${MODE}.apk"
+        OUTPUT_PATH="$OUTPUT_DIR/$OUTPUT_FILE"
+        TMP_APP_XML="$BUILD/Mobile-app-${ARCH}-${MODE}.xml"
 
-    echo "   -> Packaging $OUTPUT_FILE (renderMode: $MODE, arch: all)..."
-    cp "$STAGING/Mobile-app.xml" "$TMP_APP_XML"
-    sed -i "s|<renderMode>.*</renderMode>|<renderMode>${MODE}</renderMode>|" "$TMP_APP_XML"
+        echo "   -> Packaging $OUTPUT_FILE (renderMode: $MODE, arch: $ARCH)..."
+        cp "$STAGING/Mobile-app.xml" "$TMP_APP_XML"
+        sed -i "s|<renderMode>.*</renderMode>|<renderMode>${MODE}</renderMode>|" "$TMP_APP_XML"
 
-    "$ADT" -package \
-        -arch all \
-        -target apk-captive-runtime \
-        -storetype PKCS12 \
-        -keystore "$KEYSTORE" \
-        -storepass password \
-        "$OUTPUT_PATH" \
-        "$TMP_APP_XML" \
-        -C "$BUILD" Mobile.swf \
-        -C "$STAGING" \
-            assets \
-            icons/icon-36x36.png \
-            icons/icon-48x48.png \
-            icons/icon-72x72.png \
-            icons/icon-96x96.png \
-            icons/icon-144x144.png \
-            icons/icon-192x192.png \
-            gamefiles
+        "$ADT" -package \
+            -arch "$ARCH" \
+            -target apk-captive-runtime \
+            -storetype PKCS12 \
+            -keystore "$KEYSTORE" \
+            -storepass password \
+            "$OUTPUT_PATH" \
+            "$TMP_APP_XML" \
+            -C "$BUILD" Mobile.swf \
+            -C "$STAGING" \
+                assets \
+                icons/icon-36x36.png \
+                icons/icon-48x48.png \
+                icons/icon-72x72.png \
+                icons/icon-96x96.png \
+                icons/icon-144x144.png \
+                icons/icon-192x192.png \
+                gamefiles
 
-    rm -f "$TMP_APP_XML"
+        rm -f "$TMP_APP_XML"
 
-    echo "   -> Verifying all Android ABIs are present..."
-    APK_ABIS="$(python3 - "$OUTPUT_PATH" <<'PY'
+        echo "   -> Verifying $EXPECTED_ABI native libraries are present..."
+        python3 - "$OUTPUT_PATH" "$EXPECTED_ABI" <<'PY'
 import sys, zipfile
-apk = sys.argv[1]
-required = {
-    "armeabi-v7a": "ARMv7",
-    "arm64-v8a": "ARM64",
-    "x86": "x86",
-    "x86_64": "x64",
-}
+apk, abi = sys.argv[1], sys.argv[2]
 with zipfile.ZipFile(apk) as z:
     names = z.namelist()
-missing = [abi for abi in required if not any(n.startswith(f"lib/{abi}/") and n.endswith(".so") for n in names)]
-if missing:
-    print("Missing native library ABIs: " + ", ".join(missing), file=sys.stderr)
+if not any(n.startswith(f"lib/{abi}/") and n.endswith(".so") for n in names):
+    print(f"Missing native library ABI: {abi}", file=sys.stderr)
     sys.exit(1)
-print(", ".join(required.values()))
+print(f"Verified native libraries for {abi}")
 PY
-)"
-    echo "   Verified native libraries for: $APK_ABIS"
 
-    FILE_SIZE=$(du -sh "$OUTPUT_PATH" | cut -f1)
-    BUILT_APKS+=("$OUTPUT_FILE ($FILE_SIZE)")
+        FILE_SIZE=$(du -sh "$OUTPUT_PATH" | cut -f1)
+        BUILT_APKS+=("$OUTPUT_FILE ($FILE_SIZE)")
+    done
 done
 
 echo ""
