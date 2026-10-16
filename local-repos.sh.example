@@ -1,0 +1,7 @@
+# Copy this file to local-repos.sh and edit the absolute paths for your machine.
+# The build scripts source local-repos.sh automatically when it exists.
+# Paths may be anywhere; the repositories do not need to be sibling directories.
+#
+# Keep local-repos.sh untracked: it is machine-specific.
+HAXE_API_DIR="$HOME/src/aqw-haxe-api"
+HAXE_UI_DIR="$HOME/src/aqw-haxe-ui"
