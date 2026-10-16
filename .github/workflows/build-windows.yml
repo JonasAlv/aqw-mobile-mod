@@ -208,52 +208,71 @@ jobs:
           $upstreamVersion = $release.tag_name
           Write-Host "Detected upstream version: $upstreamVersion"
 
-          $apk = $release.assets | Where-Object { $_.name -match '-armv8\.apk$' } | Select-Object -First 1
-          if ($null -eq $apk) {
-            $apk = $release.assets | Where-Object { $_.name -match '-armv7\.apk$' } | Select-Object -First 1
-          }
-          if ($null -eq $apk) {
-            throw "The upstream release has no supported ARM APK asset."
+          # Prefer the stable Windows x64 bundle because it exposes the complete
+          # gamefiles/ directory directly, unlike the APK which may only bundle game.swf.
+          $bundle = $release.assets | Where-Object { $_.name -match '-windows-x64\.zip$' -and $_.name -notmatch '-direct\.zip$' } | Select-Object -First 1
+          if ($null -eq $bundle) {
+            throw "The upstream stable release has no standard Windows x64 ZIP asset."
           }
 
-          $apkPath = Join-Path $tempDir "upstream.apk"
-          Invoke-WebRequest -Uri $apk.browser_download_url -Headers $headers -OutFile $apkPath
+          $bundlePath = Join-Path $tempDir "upstream-windows-x64.zip"
+          Invoke-WebRequest -Uri $bundle.browser_download_url -Headers $headers -OutFile $bundlePath
 
-          $digest = [string]$apk.digest
+          $digest = [string]$bundle.digest
           if ($digest -and $digest -match '^sha256:[0-9a-fA-F]{64}$') {
             $expected = $digest.Substring(7).ToUpperInvariant()
-            $actual = (Get-FileHash -Path $apkPath -Algorithm SHA256).Hash
-            if ($actual -ne $expected) { throw "The upstream APK SHA-256 digest did not match." }
+            $actual = (Get-FileHash -Path $bundlePath -Algorithm SHA256).Hash
+            if ($actual -ne $expected) { throw "The upstream Windows ZIP SHA-256 digest did not match." }
           }
 
           $gamefilesDest = Join-Path $env:GITHUB_WORKSPACE "aqw-mobile-mod\build\gamefiles-upstream"
+          if (Test-Path $gamefilesDest) { Remove-Item -Path $gamefilesDest -Recurse -Force }
           New-Item -ItemType Directory -Path $gamefilesDest -Force | Out-Null
 
-          Add-Type -AssemblyName System.IO.Compression.FileSystem
-          $zip = [System.IO.Compression.ZipFile]::OpenRead($apkPath)
+          Add-Type -AssemblyName System.IO.Compression
+          $zip = [System.IO.Compression.ZipFile]::OpenRead($bundlePath)
+          $extracted = 0
           try {
-            # Upstream APK now only bundles game.swf; other gamefiles are downloaded from CDN
-            $entry = $zip.Entries | Where-Object { $_.FullName -ceq "gamefiles/game.swf" } | Select-Object -First 1
-            if ($null -eq $entry) {
-              $entry = $zip.Entries | Where-Object { $_.FullName -ceq "assets/gamefiles/game.swf" } | Select-Object -First 1
-            }
-            if ($null -eq $entry) {
-              throw "The upstream APK is missing required asset 'gamefiles/game.swf'."
-            }
-
-            $target = Join-Path $gamefilesDest "game.swf"
-            $inputStream = $entry.Open()
-            $outputStream = [System.IO.File]::Create($target)
-            try { $inputStream.CopyTo($outputStream) }
-            finally {
-              $inputStream.Dispose()
-              $outputStream.Dispose()
+            foreach ($entry in $zip.Entries) {
+              # Find the gamefiles directory anywhere inside the release ZIP,
+              # then preserve every path beneath it in our destination directory.
+              if ($entry.FullName -notmatch '(^|/)gamefiles/') { continue }
+              $relative = [regex]::Replace($entry.FullName, '^.*?gamefiles/', '')
+              if (-not $relative) { continue }
+              $relative = $relative.Replace('/', [System.IO.Path]::DirectorySeparatorChar)
+              $target = [System.IO.Path]::GetFullPath((Join-Path $gamefilesDest $relative))
+              $root = [System.IO.Path]::GetFullPath($gamefilesDest) + [System.IO.Path]::DirectorySeparatorChar
+              if (-not $target.StartsWith($root, [System.StringComparison]::OrdinalIgnoreCase)) {
+                throw "Unsafe path found in upstream ZIP: $($entry.FullName)"
+              }
+              if ($entry.FullName.EndsWith('/')) {
+                New-Item -ItemType Directory -Path $target -Force | Out-Null
+                continue
+              }
+              $parent = Split-Path -Parent $target
+              New-Item -ItemType Directory -Path $parent -Force | Out-Null
+              $inputStream = $entry.Open()
+              $outputStream = [System.IO.File]::Create($target)
+              try { $inputStream.CopyTo($outputStream) }
+              finally {
+                $inputStream.Dispose()
+                $outputStream.Dispose()
+              }
+              $extracted++
             }
           }
           finally {
             $zip.Dispose()
           }
 
+          if ($extracted -eq 0) {
+            throw "The upstream Windows ZIP did not contain a gamefiles/ directory with files."
+          }
+          if (-not (Test-Path (Join-Path $gamefilesDest "game.swf") -PathType Leaf)) {
+            throw "The extracted upstream gamefiles/ directory is missing game.swf."
+          }
+
+          Write-Host "Extracted $extracted files from the upstream gamefiles/ directory."
           "upstream_version=$upstreamVersion" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
 
       - name: Build API, UI, Worker, and Inject Mod Code
@@ -310,11 +329,12 @@ jobs:
           Copy-Item -Path (Join-Path $loaderDir "Desktop.swf") -Destination (Join-Path $staging "Desktop.swf") -Force
           Copy-Item -Path (Join-Path $loaderDir "Mobile.swf") -Destination (Join-Path $staging "Mobile.swf") -Force
 
-          # Copy upstream synced gamefiles (only game.swf; others are loaded from CDN at runtime)
+          # Copy the complete upstream gamefiles tree into staging, preserving subfolders.
           $gamefilesUpstream = Join-Path $buildDir "gamefiles-upstream"
-          if (Test-Path $gamefilesUpstream) {
-            Copy-Item -Path (Join-Path $gamefilesUpstream "game.swf") -Destination (Join-Path $staging "gamefiles\game.swf") -Force
+          if (-not (Test-Path (Join-Path $gamefilesUpstream "game.swf") -PathType Leaf)) {
+            throw "The complete upstream gamefiles directory was not downloaded."
           }
+          Copy-Item -Path (Join-Path $gamefilesUpstream "*") -Destination (Join-Path $staging "gamefiles") -Recurse -Force
 
 
 
@@ -475,7 +495,7 @@ jobs:
 
             if ($LASTEXITCODE -ne 0) { throw "AIR bundle packaging failed for mode $mode." }
 
-            $zipName = "aqw-$upstreamVer-$date-x64-$mode.zip"
+            $zipName = "AQWMod-$upstreamVer-$date-x64-$mode.zip"
             $zipPath = Join-Path $artifactsDir $zipName
             if (Test-Path $zipPath) { Remove-Item -Path $zipPath -Force }
 
@@ -498,7 +518,7 @@ jobs:
 
             foreach ($arch in $androidArchs) {
               foreach ($mode in $androidModes) {
-              $apkName = "aqwmod-$upstreamVer-$date-$arch-$mode.apk"
+              $apkName = "AQWMod-$upstreamVer-$date-$arch-$mode.apk"
               $apkPath = Join-Path $artifactsDir $apkName
 
               $rawMobileXml = Get-Content (Join-Path $loaderDir "Mobile-app.xml") -Raw
@@ -542,7 +562,7 @@ jobs:
                 "-C", $staging, "icons/icon-96x96.png",
                 "-C", $staging, "icons/icon-144x144.png",
                 "-C", $staging, "icons/icon-192x192.png",
-                "-C", $staging, "gamefiles/game.swf"
+                "-C", $staging, "gamefiles"
               )
 
               & $adt @androidPackageArgs
