@@ -217,7 +217,7 @@ run_haxe_ui_build() (
     trap 'rm -f "$temp_hxml"' EXIT
     awk -v api_src="$api_dir/src" '
         $0 == "-cp ../aqw-haxe-api/src" {
-            printf "%s%s%s%s\n", "-cp ", "\"", api_src, "\""
+            printf "-cp %s\n", api_src
             replaced = 1
             next
         }
