@@ -1,0 +1,46 @@
+name: Compile Worker
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "loader/worker-src/**"
+      - ".github/workflows/compile-worker.yml"
+  pull_request:
+    paths:
+      - "loader/worker-src/**"
+      - ".github/workflows/compile-worker.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  compile-worker:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Adobe AIR SDK
+        uses: joshtynjala/setup-adobe-air-action@v2
+        with:
+          air-version: "51.3.1"
+          accept-license: yes
+
+      - name: Compile WorkerMain from source
+        run: |
+          mkdir -p loader/libs
+          rm -f loader/libs/WorkerMain.swf
+          amxmlc +configname=air -strict=false -debug=true \
+            -source-path+=loader/worker-src \
+            -output loader/libs/WorkerMain.swf \
+            loader/worker-src/WorkerMain.as
+          test -s loader/libs/WorkerMain.swf
+
+      - name: Upload compiled worker
+        uses: actions/upload-artifact@v4
+        with:
+          name: WorkerMain
+          path: loader/libs/WorkerMain.swf
+          if-no-files-found: error
