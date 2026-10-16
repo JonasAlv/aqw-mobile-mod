@@ -1,7 +1,7 @@
-# Copy this file to local-repos.sh and edit the absolute paths for your machine.
+# Copy this file to local-repos.sh and adjust paths if your checkouts are elsewhere.
+# Relative paths are resolved from the aqw-mobile-mod checkout; absolute paths are also accepted.
 # The build scripts source local-repos.sh automatically when it exists.
-# Paths may be anywhere; the repositories do not need to be sibling directories.
 #
-# Keep local-repos.sh untracked: it is machine-specific.
-HAXE_API_DIR="$HOME/src/aqw-haxe-api"
-HAXE_UI_DIR="$HOME/src/aqw-haxe-ui"
+# Keep local-repos.sh untracked: machine-specific overrides must never be committed.
+HAXE_API_DIR="../aqw-haxe-api"
+HAXE_UI_DIR="../aqw-haxe-ui"
