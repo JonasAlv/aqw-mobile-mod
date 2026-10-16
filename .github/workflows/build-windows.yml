@@ -109,7 +109,6 @@ jobs:
         uses: actions/cache@v4
         with:
           path: C:\AIR_SDK
-          # Force a fresh cache populated from the exact versioned Harman URL below.
           key: airsdk-windows-match-aqworlds-latest-2026-10
 
       - name: Set up AIR SDK
@@ -122,8 +121,6 @@ jobs:
             New-Item -ItemType Directory -Path $airDir -Force | Out-Null
             $zipPath = Join-Path $env:RUNNER_TEMP "AIRSDK_Windows.zip"
 
-            # Match the known-working aqworlds workflow's AIR SDK resolution exactly.
-            # The successful cached SDK contains a different D8 tool than the pinned 51.4.1.1 archive.
             try {
               $urls = Invoke-RestMethod -Uri "https://api.airsdk.harman.com/releases/latest/urls"
               $downloadUrl = "https://airsdk.harman.com" + $urls.AIR_Win + "?license=accepted"
@@ -208,8 +205,6 @@ jobs:
           $upstreamVersion = $release.tag_name
           Write-Host "Detected upstream version: $upstreamVersion"
 
-          # Prefer the stable Windows x64 bundle because it exposes the complete
-          # gamefiles/ directory directly, unlike the APK which may only bundle game.swf.
           $bundle = $release.assets | Where-Object { $_.name -match '-windows-x64\.zip$' -and $_.name -notmatch '-direct\.zip$' } | Select-Object -First 1
           if ($null -eq $bundle) {
             throw "The upstream stable release has no standard Windows x64 ZIP asset."
@@ -234,8 +229,6 @@ jobs:
           $extracted = 0
           try {
             foreach ($entry in $zip.Entries) {
-              # Find the gamefiles directory anywhere inside the release ZIP,
-              # then preserve every path beneath it in our destination directory.
               if ($entry.FullName -notmatch '(^|/)gamefiles/') { continue }
               $relative = [regex]::Replace($entry.FullName, '^.*?gamefiles/', '')
               if (-not $relative) { continue }
@@ -293,19 +286,16 @@ jobs:
             if ($LASTEXITCODE -ne 0) { throw "$Description failed with exit code $LASTEXITCODE." }
           }
 
-          # 1. Compile AqwApi.swc
           Write-Host "=> [1/5] Compiling AqwApi (aqw-haxe-api)..."
           Push-Location $apiDir
           try { Invoke-Checked "haxe" @("build.hxml") "API compilation" }
           finally { Pop-Location }
 
-          # 2. Compile ModUI.swc
           Write-Host "=> [2/5] Compiling ModUI (aqw-haxe-ui)..."
           Push-Location $uiDir
           try { Invoke-Checked "haxe" @("build.hxml") "UI compilation" }
           finally { Pop-Location }
 
-          # 3. Setup sandbox staging
           Write-Host "=> [3/5] Setting up staging sandbox..."
           if (Test-Path $staging) { Remove-Item -Path $staging -Recurse -Force }
           New-Item -ItemType Directory -Path `
@@ -329,31 +319,24 @@ jobs:
           Copy-Item -Path (Join-Path $loaderDir "Desktop.swf") -Destination (Join-Path $staging "Desktop.swf") -Force
           Copy-Item -Path (Join-Path $loaderDir "Mobile.swf") -Destination (Join-Path $staging "Mobile.swf") -Force
 
-          # Copy the complete upstream gamefiles tree into staging, preserving subfolders.
           $gamefilesUpstream = Join-Path $buildDir "gamefiles-upstream"
           if (-not (Test-Path (Join-Path $gamefilesUpstream "game.swf") -PathType Leaf)) {
             throw "The complete upstream gamefiles directory was not downloaded."
           }
           Copy-Item -Path (Join-Path $gamefilesUpstream "*") -Destination (Join-Path $staging "gamefiles") -Recurse -Force
 
-
-
-          # Copy SWCs and ANEs to staging libs
           if (Test-Path (Join-Path $loaderDir "libs")) {
             Copy-Item -Path (Join-Path $loaderDir "libs\*") -Destination (Join-Path $staging "libs") -Recurse -Force
           }
           Copy-Item -Path (Join-Path $apiDir "bin\AqwApi.swc") -Destination (Join-Path $staging "libs\AqwApi.swc") -Force
           Copy-Item -Path (Join-Path $uiDir "bin\ModUI.swc") -Destination (Join-Path $staging "libs\ModUI.swc") -Force
 
-
-          # 4. Verify WorkerMain.swf
           $workerSwf = Join-Path $loaderDir "libs\WorkerMain.swf"
           if (-not (Test-Path $workerSwf)) {
             throw "loader/libs/WorkerMain.swf is missing. Obtain a prebuilt copy from a desktop release that bundles it and save it there."
           }
           Write-Host "=> [4/5] Verified WorkerMain.swf in loader/libs/WorkerMain.swf (embedded at compile time)"
 
-          # 5. Compile Desktop_code.swf and inject into Desktop.swf
           Write-Host "=> [5/5] Compiling Desktop_code.swf and injecting into Desktop.swf..."
           Invoke-Checked $amxmlc @(
             "+configname=air",
@@ -380,7 +363,6 @@ jobs:
 
           Copy-Item -Path (Join-Path $staging "Desktop.swf") -Destination (Join-Path $buildDir "Desktop.swf") -Force
 
-          # Optional Android Mobile.swf compilation
           if ("${{ github.event.inputs.build_android }}" -eq "true") {
             Write-Host "=> Compiling Mobile_code.swf and injecting into Mobile.swf..."
             Invoke-Checked $amxmlc @(
@@ -424,7 +406,6 @@ jobs:
           $airBin = Join-Path $env:AIR_HOME "bin"
           $adt = Join-Path $airBin "adt.bat"
 
-          # 1. Certificate setup (support persistent repository secret if present, fallback to self-signed)
           $certificate = Join-Path $env:RUNNER_TEMP "aqw-pocket-signing.p12"
           $certPass = "temporary-ci-password"
           if ($env:KEYSTORE_P12_BASE64) {
@@ -437,7 +418,6 @@ jobs:
             if ($LASTEXITCODE -ne 0) { throw "Failed to generate temporary signing certificate." }
           }
 
-          # 2. Prepare descriptor
           $upstreamVer = "${{ steps.sync-gamefiles.outputs.upstream_version }}"
           if (-not $upstreamVer) { $upstreamVer = "latest" }
           $cleanVersion = ($upstreamVer -replace '^v','').Trim()
@@ -445,7 +425,6 @@ jobs:
           $date = Get-Date -Format "dd-MM-yy"
 
           $rawDescriptor = Get-Content (Join-Path $loaderDir "Desktop-app.xml") -Raw
-          # Keep extensions intact for DiscordRPC; update version numbers
           $cleanDescriptor = [System.Text.RegularExpressions.Regex]::Replace(
             $rawDescriptor,
             "<versionNumber>.*?</versionNumber>",
@@ -457,7 +436,6 @@ jobs:
             "<versionLabel>$cleanVersion</versionLabel>"
           )
 
-          # Modes to build: cpu, direct, gpu (no auto)
           $modes = @()
           if ("${{ github.event.inputs.include_cpu }}" -ne "false") {
             $modes += "cpu"
@@ -503,7 +481,6 @@ jobs:
             Compress-Archive -Path $bundleDir -DestinationPath $zipPath -CompressionLevel Optimal
           }
 
-          # Optional Android package
           if ("${{ github.event.inputs.build_android }}" -eq "true") {
             Write-Host "=> Packaging Android APKs..."
             $androidModes = @()
@@ -541,10 +518,6 @@ jobs:
               Set-Content -Path $mobileXmlPath -Value $mobileXml -Encoding utf8
 
               Write-Host "   -> Packaging $apkName (arch: $arch, mode: $mode)..."
-              # Mirror build-android.sh's locally verified packaging inputs:
-              # Mobile.swf from build/, then assets and explicit icon/game SWF files
-              # from staging. Avoid recursively packaging the entire icons/gamefiles
-              # directories, which can include files the local script deliberately omits.
               $androidPackageArgs = @(
                 "-package",
                 "-target", "apk-captive-runtime",
