@@ -61,7 +61,10 @@ else
     remove_path "$BUILD/icons" "build/icons/"
     remove_path "$BUILD/gamefiles" "build/gamefiles/"
     remove_path "$BUILD/META-INF" "build/META-INF/"
-    remove_path "$BUILD/Desktop-app-gpu.xml" "build/Desktop-app-gpu.xml"
+    for descriptor in "$BUILD"/Desktop-app-*.xml "$BUILD"/Mobile-app-*.xml; do
+        [ -e "$descriptor" ] || continue
+        remove_path "$descriptor" "${descriptor#"$BUILD/"}"
+    done
 fi
 
 # Haxe language-server scratch: target/debug + target/flycheck0, with a CMake CACHEDIR.TAG.
