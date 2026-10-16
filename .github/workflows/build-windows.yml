@@ -81,7 +81,7 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: "17"
+          java-version: "21"
 
       - name: Set up Haxe
         uses: HaxeFoundation/setup-haxe@v2
@@ -499,18 +499,13 @@ jobs:
                 "<renderMode>.*?</renderMode>",
                 "<renderMode>$mode</renderMode>"
               )
-              if ($mobileXml -notmatch "<buildArchitectures>") {
-                $mobileXml = $mobileXml.Replace(
-                  "</android>",
-                  "<buildArchitectures>armv7,armv8,x86,x64</buildArchitectures></android>"
-                )
-              }
               $mobileXmlPath = Join-Path $buildDir "Mobile-app-multiarch-$mode.xml"
               Set-Content -Path $mobileXmlPath -Value $mobileXml -Encoding utf8
 
               Write-Host "   -> Packaging $apkName (all architectures, mode: $mode)..."
               $androidPackageArgs = @(
                 "-package",
+                "-arch", "all",
                 "-target", "apk-captive-runtime",
                 "-storetype", "PKCS12",
                 "-keystore", $certificate,
@@ -530,6 +525,26 @@ jobs:
 
               & $adt @androidPackageArgs
               if ($LASTEXITCODE -ne 0) { throw "Universal Android APK packaging failed for mode $mode." }
+
+              Add-Type -AssemblyName System.IO.Compression
+              $apkZip = [System.IO.Compression.ZipFile]::OpenRead($apkPath)
+              try {
+                $apkEntries = @($apkZip.Entries | ForEach-Object { $_.FullName })
+              } finally {
+                $apkZip.Dispose()
+              }
+              $requiredAbis = @{
+                "armeabi-v7a" = "ARMv7"
+                "arm64-v8a" = "ARM64"
+                "x86" = "x86"
+                "x86_64" = "x64"
+              }
+              foreach ($abi in $requiredAbis.Keys) {
+                if (-not ($apkEntries | Where-Object { $_ -match ("^lib/" + [regex]::Escape($abi) + "/.+\\.so$") })) {
+                  throw "APK $apkName is missing native libraries for $abi ($($requiredAbis[$abi])). Refusing to publish a non-universal APK."
+                }
+              }
+              Write-Host "Verified APK contains native libraries for all four ABIs: $($requiredAbis.Values -join ', ')."
             }
           }
 
