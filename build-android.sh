@@ -25,9 +25,8 @@ rm -f "$BUILD"/Mobile-app-*.xml
 mkdir -p "$BUILD"
 mkdir -p "$STAGING"
 mkdir -p "$OUTPUT_DIR"
-rm -f "${OUTPUT_DIR:?}"/AQWMod-*.apk
 
-trap 'rm -rf "$STAGING"' EXIT
+trap 'rm -rf "$STAGING"; rm -f "$BUILD"/Mobile-app-*.xml' EXIT
 
 TARGET_MODES=("$@")
 if [ ${#TARGET_MODES[@]} -eq 0 ]; then
@@ -50,6 +49,7 @@ if [ ${#TARGET_ARCHS[@]} -eq 0 ]; then
     echo "ERROR: No Android architectures selected. Set ANDROID_ARCHS to armv7, armv8, or both." >&2
     exit 2
 fi
+SEEN_ARCHS=()
 for arch in "${TARGET_ARCHS[@]}"; do
     case "$arch" in
         armv7|armv8) ;;
@@ -58,6 +58,11 @@ for arch in "${TARGET_ARCHS[@]}"; do
             exit 2
             ;;
     esac
+    if [[ " ${SEEN_ARCHS[*]} " == *" $arch "* ]]; then
+        echo "ERROR: Android architecture '$arch' was selected more than once." >&2
+        exit 2
+    fi
+    SEEN_ARCHS+=("$arch")
 done
 
 KEYSTORE="${KEYSTORE:-$DIR/aqwpocket_keystore_local.p12}"
@@ -125,6 +130,14 @@ if [ "${SKIP_HAXE_API:-}" != "1" ]; then
     fi
 fi
 
+for required_swc in AqwApi.swc ModUI.swc; do
+    if [ ! -f "$STAGING/libs/$required_swc" ]; then
+        echo "ERROR: Required library '$required_swc' is missing from $STAGING/libs." >&2
+        echo "       Build the matching Haxe project or place its prebuilt SWC in loader/libs/." >&2
+        exit 1
+    fi
+done
+
 if [ -f "$DIR/loader/libs/WorkerMain.swf" ]; then
     echo "=> [3/5] WorkerMain.swf verified in loader/libs/WorkerMain.swf (embedded at compile time)..."
     cp "$DIR/loader/libs/WorkerMain.swf" "$STAGING/libs/WorkerMain.swf"
@@ -190,6 +203,7 @@ for ARCH in "${TARGET_ARCHS[@]}"; do
         OUTPUT_PATH="$OUTPUT_DIR/$OUTPUT_FILE"
         TMP_APP_XML="$BUILD/Mobile-app-${ARCH}-${MODE}.xml"
 
+        rm -f "$OUTPUT_PATH"
         echo "   -> Packaging $OUTPUT_FILE (renderMode: $MODE, arch: $ARCH)..."
         cp "$STAGING/Mobile-app.xml" "$TMP_APP_XML"
         sed -i "s|<renderMode>.*</renderMode>|<renderMode>${MODE}</renderMode>|" "$TMP_APP_XML"
