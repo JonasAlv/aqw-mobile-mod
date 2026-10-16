@@ -320,17 +320,34 @@ jobs:
           }
           Copy-Item -Path (Join-Path $gamefilesUpstream "*") -Destination (Join-Path $staging "gamefiles") -Recurse -Force
 
-          if (Test-Path (Join-Path $loaderDir "libs")) {
-            Copy-Item -Path (Join-Path $loaderDir "libs\*") -Destination (Join-Path $staging "libs") -Recurse -Force
+          # Compile directly to the canonical loader/libs path before staging it.
+          $workerSource = Join-Path $loaderDir "worker-src\\WorkerMain.as"
+          $workerLibs = Join-Path $loaderDir "libs"
+          $workerSwf = Join-Path $workerLibs "WorkerMain.swf"
+          if (-not (Test-Path $workerSource -PathType Leaf)) {
+            throw "Worker source is missing: $workerSource"
           }
-          Copy-Item -Path (Join-Path $apiDir "bin\AqwApi.swc") -Destination (Join-Path $staging "libs\AqwApi.swc") -Force
-          Copy-Item -Path (Join-Path $uiDir "bin\ModUI.swc") -Destination (Join-Path $staging "libs\ModUI.swc") -Force
+          New-Item -ItemType Directory -Path $workerLibs -Force | Out-Null
+          Remove-Item -Path $workerSwf -Force -ErrorAction SilentlyContinue
+          Write-Host "=> [4/5] Compiling WorkerMain into loader/libs/WorkerMain.swf..."
+          Invoke-Checked $amxmlc @(
+            "+configname=air",
+            "-strict=false",
+            "-debug=true",
+            "-source-path+=$(Join-Path $loaderDir 'worker-src')",
+            "-output", $workerSwf,
+            $workerSource
+          ) "WorkerMain.swf compilation"
+          if (-not (Test-Path $workerSwf -PathType Leaf) -or (Get-Item $workerSwf).Length -le 0) {
+            throw "Worker compilation did not produce loader/libs/WorkerMain.swf."
+          }
+          Write-Host "WorkerMain.swf SHA-256: $((Get-FileHash -Path $workerSwf -Algorithm SHA256).Hash)"
 
-          $workerSwf = Join-Path $loaderDir "libs\WorkerMain.swf"
-          if (-not (Test-Path $workerSwf)) {
-            throw "loader/libs/WorkerMain.swf is missing. Obtain a prebuilt copy from a desktop release that bundles it and save it there."
+          if (Test-Path (Join-Path $loaderDir "libs")) {
+            Copy-Item -Path (Join-Path $loaderDir "libs\\*") -Destination (Join-Path $staging "libs") -Recurse -Force
           }
-          Write-Host "=> [4/5] Verified WorkerMain.swf in loader/libs/WorkerMain.swf (embedded at compile time)"
+          Copy-Item -Path (Join-Path $apiDir "bin\\AqwApi.swc") -Destination (Join-Path $staging "libs\\AqwApi.swc") -Force
+          Copy-Item -Path (Join-Path $uiDir "bin\\ModUI.swc") -Destination (Join-Path $staging "libs\\ModUI.swc") -Force
 
           Write-Host "=> [5/5] Compiling Desktop_code.swf and injecting into Desktop.swf..."
           Invoke-Checked $amxmlc @(
