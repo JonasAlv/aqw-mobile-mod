@@ -94,8 +94,9 @@ build(){
   (cd "$STAGING"; abcexport "${label}_code.swf"; abcreplace "$label.swf" 0 "${label}_code-0.abc"; rm -f "${label}_code-0.abc" "${label}"-*.abc)
   cp "$STAGING/$label.swf" "$BUILD/$label.swf"
  done
- rm -rf "$BUILD/assets" "$BUILD/icons" "$BUILD/gamefiles" "$BUILD/META-INF"
- cp -r "$STAGING/assets" "$BUILD/assets"; cp -r "$STAGING/icons" "$BUILD/icons"
+ rm -rf "$BUILD/assets" "$BUILD/icons" "$BUILD/gamefiles" "$BUILD/META-INF" "$BUILD/libs"
+ cp -r "$STAGING/assets" "$BUILD/assets"; cp -r "$STAGING/icons" "$BUILD/icons"; cp -r "$STAGING/libs" "$BUILD/libs"
+ [[ -s "$BUILD/libs/WorkerMain.swf" ]] || die "WorkerMain.swf missing from runnable build output"
  [[ ! -d "$STAGING/gamefiles" ]] || cp -r "$STAGING/gamefiles" "$BUILD/gamefiles"
  [[ ! -d "$CLIENT/META-INF" ]] || cp -r "$CLIENT/META-INF" "$BUILD/META-INF"
  strip_descriptor "$CLIENT/Desktop-app.xml" "$BUILD/Desktop-app.xml"
@@ -141,7 +142,7 @@ android(){
   for mode in "${mode_list[@]}"; do [[ "$mode" == cpu || "$mode" == direct || "$mode" == gpu ]] || die "Unknown mode $mode"
    out="$outdir/AQWMod-$version-$date-$arch-$mode.apk"; xml="$BUILD/Mobile-app-$arch-$mode.xml"
    sed "s|<renderMode>.*</renderMode>|<renderMode>$mode</renderMode>|" "$STAGING/Mobile-app.xml" > "$xml"; rm -f "$out"
-   "$ADT" -package -arch "$arch" -target apk-captive-runtime -storetype PKCS12 -keystore "$keystore" -storepass password "$out" "$xml" -C "$BUILD" Mobile.swf -C "$STAGING" assets icons/icon-36x36.png icons/icon-48x48.png icons/icon-72x72.png icons/icon-96x96.png icons/icon-144x144.png icons/icon-192x192.png gamefiles
+   "$ADT" -package -arch "$arch" -target apk-captive-runtime -storetype PKCS12 -keystore "$keystore" -storepass password "$out" "$xml" -C "$BUILD" Mobile.swf -C "$STAGING" libs assets icons/icon-36x36.png icons/icon-48x48.png icons/icon-72x72.png icons/icon-96x96.png icons/icon-144x144.png icons/icon-192x192.png gamefiles
    rm -f "$xml"; python3 - "$out" "$abi" <<'PYAPK'
 import sys,zipfile
 with zipfile.ZipFile(sys.argv[1]) as z: names=z.namelist()
