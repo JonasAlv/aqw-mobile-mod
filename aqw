@@ -30,7 +30,8 @@ resolve_java(){
  JAVA_HOME="${j%/bin/java}"; export JAVA_HOME
 }
 resolve_air(){
- AIR_HOME="${AIR_HOME:-${AIRSDK_HOME:-}}"
+ AIR_HOME="${AIR_HOME:-${AIRSDK_HOME:-${HOME}/.airsdk/AIRSDK_Linux}}"
+  [[ -d "$AIR_HOME" ]] || AIR_HOME=""
  AMXMLC="$(command -v amxmlc 2>/dev/null || true)"; ADT="$(command -v adt 2>/dev/null || true)"
  [[ -n "$AMXMLC" ]] || { [[ -n "$AIR_HOME" && -x "$AIR_HOME/bin/amxmlc" ]] && AMXMLC="$AIR_HOME/bin/amxmlc"; }
  [[ -n "$ADT" ]] || { [[ -n "$AIR_HOME" && -x "$AIR_HOME/bin/adt" ]] && ADT="$AIR_HOME/bin/adt"; }
@@ -98,14 +99,30 @@ build(){
  echo "=> Build complete"; ls -lh "$BUILD/Desktop.swf" "$BUILD/Mobile.swf"
 }
 run_client(){
- local mode="" descriptor=Desktop-app.xml adl
+ local mode="" descriptor=Desktop-app.xml adl=""
  while (($#)); do case "$1" in --cpu|--direct|--gpu) [[ -z "$mode" ]] || die "Choose one render mode"; mode="${1#--}"; shift;; *) die "Unknown run option: $1";; esac; done
  [[ -s "$BUILD/Desktop.swf" ]] || build
  if [[ -n "$mode" ]]; then descriptor=Desktop-app-launch.xml; sed "s|<renderMode>.*</renderMode>|<renderMode>$mode</renderMode>|" "$BUILD/Desktop-app.xml" > "$BUILD/$descriptor"; fi
  trap 'rm -f "$BUILD/Desktop-app-launch.xml"' EXIT
- adl="${AIRSDK_WINDOWS:-${AIR_WINDOWS_HOME:-}}"; [[ -n "$adl" ]] || die "Set AIRSDK_WINDOWS to Windows AIR SDK directory"
- [[ -f "$adl/adl.exe" ]] && adl="$adl/adl.exe"; [[ -f "$adl" ]] || die "adl.exe not found at $adl"
  mkdir -p "$BUILD/assets"; touch "$BUILD/assets/api.log"; ln -sf "$BUILD/assets/api.log" "$DIR/api.log" 2>/dev/null || true
+ # Prefer native Linux ADL; use Windows ADL through Wine only when explicitly configured.
+ if [[ -n "${AIRSDK_LINUX:-}" ]]; then
+   adl="$AIRSDK_LINUX"
+ elif [[ -x "${HOME}/.airsdk/AIRSDK_Linux/bin/adl_linux64" ]]; then
+   adl="${HOME}/.airsdk/AIRSDK_Linux/bin/adl_linux64"
+ elif [[ -x "${HOME}/.airsdk/AIRSDK_Linux/bin/adl" ]]; then
+   adl="${HOME}/.airsdk/AIRSDK_Linux/bin/adl"
+ fi
+ if [[ -n "$adl" && -x "$adl" ]]; then
+   echo "=> Launching with Linux ADL: $adl"
+   (cd "$BUILD"; "$adl" -profile extendedDesktop "$descriptor")
+   return
+ fi
+ adl="${AIRSDK_WINDOWS:-${AIR_WINDOWS_HOME:-${HOME}/.airsdk/AIRSDK_Windows/bin/adl64.exe}}"
+ [[ -f "$adl" ]] || [[ -f "${adl%/*}/adl64.exe" ]] || die "Linux ADL not found. Set AIRSDK_LINUX to adl_linux64; Windows fallback: $adl"
+ if [[ -d "$adl" ]]; then adl="$adl/bin/adl64.exe"; elif [[ ! -f "$adl" ]]; then adl="${adl%/*}/adl64.exe"; fi
+ command -v wine >/dev/null 2>&1 || die "Windows ADL selected but Wine is unavailable. Set AIRSDK_LINUX to use native Linux ADL."
+ echo "=> Launching with Windows ADL via Wine: $adl"
  (cd "$BUILD"; wine "$adl" -profile extendedDesktop "$descriptor")
 }
 android(){
