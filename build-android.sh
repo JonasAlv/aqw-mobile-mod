@@ -11,6 +11,11 @@ cd "$DIR"
 # shellcheck source=lib.sh
 . "$DIR/lib.sh"
 
+# Optional machine-local paths for the API/UI checkouts; never committed.
+if [ -f "$DIR/local-repos.sh" ]; then
+    . "$DIR/local-repos.sh"
+fi
+
 resolve_air_env
 
 BUILD="$DIR/build"
@@ -69,6 +74,22 @@ KEYSTORE="${KEYSTORE:-$DIR/aqwpocket_keystore_local.p12}"
 HAXE_API_DIR="${HAXE_API_DIR:-$DIR/../aqw-haxe-api}"
 HAXE_UI_DIR="${HAXE_UI_DIR:-$DIR/../aqw-haxe-ui}"
 
+for repo_spec in "aqw-haxe-api:$HAXE_API_DIR:bin/AqwApi.swc" "aqw-haxe-ui:$HAXE_UI_DIR:bin/ModUI.swc"; do
+    repo_name="${repo_spec%%:*}"
+    repo_rest="${repo_spec#*:}"
+    repo_path="${repo_rest%:*}"
+    if [ ! -d "$repo_path" ] || [ ! -f "$repo_path/build.hxml" ]; then
+        echo "ERROR: $repo_name checkout or build.hxml not found at $repo_path." >&2
+        echo "       Set HAXE_API_DIR/HAXE_UI_DIR in local-repos.sh to your actual checkout paths." >&2
+        exit 1
+    fi
+    printf "=> Source %s: %s" "$repo_name" "$repo_path"
+    if git -C "$repo_path" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+        printf " [branch=%s commit=%s]" "$(git -C "$repo_path" branch --show-current 2>/dev/null || echo detached)" "$(git -C "$repo_path" rev-parse --short HEAD 2>/dev/null || echo unknown)"
+    fi
+    printf "\\n"
+done
+
 if [ ! -f "$DIR/loader/src/ModBootstrap.as" ]; then
     echo "ERROR: loader/src/ModBootstrap.as is missing - the mod seam was lost." >&2
     exit 1
@@ -118,16 +139,22 @@ if [ -d "$DIR/loader/libs" ]; then
 fi
 
 if [ "${SKIP_HAXE_API:-}" != "1" ]; then
-    if [ -d "$HAXE_API_DIR" ]; then
-        echo "=> [2a/5] Compiling Haxe API (aqw-haxe-api)..."
-        run_haxe_build "$HAXE_API_DIR"
-        cp "$HAXE_API_DIR/bin/AqwApi.swc" "$STAGING/libs/AqwApi.swc"
+    echo "=> [2a/5] Compiling Haxe API from $HAXE_API_DIR..."
+    run_haxe_build "$HAXE_API_DIR"
+    if [ ! -s "$HAXE_API_DIR/bin/AqwApi.swc" ]; then
+        echo "ERROR: Haxe API build did not produce bin/AqwApi.swc." >&2
+        exit 1
     fi
-    if [ -d "$HAXE_UI_DIR" ]; then
-        echo "=> [2b/5] Compiling Haxe UI (aqw-haxe-ui)..."
-        run_haxe_build "$HAXE_UI_DIR"
-        cp "$HAXE_UI_DIR/bin/ModUI.swc" "$STAGING/libs/ModUI.swc"
+    cp "$HAXE_API_DIR/bin/AqwApi.swc" "$STAGING/libs/AqwApi.swc"
+
+    echo "=> [2b/5] Compiling Haxe UI from $HAXE_UI_DIR..."
+    run_haxe_build "$HAXE_UI_DIR"
+    if [ ! -s "$HAXE_UI_DIR/bin/ModUI.swc" ]; then
+        echo "ERROR: Haxe UI build did not produce bin/ModUI.swc." >&2
+        exit 1
     fi
+    cp "$HAXE_UI_DIR/bin/ModUI.swc" "$STAGING/libs/ModUI.swc"
+    echo "=> Using freshly built UI library: $STAGING/libs/ModUI.swc"
 fi
 
 for required_swc in AqwApi.swc ModUI.swc; do
