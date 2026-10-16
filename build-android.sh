@@ -1,7 +1,7 @@
 #!/bin/bash
 # build-android.sh - Build Android APKs locally using isolated build sandbox
-# Supports ARMv8, ARMv7, or both (default)
-# Output: android_builds/aqwmod-${UPSTREAM_VERSION}-${BUILD_DATE}-${ARCH}.apk
+# Builds universal multi-architecture APKs (all supported Android architectures)
+# Output: android_builds/AQWMod-${UPSTREAM_VERSION}-${BUILD_DATE}-multiarch-${MODE}.apk
 
 set -euo pipefail
 
@@ -27,12 +27,6 @@ mkdir -p "$OUTPUT_DIR"
 rm -rf "${OUTPUT_DIR:?}"/*
 
 trap 'rm -rf "$STAGING"' EXIT
-
-if [ -n "${ARCH:-}" ] && [ "$ARCH" != "all" ]; then
-    ARCHS=("$ARCH")
-else
-    ARCHS=("armv8" "armv7")
-fi
 
 TARGET_MODES=("$@")
 if [ ${#TARGET_MODES[@]} -eq 0 ]; then
@@ -156,47 +150,41 @@ fi
 
 BUILD_DATE="${BUILD_DATE:-$(date +'%d-%m-%y')}"
 
-echo "=> Packaging APKs (${TARGET_MODES[*]}) for architectures: ${ARCHS[*]} (version: $UPSTREAM_VERSION, date: $BUILD_DATE)..."
+echo "=> Packaging universal multi-architecture APKs (${TARGET_MODES[*]}) (version: $UPSTREAM_VERSION, date: $BUILD_DATE)..."
 
 BUILT_APKS=()
-for CURRENT_ARCH in "${ARCHS[@]}"; do
-    for MODE in "${TARGET_MODES[@]}"; do
-        if [ "$MODE" = "auto" ] && [ "${#TARGET_MODES[@]}" -eq 1 ]; then
-            OUTPUT_FILE="aqwmod-${UPSTREAM_VERSION}-${BUILD_DATE}-${CURRENT_ARCH}.apk"
-        else
-            OUTPUT_FILE="aqwmod-${UPSTREAM_VERSION}-${BUILD_DATE}-${CURRENT_ARCH}-${MODE}.apk"
-        fi
-        OUTPUT_PATH="$OUTPUT_DIR/$OUTPUT_FILE"
-        TMP_APP_XML="$BUILD/Mobile-app-${CURRENT_ARCH}-${MODE}.xml"
+for MODE in "${TARGET_MODES[@]}"; do
+    OUTPUT_FILE="AQWMod-${UPSTREAM_VERSION}-${BUILD_DATE}-multiarch-${MODE}.apk"
+    OUTPUT_PATH="$OUTPUT_DIR/$OUTPUT_FILE"
+    TMP_APP_XML="$BUILD/Mobile-app-multiarch-${MODE}.xml"
 
-        echo "   -> Packaging $OUTPUT_FILE (renderMode: $MODE, arch: $CURRENT_ARCH)..."
-        cp "$STAGING/Mobile-app.xml" "$TMP_APP_XML"
-        sed -i "s|<renderMode>.*</renderMode>|<renderMode>${MODE}</renderMode>|" "$TMP_APP_XML"
+    echo "   -> Packaging $OUTPUT_FILE (renderMode: $MODE, arch: all)..."
+    cp "$STAGING/Mobile-app.xml" "$TMP_APP_XML"
+    sed -i "s|<renderMode>.*</renderMode>|<renderMode>${MODE}</renderMode>|" "$TMP_APP_XML"
 
-        "$ADT" -package \
-            -target apk-captive-runtime \
-            -arch "$CURRENT_ARCH" \
-            -storetype PKCS12 \
-            -keystore "$KEYSTORE" \
-            -storepass password \
-            "$OUTPUT_PATH" \
-            "$TMP_APP_XML" \
-            -C "$BUILD" Mobile.swf \
-            -C "$STAGING" \
-                assets \
-                icons/icon-36x36.png \
-                icons/icon-48x48.png \
-                icons/icon-72x72.png \
-                icons/icon-96x96.png \
-                icons/icon-144x144.png \
-                icons/icon-192x192.png \
-                gamefiles/game.swf
+    "$ADT" -package \
+        -target apk-captive-runtime \
+        -arch all \
+        -storetype PKCS12 \
+        -keystore "$KEYSTORE" \
+        -storepass password \
+        "$OUTPUT_PATH" \
+        "$TMP_APP_XML" \
+        -C "$BUILD" Mobile.swf \
+        -C "$STAGING" \
+            assets \
+            icons/icon-36x36.png \
+            icons/icon-48x48.png \
+            icons/icon-72x72.png \
+            icons/icon-96x96.png \
+            icons/icon-144x144.png \
+            icons/icon-192x192.png \
+            gamefiles
 
-        rm -f "$TMP_APP_XML"
+    rm -f "$TMP_APP_XML"
 
-        FILE_SIZE=$(du -sh "$OUTPUT_PATH" | cut -f1)
-        BUILT_APKS+=("$OUTPUT_FILE ($FILE_SIZE)")
-    done
+    FILE_SIZE=$(du -sh "$OUTPUT_PATH" | cut -f1)
+    BUILT_APKS+=("$OUTPUT_FILE ($FILE_SIZE)")
 done
 
 echo ""
