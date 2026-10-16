@@ -540,7 +540,7 @@ jobs:
                 "x86_64" = "x64"
               }
               foreach ($abi in $requiredAbis.Keys) {
-                if (-not ($apkEntries | Where-Object { $_ -match ("^lib/" + [regex]::Escape($abi) + "/.+\\.so$") })) {
+                if (-not ($apkEntries | Where-Object { $_ -match ("^lib/" + [regex]::Escape($abi) + "/.+\.so$") })) {
                   throw "APK $apkName is missing native libraries for $abi ($($requiredAbis[$abi])). Refusing to publish a non-universal APK."
                 }
               }
