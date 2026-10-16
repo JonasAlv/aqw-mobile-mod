@@ -22,6 +22,7 @@ loader.iml
 .env
 
 # Local-only overrides
+/local-repos.sh
 # NOTE: build.sh, run.sh, build-android.sh, sync-gamefiles.sh and lib.sh are deliberately NOT ignored.
 # `*.sh` used to be ignored here, which left the entire build tooling unversioned - unrecoverable on a
 # re-clone and invisible to anyone else working on the project.
