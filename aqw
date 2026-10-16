@@ -17,6 +17,8 @@ die(){ echo "ERROR: $*" >&2; exit 1; }
 load_repos(){
   [[ ! -f "$DIR/local-repos.sh" ]] || . "$DIR/local-repos.sh"
   HAXE_API_DIR="${HAXE_API_DIR:-$DIR/../aqw-haxe-api}"; HAXE_UI_DIR="${HAXE_UI_DIR:-$DIR/../aqw-haxe-ui}"
+  [[ "$HAXE_API_DIR" == /* ]] || HAXE_API_DIR="$DIR/$HAXE_API_DIR"
+  [[ "$HAXE_UI_DIR" == /* ]] || HAXE_UI_DIR="$DIR/$HAXE_UI_DIR"
   [[ -d "$HAXE_API_DIR" && -f "$HAXE_API_DIR/build.hxml" ]] || die "Haxe API checkout/build.hxml missing: $HAXE_API_DIR"
   [[ -d "$HAXE_UI_DIR" && -f "$HAXE_UI_DIR/build.hxml" ]] || die "Haxe UI checkout/build.hxml missing: $HAXE_UI_DIR"
 }
