@@ -21,8 +21,10 @@ STAGING="$BUILD/staging"
 UPSTREAM_GAMEFILES="$BUILD/gamefiles-upstream"
 LEGACY_GAMEFILES="$CLIENT/gamefiles"
 
-HAXE_API_DIR="${HAXE_API_DIR:-$DIR/../aqw-haxe-api}"
-HAXE_UI_DIR="${HAXE_UI_DIR:-$DIR/../aqw-haxe-ui}"
+HAXE_API_DIR="${HAXE_API_DIR:-../aqw-haxe-api}"
+HAXE_UI_DIR="${HAXE_UI_DIR:-../aqw-haxe-ui}"
+HAXE_API_DIR="$(resolve_repo_dir "$DIR" "$HAXE_API_DIR")"
+HAXE_UI_DIR="$(resolve_repo_dir "$DIR" "$HAXE_UI_DIR")"
 
 for repo_spec in "aqw-haxe-api:$HAXE_API_DIR:bin/AqwApi.swc" "aqw-haxe-ui:$HAXE_UI_DIR:bin/ModUI.swc"; do
     repo_name="${repo_spec%%:*}"
@@ -114,7 +116,7 @@ if [ "${SKIP_HAXE:-}" != "1" ]; then
     cp "$HAXE_API_DIR/bin/AqwApi.swc" "$STAGING/libs/AqwApi.swc"
 
     echo "=> [2/6] Compiling ModUI from $HAXE_UI_DIR..."
-    run_haxe_build "$HAXE_UI_DIR"
+    run_haxe_ui_build "$HAXE_UI_DIR" "$HAXE_API_DIR"
     if [ ! -s "$HAXE_UI_DIR/bin/ModUI.swc" ]; then
         echo "ERROR: Haxe UI build did not produce bin/ModUI.swc." >&2
         exit 1

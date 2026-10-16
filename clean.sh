@@ -16,8 +16,10 @@ cd "$DIR"
 if [ -f "$DIR/local-repos.sh" ]; then
     . "$DIR/local-repos.sh"
 fi
-HAXE_API_DIR="${HAXE_API_DIR:-$DIR/../aqw-haxe-api}"
-HAXE_UI_DIR="${HAXE_UI_DIR:-$DIR/../aqw-haxe-ui}"
+HAXE_API_DIR="${HAXE_API_DIR:-../aqw-haxe-api}"
+HAXE_UI_DIR="${HAXE_UI_DIR:-../aqw-haxe-ui}"
+HAXE_API_DIR="$(resolve_repo_dir "$DIR" "$HAXE_API_DIR")"
+HAXE_UI_DIR="$(resolve_repo_dir "$DIR" "$HAXE_UI_DIR")"
 
 BUILD="$DIR/build"
 STAGING="$BUILD/staging"
