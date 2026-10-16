@@ -320,6 +320,18 @@ jobs:
           }
           Copy-Item -Path (Join-Path $gamefilesUpstream "*") -Destination (Join-Path $staging "gamefiles") -Recurse -Force
 
+          # Fetch the AS3 SWF parser required by Rasterize and SWFStripper.
+          $as3swfDir = Join-Path $env:RUNNER_TEMP "as3swf"
+          $as3swfSource = Join-Path $as3swfDir "src"
+          if (-not (Test-Path (Join-Path $as3swfSource "com\\codeazur\\as3swf\\SWF.as") -PathType Leaf)) {
+            if (Test-Path $as3swfDir) { Remove-Item -Path $as3swfDir -Recurse -Force }
+            git clone --depth 1 https://github.com/claus/as3swf.git $as3swfDir
+            if ($LASTEXITCODE -ne 0) { throw "Failed to fetch the as3swf dependency." }
+          }
+          if (-not (Test-Path (Join-Path $as3swfSource "com\\codeazur\\as3swf\\SWF.as") -PathType Leaf)) {
+            throw "as3swf source is missing: $as3swfSource"
+          }
+
           # Compile directly to the canonical loader/libs path before staging it.
           $workerSource = Join-Path $loaderDir "worker-src\\WorkerMain.as"
           $workerLibs = Join-Path $loaderDir "libs"
@@ -335,6 +347,7 @@ jobs:
             "-strict=false",
             "-debug=true",
             "-source-path+=$(Join-Path $loaderDir 'worker-src')",
+            "-source-path+=$as3swfSource",
             "-output", $workerSwf,
             $workerSource
           ) "WorkerMain.swf compilation"
