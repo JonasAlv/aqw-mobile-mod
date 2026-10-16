@@ -105,23 +105,19 @@ run_client(){
  if [[ -n "$mode" ]]; then descriptor=Desktop-app-launch.xml; sed "s|<renderMode>.*</renderMode>|<renderMode>$mode</renderMode>|" "$BUILD/Desktop-app.xml" > "$BUILD/$descriptor"; fi
  trap 'rm -f "$BUILD/Desktop-app-launch.xml"' EXIT
  mkdir -p "$BUILD/assets"; touch "$BUILD/assets/api.log"; ln -sf "$BUILD/assets/api.log" "$DIR/api.log" 2>/dev/null || true
- # Prefer native Linux ADL; use Windows ADL through Wine only when explicitly configured.
- if [[ -n "${AIRSDK_LINUX:-}" ]]; then
-   adl="$AIRSDK_LINUX"
- elif [[ -x "${HOME}/.airsdk/AIRSDK_Linux/bin/adl_linux64" ]]; then
-   adl="${HOME}/.airsdk/AIRSDK_Linux/bin/adl_linux64"
- elif [[ -x "${HOME}/.airsdk/AIRSDK_Linux/bin/adl" ]]; then
-   adl="${HOME}/.airsdk/AIRSDK_Linux/bin/adl"
- fi
- if [[ -n "$adl" && -x "$adl" ]]; then
+ # Prefer Windows ADL through Wine by default; native Linux ADL is an explicit opt-in.
+ if [[ "${AQW_ADL:-wine}" == "linux" ]]; then
+   adl="${AIRSDK_LINUX:-${HOME}/.airsdk/AIRSDK_Linux/bin/adl_linux64}"
+   [[ -x "$adl" ]] || die "Linux ADL not found or not executable: $adl"
    echo "=> Launching with Linux ADL: $adl"
    (cd "$BUILD"; "$adl" -profile extendedDesktop "$descriptor")
    return
  fi
+ [[ "${AQW_ADL:-wine}" == "wine" ]] || die "Unknown AQW_ADL value '${AQW_ADL}'; use wine or linux."
  adl="${AIRSDK_WINDOWS:-${AIR_WINDOWS_HOME:-${HOME}/.airsdk/AIRSDK_Windows/bin/adl64.exe}}"
- [[ -f "$adl" ]] || [[ -f "${adl%/*}/adl64.exe" ]] || die "Linux ADL not found. Set AIRSDK_LINUX to adl_linux64; Windows fallback: $adl"
+ [[ -f "$adl" ]] || [[ -f "${adl%/*}/adl64.exe" ]] || die "Windows ADL not found: $adl"
  if [[ -d "$adl" ]]; then adl="$adl/bin/adl64.exe"; elif [[ ! -f "$adl" ]]; then adl="${adl%/*}/adl64.exe"; fi
- command -v wine >/dev/null 2>&1 || die "Windows ADL selected but Wine is unavailable. Set AIRSDK_LINUX to use native Linux ADL."
+ command -v wine >/dev/null 2>&1 || die "Wine is unavailable; install Wine or set AQW_ADL=linux to use native Linux ADL."
  echo "=> Launching with Windows ADL via Wine: $adl"
  (cd "$BUILD"; wine "$adl" -profile extendedDesktop "$descriptor")
 }
