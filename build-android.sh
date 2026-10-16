@@ -161,11 +161,9 @@ for MODE in "${TARGET_MODES[@]}"; do
     echo "   -> Packaging $OUTPUT_FILE (renderMode: $MODE, arch: all)..."
     cp "$STAGING/Mobile-app.xml" "$TMP_APP_XML"
     sed -i "s|<renderMode>.*</renderMode>|<renderMode>${MODE}</renderMode>|" "$TMP_APP_XML"
-    if ! grep -q "<buildArchitectures>" "$TMP_APP_XML"; then
-        sed -i 's|</android>|<buildArchitectures>armv7,armv8,x86,x64</buildArchitectures></android>|' "$TMP_APP_XML"
-    fi
 
     "$ADT" -package \
+        -arch all \
         -target apk-captive-runtime \
         -storetype PKCS12 \
         -keystore "$KEYSTORE" \
@@ -184,6 +182,27 @@ for MODE in "${TARGET_MODES[@]}"; do
             gamefiles
 
     rm -f "$TMP_APP_XML"
+
+    echo "   -> Verifying all Android ABIs are present..."
+    APK_ABIS="$(python3 - "$OUTPUT_PATH" <<'PY'
+import sys, zipfile
+apk = sys.argv[1]
+required = {
+    "armeabi-v7a": "ARMv7",
+    "arm64-v8a": "ARM64",
+    "x86": "x86",
+    "x86_64": "x64",
+}
+with zipfile.ZipFile(apk) as z:
+    names = z.namelist()
+missing = [abi for abi in required if not any(n.startswith(f"lib/{abi}/") and n.endswith(".so") for n in names)]
+if missing:
+    print("Missing native library ABIs: " + ", ".join(missing), file=sys.stderr)
+    sys.exit(1)
+print(", ".join(required.values()))
+PY
+)"
+    echo "   Verified native libraries for: $APK_ABIS"
 
     FILE_SIZE=$(du -sh "$OUTPUT_PATH" | cut -f1)
     BUILT_APKS+=("$OUTPUT_FILE ($FILE_SIZE)")
