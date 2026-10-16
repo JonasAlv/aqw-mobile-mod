@@ -497,6 +497,10 @@ jobs:
               -C $staging libs gamefiles assets icons
 
             if ($LASTEXITCODE -ne 0) { throw "AIR bundle packaging failed for mode $mode." }
+            if (-not (Test-Path (Join-Path $bundleDir "libs\\WorkerMain.swf") -PathType Leaf)) {
+              throw "Windows bundle is missing libs/WorkerMain.swf."
+            }
+            Write-Host "Verified WorkerMain.swf in Windows bundle."
 
             $zipName = "AQWMod-$upstreamVer-$date-x64-$mode.zip"
             $zipPath = Join-Path $artifactsDir $zipName
@@ -540,6 +544,7 @@ jobs:
                   $apkPath,
                   $mobileXmlPath,
                   "-C", $buildDir, "Mobile.swf",
+                  "-C", $staging, "libs",
                   "-C", $staging, "assets",
                   "-C", $staging, "icons/icon-36x36.png",
                   "-C", $staging, "icons/icon-48x48.png",
@@ -556,10 +561,13 @@ jobs:
                 $apkZip = [System.IO.Compression.ZipFile]::OpenRead($apkPath)
                 try { $apkEntries = @($apkZip.Entries | ForEach-Object { $_.FullName }) }
                 finally { $apkZip.Dispose() }
-                if (-not ($apkEntries | Where-Object { $_ -match ("^lib/" + [regex]::Escape($abi) + "/.+\.so$") })) {
+                if (-not ($apkEntries -contains "libs/WorkerMain.swf")) {
+                  throw "APK $apkName is missing libs/WorkerMain.swf."
+                }
+                                if (-not ($apkEntries | Where-Object { $_ -match ("^lib/" + [regex]::Escape($abi) + "/.+\.so$") })) {
                   throw "APK $apkName is missing native libraries for $abi."
                 }
-                Write-Host "Verified native libraries for $abi."
+                Write-Host "Verified WorkerMain.swf and native libraries for $abi."
               }
             }
           }
