@@ -12,6 +12,13 @@ set -euo pipefail
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$DIR"
 
+# Match the build scripts when repositories are not sibling directories.
+if [ -f "$DIR/local-repos.sh" ]; then
+    . "$DIR/local-repos.sh"
+fi
+HAXE_API_DIR="${HAXE_API_DIR:-$DIR/../aqw-haxe-api}"
+HAXE_UI_DIR="${HAXE_UI_DIR:-$DIR/../aqw-haxe-ui}"
+
 BUILD="$DIR/build"
 STAGING="$BUILD/staging"
 LEGACY_GAMEFILES="$DIR/loader/gamefiles"
@@ -70,7 +77,7 @@ fi
 # Haxe language-server scratch: target/debug + target/flycheck0, with a CMake CACHEDIR.TAG.
 # Unrelated to the build, ~250MB, and safe to delete at any time - it regenerates on the next
 # language-server run. Ignored via `/target` in .gitignore.
-for repo in "$DIR" "$DIR/../aqw-haxe-api" "$DIR/../aqw-haxe-ui"; do
+for repo in "$DIR" "$HAXE_API_DIR" "$HAXE_UI_DIR"; do
     remove_path "$repo/target" "${repo#$DIR/}/target (language-server scratch)"
 done
 
