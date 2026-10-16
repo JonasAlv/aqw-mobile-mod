@@ -497,6 +497,10 @@ jobs:
               -C $staging libs gamefiles assets icons
 
             if ($LASTEXITCODE -ne 0) { throw "AIR bundle packaging failed for mode $mode." }
+            if (-not (Test-Path (Join-Path $bundleDir "libs\\WorkerMain.swf") -PathType Leaf)) {
+              throw "Windows bundle is missing libs/WorkerMain.swf."
+            }
+            Write-Host "Verified WorkerMain.swf in Windows bundle."
 
             $zipName = "AQWMod-$upstreamVer-$date-x64-$mode.zip"
             $zipPath = Join-Path $artifactsDir $zipName
