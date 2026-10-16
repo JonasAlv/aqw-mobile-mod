@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-DIR="$(cd "$(dirname "\${BASH_SOURCE[0]}")" && pwd)"
+DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 GAMEFILES_DIR="$DIR/build/gamefiles-upstream"
-DESTINATION="\${1:-$GAMEFILES_DIR}"
+DESTINATION="${1:-$GAMEFILES_DIR}"
 if [[ "$#" -gt 1 ]]; then
     echo "Usage: sync-gamefiles.sh [gamefiles-directory]" >&2
     exit 2
@@ -19,7 +19,7 @@ for tool in curl python3 unzip sha256sum; do
 done
 
 mkdir -p "$CACHE_DIR"
-TMP_DIR="$(mktemp -d "\${TMPDIR:-/tmp}/aqw-gamefiles.XXXXXX")"
+TMP_DIR="$(mktemp -d "${TMPDIR:-/tmp}/aqw-gamefiles.XXXXXX")"
 trap 'rm -rf "$TMP_DIR"' EXIT
 
 curl --fail --silent --show-error --location \
@@ -59,14 +59,14 @@ print(digest.removeprefix("sha256:").lower())
 PY
 )
 
-if [[ "\${#RELEASE_METADATA[@]}" -ne 3 ]]; then
+if [[ "${#RELEASE_METADATA[@]}" -ne 3 ]]; then
     echo "ERROR: Could not resolve latest upstream Windows release metadata." >&2
     exit 1
 fi
 
-RELEASE_TAG="\${RELEASE_METADATA[0]}"
-ZIP_URL="\${RELEASE_METADATA[1]}"
-ZIP_DIGEST="\${RELEASE_METADATA[2]}"
+RELEASE_TAG="${RELEASE_METADATA[0]}"
+ZIP_URL="${RELEASE_METADATA[1]}"
+ZIP_DIGEST="${RELEASE_METADATA[2]}"
 if [[ ! "$RELEASE_TAG" =~ ^[a-zA-Z0-9._-]+$ || "$ZIP_URL" != https://github.com/anthony-hyo/aqw-mobile/releases/download/* ]]; then
     echo "ERROR: Upstream release returned an invalid tag or ZIP URL." >&2
     exit 1
